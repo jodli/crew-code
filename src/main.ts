@@ -1,4 +1,5 @@
 import { defineCommand, runMain } from "citty";
+import spawn from "./cli/commands/spawn.ts";
 
 const main = defineCommand({
   meta: {
@@ -7,7 +8,7 @@ const main = defineCommand({
     version: "0.1.0",
   },
   subCommands: {
-    // Commands added in later phases
+    spawn,
   },
 });
 
