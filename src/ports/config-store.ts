@@ -9,4 +9,6 @@ export interface ConfigStore {
     updater: (config: TeamConfig) => TeamConfig,
   ): Promise<Result<TeamConfig>>;
   teamExists(name: string): Promise<boolean>;
+  createTeam(config: TeamConfig): Promise<Result<void>>;
+  listTeams(): Promise<Result<string[]>>;
 }

@@ -49,6 +49,8 @@ const messages: Record<string, (e: CrewError) => string> = {
     `Preflight check failed: ${(e as { detail: string }).detail}`,
   spawn_failed: (e) =>
     `Spawn failed: ${(e as { detail: string }).detail}`,
+  team_already_exists: (e) =>
+    `Team "${(e as { team: string }).team}" already exists.`,
 };
 
 export function renderError(e: CrewError): string {

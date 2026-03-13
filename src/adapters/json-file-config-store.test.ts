@@ -12,6 +12,7 @@ beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), "crew-cfg-test-"));
   store = new JsonFileConfigStore({
     configPath: (name: string) => join(tmpDir, name, "config.json"),
+    teamsDir: () => tmpDir,
   });
 });
 
@@ -98,6 +99,64 @@ describe("JsonFileConfigStore", () => {
       expect(readBack.ok).toBe(true);
       if (readBack.ok) {
         expect(readBack.value.description).toBe("Updated description");
+      }
+    });
+  });
+
+  describe("createTeam()", () => {
+    test("writes config.json to team directory", async () => {
+      const result = await store.createTeam(sampleConfig);
+      expect(result.ok).toBe(true);
+
+      // Verify file was created
+      const readBack = await store.getTeam("test-team");
+      expect(readBack.ok).toBe(true);
+      if (readBack.ok) {
+        expect(readBack.value.name).toBe("test-team");
+        expect(readBack.value.leadAgentId).toBe("team-lead@test-team");
+        expect(readBack.value.members).toHaveLength(1);
+      }
+    });
+
+    test("creates inboxes directory", async () => {
+      await store.createTeam(sampleConfig);
+
+      const { existsSync } = await import("node:fs");
+      const inboxesDir = join(tmpDir, "test-team", "inboxes");
+      expect(existsSync(inboxesDir)).toBe(true);
+    });
+
+    test("returns error if team already exists", async () => {
+      await store.createTeam(sampleConfig);
+      const result = await store.createTeam(sampleConfig);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe("team_already_exists");
+      }
+    });
+  });
+
+  describe("listTeams()", () => {
+    test("returns team names from directory listing", async () => {
+      await store.createTeam(sampleConfig);
+      await store.createTeam({ ...sampleConfig, name: "second-team" });
+
+      const result = await store.listTeams();
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.sort()).toEqual(["second-team", "test-team"]);
+      }
+    });
+
+    test("returns empty array when no teams exist", async () => {
+      // Ensure the teams directory exists but is empty
+      await mkdir(tmpDir, { recursive: true });
+
+      const result = await store.listTeams();
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toEqual([]);
       }
     });
   });

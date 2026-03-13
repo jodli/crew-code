@@ -15,4 +15,5 @@ export type CrewError =
   | { kind: "tmux_timeout"; command: string }
   | { kind: "launch_failed"; detail: string }
   | { kind: "preflight_failed"; detail: string }
-  | { kind: "spawn_failed"; detail: string };
+  | { kind: "spawn_failed"; detail: string }
+  | { kind: "team_already_exists"; team: string };

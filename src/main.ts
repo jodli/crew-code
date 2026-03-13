@@ -1,4 +1,5 @@
 import { defineCommand, runMain } from "citty";
+import create from "./cli/commands/create.ts";
 import spawn from "./cli/commands/spawn.ts";
 
 const main = defineCommand({
@@ -8,6 +9,7 @@ const main = defineCommand({
     version: "0.1.0",
   },
   subCommands: {
+    create,
     spawn,
   },
 });

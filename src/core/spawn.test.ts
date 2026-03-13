@@ -47,6 +47,12 @@ function makeConfigStore(
     async teamExists(name) {
       return current !== null && current.name === name;
     },
+    async createTeam() {
+      return ok(undefined);
+    },
+    async listTeams() {
+      return ok([]);
+    },
   };
   return store;
 }
