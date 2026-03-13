@@ -109,6 +109,91 @@ describe("JsonFileInboxStore", () => {
     });
   });
 
+  describe("appendMessage()", () => {
+    test("adds message to existing inbox", async () => {
+      const inboxesDir = join(tmpDir, "test-team", "inboxes");
+      await mkdir(inboxesDir, { recursive: true });
+      const existing: InboxMessage[] = [
+        {
+          from: "team-lead",
+          text: "Hello",
+          timestamp: "2026-01-01T00:00:00Z",
+          read: true,
+        },
+      ];
+      await writeFile(
+        join(inboxesDir, "agent1.json"),
+        JSON.stringify(existing, null, 2),
+      );
+
+      const newMsg: InboxMessage = {
+        from: "external",
+        text: "New message",
+        timestamp: "2026-01-01T00:05:00Z",
+        read: false,
+      };
+
+      const result = await store.appendMessage("test-team", "agent1", newMsg);
+      expect(result.ok).toBe(true);
+
+      const content = JSON.parse(
+        await readFile(join(inboxesDir, "agent1.json"), "utf-8"),
+      );
+      expect(content).toHaveLength(2);
+      expect(content[0].from).toBe("team-lead");
+      expect(content[1].from).toBe("external");
+      expect(content[1].text).toBe("New message");
+    });
+
+    test("creates inbox if it doesn't exist", async () => {
+      const inboxesDir = join(tmpDir, "test-team", "inboxes");
+      await mkdir(inboxesDir, { recursive: true });
+
+      const msg: InboxMessage = {
+        from: "external",
+        text: "First message",
+        timestamp: "2026-01-01T00:00:00Z",
+        read: false,
+      };
+
+      const result = await store.appendMessage("test-team", "new-agent", msg);
+      expect(result.ok).toBe(true);
+
+      const path = join(inboxesDir, "new-agent.json");
+      expect(existsSync(path)).toBe(true);
+
+      const content = JSON.parse(await readFile(path, "utf-8"));
+      expect(content).toHaveLength(1);
+      expect(content[0].text).toBe("First message");
+    });
+
+    test("concurrent appendMessage() calls don't lose data", async () => {
+      const inboxesDir = join(tmpDir, "test-team", "inboxes");
+      await mkdir(inboxesDir, { recursive: true });
+      await writeFile(join(inboxesDir, "agent1.json"), "[]");
+
+      const promises = Array.from({ length: 5 }, (_, i) => {
+        const msg: InboxMessage = {
+          from: "sender",
+          text: `Message ${i}`,
+          timestamp: new Date().toISOString(),
+          read: false,
+        };
+        return store.appendMessage("test-team", "agent1", msg);
+      });
+
+      const results = await Promise.all(promises);
+      for (const r of results) {
+        expect(r.ok).toBe(true);
+      }
+
+      const content = JSON.parse(
+        await readFile(join(inboxesDir, "agent1.json"), "utf-8"),
+      );
+      expect(content).toHaveLength(5);
+    });
+  });
+
   describe("listInboxes()", () => {
     test("returns agent names from inbox directory", async () => {
       const inboxesDir = join(tmpDir, "test-team", "inboxes");

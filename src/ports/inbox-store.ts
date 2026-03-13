@@ -12,5 +12,10 @@ export interface InboxStore {
     team: string,
     agent: string,
   ): Promise<Result<InboxMessage[]>>;
+  appendMessage(
+    team: string,
+    agent: string,
+    message: InboxMessage,
+  ): Promise<Result<void>>;
   listInboxes(team: string): Promise<Result<string[]>>;
 }

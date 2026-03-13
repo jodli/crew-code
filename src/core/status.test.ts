@@ -17,6 +17,7 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
     inboxStore: {
       createInbox: async () => ok(undefined),
       readMessages: async () => ok([]),
+      appendMessage: async () => ok(undefined),
       listInboxes: async () => ok([]),
     },
     launcher: {

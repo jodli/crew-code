@@ -2,6 +2,7 @@ import { defineCommand, runMain } from "citty";
 import create from "./cli/commands/create.ts";
 import spawn from "./cli/commands/spawn.ts";
 import status from "./cli/commands/status.ts";
+import send from "./cli/commands/send.ts";
 
 const main = defineCommand({
   meta: {
@@ -13,6 +14,7 @@ const main = defineCommand({
     create,
     spawn,
     status,
+    send,
   },
 });
 

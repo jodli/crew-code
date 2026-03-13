@@ -1,0 +1,34 @@
+import type { AppContext } from "../types/context.ts";
+import type { Result } from "../types/result.ts";
+import { ok, err } from "../types/result.ts";
+
+export interface SendInput {
+  team: string;
+  agent: string;
+  message: string;
+  from?: string;
+}
+
+export async function sendMessage(
+  ctx: AppContext,
+  input: SendInput,
+): Promise<Result<void>> {
+  const teamResult = await ctx.configStore.getTeam(input.team);
+  if (!teamResult.ok) return teamResult;
+
+  const config = teamResult.value;
+  const member = config.members.find((m) => m.name === input.agent);
+  if (!member) {
+    return err({ kind: "agent_not_found", agent: input.agent, team: input.team });
+  }
+
+  const result = await ctx.inboxStore.appendMessage(input.team, input.agent, {
+    from: input.from ?? "external",
+    text: input.message,
+    timestamp: new Date().toISOString(),
+    read: false,
+  });
+
+  if (!result.ok) return result;
+  return ok(undefined);
+}

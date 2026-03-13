@@ -73,6 +73,9 @@ function makeInboxStore(): InboxStore & {
     async readMessages() {
       return ok([] as InboxMessage[]);
     },
+    async appendMessage() {
+      return ok(undefined);
+    },
     async listInboxes() {
       return ok([] as string[]);
     },

@@ -51,6 +51,10 @@ const messages: Record<string, (e: CrewError) => string> = {
     `Spawn failed: ${(e as { detail: string }).detail}`,
   team_already_exists: (e) =>
     `Team "${(e as { team: string }).team}" already exists.`,
+  agent_not_found: (e) => {
+    const { agent, team } = e as { agent: string; team: string };
+    return `Agent "${agent}" not found in team "${team}".`;
+  },
 };
 
 export function renderError(e: CrewError): string {

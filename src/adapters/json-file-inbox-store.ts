@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readdir } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import type { InboxStore } from "../ports/inbox-store.ts";
 import type { InboxMessage } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
@@ -8,7 +8,7 @@ import {
   claudeInboxesDir as defaultInboxesDir,
   claudeInboxPath as defaultInboxPath,
 } from "../config/paths.ts";
-import { readJson, writeJson } from "../lib/json-io.ts";
+import { readJson, writeJson, withLock } from "../lib/json-io.ts";
 import { InboxSchema } from "../config/schemas.ts";
 
 export interface InboxStoreDeps {
@@ -37,6 +37,58 @@ export class JsonFileInboxStore implements InboxStore {
     await mkdir(dir, { recursive: true });
     const path = this.deps.inboxPath(team, agent);
     return writeJson(path, messages);
+  }
+
+  async appendMessage(
+    team: string,
+    agent: string,
+    message: InboxMessage,
+  ): Promise<Result<void>> {
+    const dir = this.deps.inboxesDir(team);
+    await mkdir(dir, { recursive: true });
+    const path = this.deps.inboxPath(team, agent);
+    const lockPath = path + ".lock";
+
+    // Ensure the lock sentinel and data files exist
+    if (!existsSync(lockPath)) {
+      await writeFile(lockPath, "", "utf-8");
+    }
+    if (!existsSync(path)) {
+      await writeFile(path, "[]\n", "utf-8");
+    }
+
+    const { lock } = await import("proper-lockfile");
+    let release: (() => Promise<void>) | undefined;
+    try {
+      release = await lock(lockPath, {
+        retries: { retries: 10, minTimeout: 50, maxTimeout: 500 } as unknown as number,
+        stale: 10000,
+      });
+    } catch (e: unknown) {
+      return err({
+        kind: "lock_failed",
+        path: lockPath,
+        detail: String(e),
+      });
+    }
+
+    try {
+      const raw = await readFile(path, "utf-8");
+      const existing: InboxMessage[] = JSON.parse(raw);
+      existing.push(message);
+      await writeFile(path, JSON.stringify(existing, null, 2) + "\n", "utf-8");
+      return ok(undefined);
+    } catch (e: unknown) {
+      return err({
+        kind: "file_write_failed",
+        path,
+        detail: String(e),
+      });
+    } finally {
+      if (release) {
+        await release().catch(() => {});
+      }
+    }
   }
 
   async readMessages(
