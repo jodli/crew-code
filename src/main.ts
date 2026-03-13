@@ -5,6 +5,7 @@ import status from "./cli/commands/status.ts";
 import send from "./cli/commands/send.ts";
 import destroy from "./cli/commands/destroy.ts";
 import doctor from "./cli/commands/doctor.ts";
+import inbox from "./cli/commands/inbox.ts";
 
 const main = defineCommand({
   meta: {
@@ -19,6 +20,7 @@ const main = defineCommand({
     send,
     destroy,
     doctor,
+    inbox,
   },
 });
 
