@@ -47,11 +47,13 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
       teamExists: async (name: string) => name === "my-team",
       createTeam: async () => ok(undefined),
       listTeams: async () => ok(["my-team"]),
+      deleteTeam: async () => ok(undefined),
     },
     inboxStore: {
       createInbox: async () => ok(undefined),
       readMessages: async () => ok([]),
       listInboxes: async () => ok([]),
+      deleteInbox: async () => ok(undefined),
       appendMessage: async (team: string, agent: string, message: InboxMessage) => {
         appendedMessages.push({ team, agent, message });
         return ok(undefined);
@@ -61,6 +63,7 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
       preflight: async () => ok(undefined),
       launch: async () => ok("%0"),
       isAlive: async () => false,
+      kill: async () => ok(undefined),
     },
     ...overrides,
   };

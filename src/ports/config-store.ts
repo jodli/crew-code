@@ -11,4 +11,5 @@ export interface ConfigStore {
   teamExists(name: string): Promise<boolean>;
   createTeam(config: TeamConfig): Promise<Result<void>>;
   listTeams(): Promise<Result<string[]>>;
+  deleteTeam(name: string): Promise<Result<void>>;
 }

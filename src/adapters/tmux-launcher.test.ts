@@ -186,6 +186,41 @@ describe("TmuxLauncher", () => {
     });
   });
 
+  describe("kill()", () => {
+    test("kills the tmux pane", async () => {
+      let capturedArgs: string[] = [];
+      const launcher = new TmuxLauncher(
+        makeDeps({
+          execTmux: async (args) => {
+            capturedArgs = args;
+            return { stdout: "", stderr: "", exitCode: 0 };
+          },
+        }),
+      );
+
+      const result = await launcher.kill("%5");
+      expect(result.ok).toBe(true);
+      expect(capturedArgs).toContain("kill-pane");
+      expect(capturedArgs).toContain("%5");
+    });
+
+    test("handles already-dead pane gracefully", async () => {
+      const launcher = new TmuxLauncher(
+        makeDeps({
+          execTmux: async () => ({
+            stdout: "",
+            stderr: "can't find pane",
+            exitCode: 1,
+          }),
+        }),
+      );
+
+      // Should still return ok — pane is already gone, that's fine
+      const result = await launcher.kill("%99");
+      expect(result.ok).toBe(true);
+    });
+  });
+
   describe("isAlive()", () => {
     test("returns true when pane exists", async () => {
       const launcher = new TmuxLauncher(

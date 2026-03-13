@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile, unlink } from "node:fs/promises";
 import type { InboxStore } from "../ports/inbox-store.ts";
 import type { InboxMessage } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
@@ -100,6 +100,23 @@ export class JsonFileInboxStore implements InboxStore {
       return ok([]);
     }
     return readJson(path, InboxSchema);
+  }
+
+  async deleteInbox(team: string, agent: string): Promise<Result<void>> {
+    const path = this.deps.inboxPath(team, agent);
+    if (!existsSync(path)) {
+      return ok(undefined);
+    }
+    try {
+      await unlink(path);
+      return ok(undefined);
+    } catch (e: unknown) {
+      return err({
+        kind: "file_write_failed",
+        path,
+        detail: String(e),
+      });
+    }
   }
 
   async listInboxes(team: string): Promise<Result<string[]>> {

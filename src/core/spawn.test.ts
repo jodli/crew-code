@@ -53,6 +53,9 @@ function makeConfigStore(
     async listTeams() {
       return ok([]);
     },
+    async deleteTeam() {
+      return ok(undefined);
+    },
   };
   return store;
 }
@@ -79,6 +82,9 @@ function makeInboxStore(): InboxStore & {
     async listInboxes() {
       return ok([] as string[]);
     },
+    async deleteInbox() {
+      return ok(undefined);
+    },
   };
   return store;
 }
@@ -99,6 +105,9 @@ function makeLauncher(
     },
     async isAlive() {
       return true;
+    },
+    async kill() {
+      return ok(undefined);
     },
   };
   return launcher;
@@ -135,6 +144,9 @@ describe("core/spawn", () => {
         },
         async isAlive() {
           return true;
+        },
+        async kill() {
+          return ok(undefined);
         },
       },
       configStore: {
@@ -268,6 +280,9 @@ describe("core/spawn", () => {
       },
       async isAlive() {
         return false;
+      },
+      async kill() {
+        return ok(undefined);
       },
     };
     const ctx = makeCtx({ configStore, launcher });

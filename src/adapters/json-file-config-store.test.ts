@@ -161,6 +161,30 @@ describe("JsonFileConfigStore", () => {
     });
   });
 
+  describe("deleteTeam()", () => {
+    test("removes team directory and all contents", async () => {
+      await store.createTeam(sampleConfig);
+
+      // Verify team exists first
+      expect(await store.teamExists("test-team")).toBe(true);
+
+      const result = await store.deleteTeam("test-team");
+      expect(result.ok).toBe(true);
+
+      // Verify team directory is gone
+      const { existsSync } = await import("node:fs");
+      expect(existsSync(join(tmpDir, "test-team"))).toBe(false);
+    });
+
+    test("returns error if team doesn't exist", async () => {
+      const result = await store.deleteTeam("no-such-team");
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe("team_not_found");
+      }
+    });
+  });
+
   describe("teamExists()", () => {
     test("returns true when team exists", async () => {
       await writeTeamConfig("test-team", sampleConfig);

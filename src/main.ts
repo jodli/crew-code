@@ -3,6 +3,7 @@ import create from "./cli/commands/create.ts";
 import spawn from "./cli/commands/spawn.ts";
 import status from "./cli/commands/status.ts";
 import send from "./cli/commands/send.ts";
+import destroy from "./cli/commands/destroy.ts";
 
 const main = defineCommand({
   meta: {
@@ -15,6 +16,7 @@ const main = defineCommand({
     spawn,
     status,
     send,
+    destroy,
   },
 });
 

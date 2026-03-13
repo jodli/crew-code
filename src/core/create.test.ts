@@ -33,6 +33,9 @@ function makeConfigStore(opts?: {
     async listTeams() {
       return ok([]);
     },
+    async deleteTeam() {
+      return ok(undefined);
+    },
   };
 }
 
@@ -50,6 +53,9 @@ function makeInboxStore(): InboxStore {
     async listInboxes() {
       return ok([]);
     },
+    async deleteInbox() {
+      return ok(undefined);
+    },
   };
 }
 
@@ -63,6 +69,9 @@ function makeLauncher(): Launcher {
     },
     async isAlive() {
       return true;
+    },
+    async kill() {
+      return ok(undefined);
     },
   };
 }

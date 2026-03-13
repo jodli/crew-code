@@ -194,6 +194,26 @@ describe("JsonFileInboxStore", () => {
     });
   });
 
+  describe("deleteInbox()", () => {
+    test("removes the inbox file", async () => {
+      const inboxesDir = join(tmpDir, "test-team", "inboxes");
+      await mkdir(inboxesDir, { recursive: true });
+      await writeFile(join(inboxesDir, "agent1.json"), "[]");
+
+      expect(existsSync(join(inboxesDir, "agent1.json"))).toBe(true);
+
+      const result = await store.deleteInbox("test-team", "agent1");
+      expect(result.ok).toBe(true);
+
+      expect(existsSync(join(inboxesDir, "agent1.json"))).toBe(false);
+    });
+
+    test("returns ok if inbox file doesn't exist", async () => {
+      const result = await store.deleteInbox("test-team", "no-such-agent");
+      expect(result.ok).toBe(true);
+    });
+  });
+
   describe("listInboxes()", () => {
     test("returns agent names from inbox directory", async () => {
       const inboxesDir = join(tmpDir, "test-team", "inboxes");

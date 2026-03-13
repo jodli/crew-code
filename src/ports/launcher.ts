@@ -15,4 +15,5 @@ export interface Launcher {
   preflight(): Promise<Result<void>>;
   launch(opts: LaunchOptions): Promise<Result<string>>; // returns pane ID
   isAlive(paneId: string): Promise<boolean>;
+  kill(paneId: string): Promise<Result<void>>;
 }

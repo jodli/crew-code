@@ -13,17 +13,20 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
       teamExists: async () => false,
       createTeam: async () => ok(undefined),
       listTeams: async () => ok([]),
+      deleteTeam: async () => ok(undefined),
     },
     inboxStore: {
       createInbox: async () => ok(undefined),
       readMessages: async () => ok([]),
       appendMessage: async () => ok(undefined),
       listInboxes: async () => ok([]),
+      deleteInbox: async () => ok(undefined),
     },
     launcher: {
       preflight: async () => ok(undefined),
       launch: async () => ok("%0"),
       isAlive: async () => false,
+      kill: async () => ok(undefined),
     },
     ...overrides,
   };

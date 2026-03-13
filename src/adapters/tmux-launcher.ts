@@ -100,6 +100,15 @@ export class TmuxLauncher implements Launcher {
     return ok(paneId);
   }
 
+  async kill(paneId: string): Promise<Result<void>> {
+    const result = await this.deps.execTmux(["kill-pane", "-t", paneId]);
+    // Treat any exit code as success — if the pane is already gone, that's fine
+    if (result.exitCode !== 0) {
+      return ok(undefined);
+    }
+    return ok(undefined);
+  }
+
   async isAlive(paneId: string): Promise<boolean> {
     const result = await this.deps.execTmux([
       "list-panes",

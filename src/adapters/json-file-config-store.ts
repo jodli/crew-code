@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readdir, mkdir } from "node:fs/promises";
+import { readdir, mkdir, rm } from "node:fs/promises";
 import { dirname, basename } from "node:path";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { TeamConfig } from "../types/domain.ts";
@@ -84,6 +84,24 @@ export class JsonFileConfigStore implements ConfigStore {
     }
 
     return writeJson(path, config);
+  }
+
+  async deleteTeam(name: string): Promise<Result<void>> {
+    const path = this.deps.configPath(name);
+    if (!existsSync(path)) {
+      return err({ kind: "team_not_found", team: name });
+    }
+    const teamDir = dirname(path);
+    try {
+      await rm(teamDir, { recursive: true, force: true });
+      return ok(undefined);
+    } catch (e: unknown) {
+      return err({
+        kind: "file_write_failed",
+        path: teamDir,
+        detail: String(e),
+      });
+    }
   }
 
   async listTeams(): Promise<Result<string[]>> {
