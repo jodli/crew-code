@@ -167,6 +167,25 @@ describe("JsonFileInboxStore", () => {
       expect(content[0].text).toBe("First message");
     });
 
+    test("does not leave .lock file after append", async () => {
+      const inboxesDir = join(tmpDir, "test-team", "inboxes");
+      await mkdir(inboxesDir, { recursive: true });
+      await writeFile(join(inboxesDir, "agent1.json"), "[]");
+
+      const msg: InboxMessage = {
+        from: "external",
+        text: "Hello",
+        timestamp: "2026-01-01T00:00:00Z",
+        read: false,
+      };
+
+      await store.appendMessage("test-team", "agent1", msg);
+
+      // A leftover .lock file blocks Claude Code from marking messages as read,
+      // causing agents to re-process the same message in an infinite loop.
+      expect(existsSync(join(inboxesDir, "agent1.json.lock"))).toBe(false);
+    });
+
     test("concurrent appendMessage() calls don't lose data", async () => {
       const inboxesDir = join(tmpDir, "test-team", "inboxes");
       await mkdir(inboxesDir, { recursive: true });

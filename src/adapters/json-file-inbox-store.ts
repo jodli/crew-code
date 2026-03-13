@@ -47,12 +47,8 @@ export class JsonFileInboxStore implements InboxStore {
     const dir = this.deps.inboxesDir(team);
     await mkdir(dir, { recursive: true });
     const path = this.deps.inboxPath(team, agent);
-    const lockPath = path + ".lock";
 
-    // Ensure the lock sentinel and data files exist
-    if (!existsSync(lockPath)) {
-      await writeFile(lockPath, "", "utf-8");
-    }
+    // Ensure data file exists
     if (!existsSync(path)) {
       await writeFile(path, "[]\n", "utf-8");
     }
@@ -60,14 +56,14 @@ export class JsonFileInboxStore implements InboxStore {
     const { lock } = await import("proper-lockfile");
     let release: (() => Promise<void>) | undefined;
     try {
-      release = await lock(lockPath, {
+      release = await lock(path, {
         retries: { retries: 10, minTimeout: 50, maxTimeout: 500 } as unknown as number,
         stale: 10000,
       });
     } catch (e: unknown) {
       return err({
         kind: "lock_failed",
-        path: lockPath,
+        path,
         detail: String(e),
       });
     }
