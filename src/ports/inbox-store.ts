@@ -8,4 +8,9 @@ export interface InboxStore {
     agent: string,
     messages?: InboxMessage[],
   ): Promise<Result<void>>;
+  readMessages(
+    team: string,
+    agent: string,
+  ): Promise<Result<InboxMessage[]>>;
+  listInboxes(team: string): Promise<Result<string[]>>;
 }

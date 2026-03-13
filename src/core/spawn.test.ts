@@ -70,6 +70,12 @@ function makeInboxStore(): InboxStore & {
       store.created.push({ team, agent, messages });
       return ok(undefined);
     },
+    async readMessages() {
+      return ok([] as InboxMessage[]);
+    },
+    async listInboxes() {
+      return ok([] as string[]);
+    },
   };
   return store;
 }
