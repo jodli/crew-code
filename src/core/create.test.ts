@@ -167,4 +167,45 @@ describe("core/create", () => {
       expect(result.value.leadAgentId).toBe("team-lead@my-team");
     }
   });
+
+  test("returns launchOptions with correct agentId and agentName", async () => {
+    const ctx = makeCtx();
+    const result = await createTeam(ctx, { name: "my-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.launchOptions.agentId).toBe("team-lead@my-team");
+      expect(result.value.launchOptions.agentName).toBe("team-lead");
+    }
+  });
+
+  test("returns launchOptions with correct teamName", async () => {
+    const ctx = makeCtx();
+    const result = await createTeam(ctx, { name: "alpha-squad" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.launchOptions.teamName).toBe("alpha-squad");
+    }
+  });
+
+  test("returns launchOptions with cwd set to process.cwd()", async () => {
+    const ctx = makeCtx();
+    const result = await createTeam(ctx, { name: "my-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.launchOptions.cwd).toBe(process.cwd());
+    }
+  });
+
+  test("returns launchOptions with no parentSessionId (team lead has no parent)", async () => {
+    const ctx = makeCtx();
+    const result = await createTeam(ctx, { name: "my-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.launchOptions.parentSessionId).toBeUndefined();
+    }
+  });
 });

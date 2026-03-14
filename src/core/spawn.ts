@@ -1,6 +1,6 @@
 import type { AppContext } from "../types/context.ts";
 import type { AgentMember, InboxMessage } from "../types/domain.ts";
-import type { CrewError } from "../types/errors.ts";
+import type { LaunchOptions } from "../ports/launcher.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 
@@ -19,6 +19,21 @@ export interface SpawnOutput {
   paneId: string;
 }
 
+export interface RegisterInput {
+  team: string;
+  task: string;
+  name?: string;
+  model?: string;
+  color?: string;
+}
+
+export interface RegisterOutput {
+  agentId: string;
+  name: string;
+  team: string;
+  launchOptions: LaunchOptions;
+}
+
 let nameCounter = 0;
 
 function generateAgentName(): string {
@@ -31,15 +46,11 @@ export function resetNameCounter(): void {
   nameCounter = 0;
 }
 
-export async function spawn(
+export async function registerAgent(
   ctx: AppContext,
-  input: SpawnInput,
-): Promise<Result<SpawnOutput>> {
-  // 1. Preflight
-  const preflightResult = await ctx.launcher.preflight();
-  if (!preflightResult.ok) return preflightResult as Result<never>;
-
-  // 2. Get team config
+  input: RegisterInput,
+): Promise<Result<RegisterOutput>> {
+  // 1. Get team config
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) {
     if (teamResult.error.kind === "config_not_found") {
@@ -50,11 +61,11 @@ export async function spawn(
 
   const config = teamResult.value;
 
-  // 3. Generate or validate agent name
+  // 2. Generate or validate agent name
   const agentName = input.name ?? generateAgentName();
   const agentId = `${agentName}@${input.team}`;
 
-  // 4. Check for duplicates
+  // 3. Check for duplicates
   const existing = config.members.find((m) => m.name === agentName);
   if (existing) {
     return err({
@@ -64,7 +75,7 @@ export async function spawn(
     });
   }
 
-  // 5. Add member to config
+  // 4. Add member to config (isActive: false, tmuxPaneId: "")
   const cwd = process.cwd();
   const newMember: AgentMember = {
     agentId,
@@ -85,7 +96,7 @@ export async function spawn(
   }));
   if (!addResult.ok) return addResult as Result<never>;
 
-  // 6. Seed inbox with task
+  // 5. Seed inbox with task
   const initialMessage: InboxMessage = {
     from: "team-lead",
     text: input.task,
@@ -107,8 +118,8 @@ export async function spawn(
     return inboxResult as Result<never>;
   }
 
-  // 7. Launch
-  const launchResult = await ctx.launcher.launch({
+  // 6. Build LaunchOptions
+  const launchOptions: LaunchOptions = {
     agentId,
     agentName,
     teamName: input.team,
@@ -116,26 +127,55 @@ export async function spawn(
     color: input.color,
     parentSessionId: config.leadSessionId,
     model: input.model,
-  });
+  };
 
-  if (!launchResult.ok) {
-    // Rollback: remove member from config
-    await ctx.configStore.updateTeam(input.team, (cfg) => ({
-      ...cfg,
-      members: cfg.members.filter((m) => m.agentId !== agentId),
-    }));
-    return launchResult as Result<never>;
-  }
+  return ok({ agentId, name: agentName, team: input.team, launchOptions });
+}
 
-  const paneId = launchResult.value;
-
-  // 8. Update config with pane ID and active status
-  await ctx.configStore.updateTeam(input.team, (cfg) => ({
+export async function activateAgent(
+  ctx: AppContext,
+  team: string,
+  agentId: string,
+  paneId: string,
+): Promise<Result<void>> {
+  return ctx.configStore.updateTeam(team, (cfg) => ({
     ...cfg,
     members: cfg.members.map((m) =>
       m.agentId === agentId ? { ...m, tmuxPaneId: paneId, isActive: true } : m,
     ),
-  }));
+  })) as Promise<Result<void>>;
+}
 
-  return ok({ agentId, name: agentName, team: input.team, paneId });
+export async function spawn(
+  ctx: AppContext,
+  input: SpawnInput,
+): Promise<Result<SpawnOutput>> {
+  // 1. Preflight (tmux check — only needed for pane mode)
+  const preflightResult = await ctx.launcher.preflight();
+  if (!preflightResult.ok) return preflightResult as Result<never>;
+
+  // 2. Register
+  const regResult = await registerAgent(ctx, input);
+  if (!regResult.ok) return regResult as Result<never>;
+
+  // 3. Launch in tmux pane
+  const launchResult = await ctx.launcher.launch(regResult.value.launchOptions);
+  if (!launchResult.ok) {
+    // Rollback: remove member from config
+    await ctx.configStore.updateTeam(input.team, (cfg) => ({
+      ...cfg,
+      members: cfg.members.filter((m) => m.agentId !== regResult.value.agentId),
+    }));
+    return launchResult as Result<never>;
+  }
+
+  // 4. Activate (set pane ID + isActive)
+  await activateAgent(ctx, input.team, regResult.value.agentId, launchResult.value);
+
+  return ok({
+    agentId: regResult.value.agentId,
+    name: regResult.value.name,
+    team: regResult.value.team,
+    paneId: launchResult.value,
+  });
 }

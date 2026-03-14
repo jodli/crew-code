@@ -5,6 +5,7 @@ import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { TmuxLauncher } from "../../adapters/tmux-launcher.ts";
 import { renderError } from "../errors.ts";
+import { execClaude } from "../../lib/exec-claude.ts";
 import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
@@ -41,9 +42,9 @@ export default defineCommand({
       process.exit(1);
     }
 
-    console.error(
-      `Team ${pc.bold(result.value.name)} created.`,
-    );
-    console.error(`  Lead: ${result.value.leadAgentId}`);
+    console.error(`Team ${pc.bold(result.value.name)} created.`);
+    console.error(`  Becoming team-lead...\n`);
+
+    await execClaude(result.value.launchOptions);
   },
 });

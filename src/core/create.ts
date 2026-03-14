@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AppContext } from "../types/context.ts";
 import type { AgentMember, TeamConfig } from "../types/domain.ts";
+import type { LaunchOptions } from "../ports/launcher.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 
@@ -12,6 +13,7 @@ export interface CreateInput {
 export interface CreateOutput {
   name: string;
   leadAgentId: string;
+  launchOptions: LaunchOptions;
 }
 
 export async function createTeam(
@@ -49,5 +51,12 @@ export async function createTeam(
   const result = await ctx.configStore.createTeam(config);
   if (!result.ok) return result as Result<never>;
 
-  return ok({ name: input.name, leadAgentId });
+  const launchOptions: LaunchOptions = {
+    agentId: leadAgentId,
+    agentName: "team-lead",
+    teamName: input.name,
+    cwd: process.cwd(),
+  };
+
+  return ok({ name: input.name, leadAgentId, launchOptions });
 }

@@ -14,4 +14,13 @@ describe("CLI spawn command", () => {
     // citty commands have a meta property after resolution
     expect(typeof mod.default).toBe("object");
   });
+
+  test("defines --pane as an optional boolean arg", async () => {
+    const mod = await import("./spawn.ts");
+    const cmd = mod.default;
+    expect(cmd.args).toBeDefined();
+    expect(cmd.args!.pane).toBeDefined();
+    expect(cmd.args!.pane.type).toBe("boolean");
+    expect(cmd.args!.pane.required).toBe(false);
+  });
 });

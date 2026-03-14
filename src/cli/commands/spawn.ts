@@ -1,6 +1,7 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { spawn } from "../../core/spawn.ts";
+import { spawn, registerAgent } from "../../core/spawn.ts";
+import { execClaude } from "../../lib/exec-claude.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { TmuxLauncher } from "../../adapters/tmux-launcher.ts";
@@ -38,18 +39,46 @@ export default defineCommand({
       description: "Agent color in tmux",
       required: false,
     },
+    pane: {
+      type: "boolean",
+      description: "Launch in a new tmux pane instead of the current terminal",
+      required: false,
+    },
   },
   async run({ args }) {
-    const ora = (await import("ora")).default;
-    const spinner = ora("Spawning agent...").start();
-
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
       launcher: new TmuxLauncher(),
     };
 
-    const result = await spawn(ctx, {
+    if (args.pane) {
+      // Existing flow: spawn in tmux pane
+      const ora = (await import("ora")).default;
+      const spinner = ora("Spawning agent...").start();
+
+      const result = await spawn(ctx, {
+        team: args.team,
+        task: args.task,
+        name: args.name || undefined,
+        model: args.model || undefined,
+        color: args.color || undefined,
+      });
+
+      if (!result.ok) {
+        spinner.fail(renderError(result.error));
+        process.exit(1);
+      }
+
+      const { agentId, name, paneId } = result.value;
+      spinner.succeed(`Agent ${pc.bold(name)} spawned into ${pc.bold(args.team)}`);
+      console.error(`  Agent ID: ${agentId}`);
+      console.error(`  Pane:     ${paneId}`);
+      return;
+    }
+
+    // Default: foreground mode
+    const regResult = await registerAgent(ctx, {
       team: args.team,
       task: args.task,
       name: args.name || undefined,
@@ -57,14 +86,17 @@ export default defineCommand({
       color: args.color || undefined,
     });
 
-    if (!result.ok) {
-      spinner.fail(renderError(result.error));
+    if (!regResult.ok) {
+      console.error(renderError(regResult.error));
       process.exit(1);
     }
 
-    const { agentId, name, paneId } = result.value;
-    spinner.succeed(`Agent ${pc.bold(name)} spawned into ${pc.bold(args.team)}`);
-    console.error(`  Agent ID: ${agentId}`);
-    console.error(`  Pane:     ${paneId}`);
+    console.error(
+      `Agent ${pc.bold(regResult.value.name)} registered in ${pc.bold(args.team)}`,
+    );
+    console.error(`  Agent ID: ${regResult.value.agentId}`);
+    console.error(`  Launching Claude...\n`);
+
+    await execClaude(regResult.value.launchOptions);
   },
 });

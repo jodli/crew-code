@@ -2,6 +2,7 @@ import type { Launcher, LaunchOptions } from "../ports/launcher.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 import { tmuxExec, type TmuxResult } from "../lib/tmux.ts";
+import { buildClaudeArgs, CLAUDE_TEAMS_ENV_VAR } from "../lib/claude-args.ts";
 
 export interface TmuxLauncherDeps {
   execTmux: (args: string[], timeoutMs?: number) => Promise<TmuxResult>;
@@ -48,27 +49,8 @@ export class TmuxLauncher implements Launcher {
   }
 
   async launch(opts: LaunchOptions): Promise<Result<string>> {
-    const claudeArgs = [
-      "--agent-id",
-      opts.agentId,
-      "--agent-name",
-      opts.agentName,
-      "--team-name",
-      opts.teamName,
-    ];
-
-    if (opts.color) {
-      claudeArgs.push("--agent-color", opts.color);
-    }
-    if (opts.parentSessionId) {
-      claudeArgs.push("--parent-session-id", opts.parentSessionId);
-    }
-    if (opts.model) {
-      claudeArgs.push("--model", opts.model);
-    }
-
-    const envPrefix = "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1";
-    const cmd = `${envPrefix} claude ${claudeArgs.join(" ")}`;
+    const claudeArgs = buildClaudeArgs(opts);
+    const cmd = `${CLAUDE_TEAMS_ENV_VAR}=1 claude ${claudeArgs.join(" ")}`;
 
     const result = await this.deps.execTmux([
       "split-window",
