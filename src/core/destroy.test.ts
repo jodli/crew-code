@@ -210,4 +210,22 @@ describe("core/destroy", () => {
       expect(result.ok).toBe(true);
     });
   });
+
+  test("planDestroy maps config_not_found to team_not_found", async () => {
+    const config = makeSampleConfig({ lead: "", scout: "" });
+    const ctx: AppContext = {
+      ...makeCtx(config),
+      configStore: {
+        ...makeCtx(config).configStore,
+        getTeam: async () =>
+          err({ kind: "config_not_found", path: "/fake/path" }),
+      },
+    };
+    const result = await planDestroy(ctx, { team: "no-team" });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("team_not_found");
+    }
+  });
 });

@@ -1,6 +1,6 @@
 import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
-import { ok } from "../types/result.ts";
+import { ok, err } from "../types/result.ts";
 import { isProcessAlive, killProcess } from "../lib/process.ts";
 
 export interface DestroyInput {
@@ -18,7 +18,12 @@ export async function planDestroy(
   input: DestroyInput,
 ): Promise<Result<DestroyPlan>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
-  if (!teamResult.ok) return teamResult;
+  if (!teamResult.ok) {
+    if (teamResult.error.kind === "config_not_found") {
+      return err({ kind: "team_not_found", team: input.team });
+    }
+    return teamResult;
+  }
 
   const config = teamResult.value;
 

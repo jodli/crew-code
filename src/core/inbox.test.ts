@@ -156,4 +156,20 @@ describe("core/inbox", () => {
       expect(result.value.unreadCount).toBe(0);
     }
   });
+
+  test("maps config_not_found to team_not_found", async () => {
+    const ctx = makeCtx({
+      configStore: {
+        ...makeCtx().configStore,
+        getTeam: async () =>
+          err({ kind: "config_not_found", path: "/fake/path" }),
+      },
+    });
+    const result = await getInbox(ctx, "no-team", "scout");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("team_not_found");
+    }
+  });
 });

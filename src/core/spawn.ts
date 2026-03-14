@@ -19,16 +19,13 @@ export interface RegisterOutput {
   launchOptions: LaunchOptions;
 }
 
-let nameCounter = 0;
-
-function generateAgentName(): string {
-  nameCounter++;
-  return `agent-${nameCounter}`;
-}
-
-// Exported for testing
-export function resetNameCounter(): void {
-  nameCounter = 0;
+function nextAgentName(members: AgentMember[]): string {
+  let max = 0;
+  for (const m of members) {
+    const match = m.name.match(/^agent-(\d+)$/);
+    if (match) max = Math.max(max, parseInt(match[1], 10));
+  }
+  return `agent-${max + 1}`;
 }
 
 export async function registerAgent(
@@ -47,7 +44,7 @@ export async function registerAgent(
   const config = teamResult.value;
 
   // 2. Generate or validate agent name
-  const agentName = input.name ?? generateAgentName();
+  const agentName = input.name ?? nextAgentName(config.members);
   const agentId = `${agentName}@${input.team}`;
 
   // 3. Check for duplicates

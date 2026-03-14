@@ -5,6 +5,7 @@ import { listTeams, getTeamDetail } from "../../core/status.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
+import { isProcessAlive } from "../../lib/process.ts";
 import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
@@ -38,14 +39,18 @@ export default defineCommand({
       );
 
       const table = new Table({
-        head: ["Agent", "Session", "Unread", "CWD"],
+        head: ["Agent", "Status", "Session", "Unread", "CWD"],
         style: { head: process.env.NO_COLOR ? [] : ["cyan"] },
       });
 
       const home = process.env.HOME ?? "";
       for (const m of detail.members) {
+        const pid = parseInt(m.processId, 10);
+        const alive = m.processId && isProcessAlive(pid);
+        const status = alive ? pc.green("live") : pc.dim("gone");
         table.push([
           m.name,
+          status,
           m.sessionId ?? "-",
           m.unreadCount > 0 ? pc.yellow(String(m.unreadCount)) : "0",
           home ? m.cwd.replace(home, "~") : m.cwd,

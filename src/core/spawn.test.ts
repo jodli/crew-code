@@ -2,7 +2,6 @@ import { describe, expect, test, beforeEach } from "bun:test";
 import {
   registerAgent,
   activateAgent,
-  resetNameCounter,
   type RegisterInput,
 } from "./spawn.ts";
 import type { AppContext } from "../types/context.ts";
@@ -104,9 +103,6 @@ function makeCtx(overrides?: {
 }
 
 describe("core/registerAgent", () => {
-  beforeEach(() => {
-    resetNameCounter();
-  });
 
   test("returns team_not_found if team doesn't exist", async () => {
     const ctx = makeCtx({ configStore: makeConfigStore(null) });
@@ -220,6 +216,33 @@ describe("core/registerAgent", () => {
     }
   });
 
+  test("auto-generates name based on existing agent-N members", async () => {
+    const configWithAgent3: TeamConfig = {
+      ...baseConfig,
+      members: [
+        ...baseConfig.members,
+        {
+          agentId: "agent-3@test-team",
+          name: "agent-3",
+          joinedAt: 1773387766070,
+          processId: "",
+          cwd: "/tmp",
+          subscriptions: [],
+        },
+      ],
+    };
+    const ctx = makeCtx({ configStore: makeConfigStore(configWithAgent3) });
+    const result = await registerAgent(ctx, {
+      team: "test-team",
+      task: "work",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.name).toBe("agent-4");
+    }
+  });
+
   test("rolls back config if inbox seeding fails", async () => {
     const configStore = makeConfigStore();
     const inboxStore: InboxStore = {
@@ -294,9 +317,6 @@ describe("core/registerAgent", () => {
 });
 
 describe("core/activateAgent", () => {
-  beforeEach(() => {
-    resetNameCounter();
-  });
 
   test("updates member's processId and isActive in config", async () => {
     // First register an agent so we have one to activate

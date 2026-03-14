@@ -1,6 +1,5 @@
-import { readFile, writeFile, rename, mkdtemp } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { readFile, writeFile, rename, mkdtemp, rm } from "node:fs/promises";
+import { join, dirname } from "node:path";
 import type { z } from "zod";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
@@ -52,10 +51,11 @@ export async function writeJson(
   data: unknown,
 ): Promise<Result<void>> {
   try {
-    const tmpDir = await mkdtemp(join(tmpdir(), "crew-"));
+    const tmpDir = await mkdtemp(join(dirname(path), ".crew-tmp-"));
     const tmpPath = join(tmpDir, "tmp.json");
     await writeFile(tmpPath, JSON.stringify(data, null, 2) + "\n", "utf-8");
     await rename(tmpPath, path);
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
     return ok(undefined);
   } catch (e: unknown) {
     return err({

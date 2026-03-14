@@ -11,6 +11,7 @@ export interface TeamSummary {
 export interface MemberDetail {
   name: string;
   agentId: string;
+  processId: string;
   sessionId?: string;
   cwd: string;
   unreadCount: number;
@@ -63,6 +64,7 @@ export async function getTeamDetail(
     members.push({
       name: member.name,
       agentId: member.agentId,
+      processId: member.processId,
       sessionId: member.sessionId,
       cwd: member.cwd,
       unreadCount,

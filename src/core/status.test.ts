@@ -139,11 +139,13 @@ describe("status core", () => {
         )!;
         expect(lead.unreadCount).toBe(2); // two messages with read: false
         expect(lead.sessionId).toBe("a1824be0-cc35-49a5-8874-fa2aa58cae81");
+        expect(lead.processId).toBe("%0");
         expect(lead.cwd).toBe("/home/user/repos/project");
 
         const scout = result.value.members.find((m) => m.name === "scout")!;
         expect(scout.unreadCount).toBe(0);
         expect(scout.sessionId).toBeUndefined();
+        expect(scout.processId).toBe("%1");
         expect(scout.cwd).toBe("/home/user/repos/project");
       }
     });

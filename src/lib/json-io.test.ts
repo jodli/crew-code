@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, writeFile, readFile, rm, mkdir } from "node:fs/promises";
+import { mkdtemp, writeFile, readFile, readdir, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { z } from "zod";
@@ -82,6 +82,15 @@ describe("lib/json-io", () => {
 
       const content = await readFile(path, "utf-8");
       expect(JSON.parse(content)).toEqual({ name: "new", value: 1 });
+    });
+
+    test("cleans up temp directory after write", async () => {
+      const path = join(tmpDir, "out.json");
+      await writeJson(path, { name: "test", value: 1 });
+
+      const entries = await readdir(tmpDir);
+      const tempDirs = entries.filter((e) => e.startsWith(".crew-tmp-"));
+      expect(tempDirs).toHaveLength(0);
     });
   });
 

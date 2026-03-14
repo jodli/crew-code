@@ -14,7 +14,12 @@ export async function sendMessage(
   input: SendInput,
 ): Promise<Result<void>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
-  if (!teamResult.ok) return teamResult;
+  if (!teamResult.ok) {
+    if (teamResult.error.kind === "config_not_found") {
+      return err({ kind: "team_not_found", team: input.team });
+    }
+    return teamResult;
+  }
 
   const config = teamResult.value;
   const member = config.members.find((m) => m.name === input.agent);

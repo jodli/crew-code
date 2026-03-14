@@ -22,7 +22,12 @@ export async function getInbox(
   filter?: InboxFilter,
 ): Promise<Result<InboxResult>> {
   const teamResult = await ctx.configStore.getTeam(team);
-  if (!teamResult.ok) return teamResult;
+  if (!teamResult.ok) {
+    if (teamResult.error.kind === "config_not_found") {
+      return err({ kind: "team_not_found", team });
+    }
+    return teamResult;
+  }
 
   const config = teamResult.value;
   const member = config.members.find((m) => m.name === agent);

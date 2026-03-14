@@ -114,7 +114,7 @@ export class JsonFileConfigStore implements ConfigStore {
     try {
       const entries = await readdir(teamsDir, { withFileTypes: true });
       const teams = entries
-        .filter((e) => e.isDirectory())
+        .filter((e) => e.isDirectory() && existsSync(this.deps.configPath(e.name)))
         .map((e) => e.name);
       return ok(teams);
     } catch (e: unknown) {

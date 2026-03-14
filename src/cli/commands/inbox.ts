@@ -39,6 +39,17 @@ function renderMessage(msg: InboxMessage, full: boolean): string {
   const parts: string[] = [];
 
   parts.push(`  ${indicator} ${pc.dim(time)}  ${sender}`);
+
+  // Detect JSON system messages (e.g. idle notifications)
+  try {
+    const parsed = JSON.parse(msg.text);
+    if (parsed && typeof parsed === "object" && parsed.type) {
+      const label = parsed.type.replace(/_/g, " ");
+      parts.push(`  ${pc.dim(`[${label}]`)}`);
+      return parts.join("\n");
+    }
+  } catch {}
+
   if (msg.summary) {
     parts.push(`  ${pc.dim(msg.summary)}`);
   }
