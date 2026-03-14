@@ -204,6 +204,26 @@ describe("core/spawn", () => {
     expect(inboxStore.created[0].messages![0].read).toBe(false);
   });
 
+  test("creates empty inbox when no task provided", async () => {
+    const inboxStore = makeInboxStore();
+    const ctx = makeCtx({ inboxStore });
+
+    await spawn(ctx, { team: "test-team", name: "scout" });
+
+    expect(inboxStore.created).toHaveLength(1);
+    expect(inboxStore.created[0].messages).toHaveLength(0);
+  });
+
+  test("creates empty inbox when task is empty string", async () => {
+    const inboxStore = makeInboxStore();
+    const ctx = makeCtx({ inboxStore });
+
+    await spawn(ctx, { team: "test-team", name: "scout", task: "" });
+
+    expect(inboxStore.created).toHaveLength(1);
+    expect(inboxStore.created[0].messages).toHaveLength(0);
+  });
+
   test("launches via launcher, records pane ID, sets isActive: true", async () => {
     const launcher = makeLauncher(true, "%99");
     const configStore = makeConfigStore();

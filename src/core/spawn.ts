@@ -7,7 +7,7 @@ import { ok, err } from "../types/result.ts";
 export interface SpawnInput {
   team: string;
   name?: string;
-  task: string;
+  task?: string;
   model?: string;
   color?: string;
 }
@@ -21,7 +21,7 @@ export interface SpawnOutput {
 
 export interface RegisterInput {
   team: string;
-  task: string;
+  task?: string;
   name?: string;
   model?: string;
   color?: string;
@@ -96,18 +96,22 @@ export async function registerAgent(
   }));
   if (!addResult.ok) return addResult as Result<never>;
 
-  // 5. Seed inbox with task
-  const initialMessage: InboxMessage = {
-    from: "team-lead",
-    text: input.task,
-    timestamp: new Date().toISOString(),
-    read: false,
-  };
+  // 5. Create inbox (seed with task if provided)
+  const initialMessages: InboxMessage[] = input.task
+    ? [
+        {
+          from: "team-lead",
+          text: input.task,
+          timestamp: new Date().toISOString(),
+          read: false,
+        },
+      ]
+    : [];
 
   const inboxResult = await ctx.inboxStore.createInbox(
     input.team,
     agentName,
-    [initialMessage],
+    initialMessages,
   );
   if (!inboxResult.ok) {
     // Rollback: remove member from config

@@ -22,7 +22,7 @@ export default defineCommand({
     task: {
       type: "string",
       description: "Initial task message for the agent",
-      required: true,
+      required: false,
     },
     name: {
       type: "string",
