@@ -3,9 +3,9 @@ import pc from "picocolors";
 import { createTeam } from "../../core/create.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { TmuxLauncher } from "../../adapters/tmux-launcher.ts";
 import { renderError } from "../errors.ts";
-import { execClaude } from "../../lib/exec-claude.ts";
+import { launchClaude } from "../../lib/exec-claude.ts";
+import { activateAgent } from "../../core/spawn.ts";
 import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
@@ -29,7 +29,6 @@ export default defineCommand({
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
-      launcher: new TmuxLauncher(),
     };
 
     const result = await createTeam(ctx, {
@@ -45,6 +44,9 @@ export default defineCommand({
     console.error(`Team ${pc.bold(result.value.name)} created.`);
     console.error(`  Becoming team-lead...\n`);
 
-    await execClaude(result.value.launchOptions);
+    const { pid, exited } = launchClaude(result.value.launchOptions);
+    await activateAgent(ctx, args.name, result.value.leadAgentId, String(pid));
+    const code = await exited;
+    process.exit(code);
   },
 });

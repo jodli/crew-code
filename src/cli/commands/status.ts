@@ -4,7 +4,6 @@ import Table from "cli-table3";
 import { listTeams, getTeamDetail } from "../../core/status.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { TmuxLauncher } from "../../adapters/tmux-launcher.ts";
 import { renderError } from "../errors.ts";
 import type { AppContext } from "../../types/context.ts";
 
@@ -24,7 +23,6 @@ export default defineCommand({
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
-      launcher: new TmuxLauncher(),
     };
 
     if (args.team) {

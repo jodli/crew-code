@@ -3,7 +3,6 @@ import { createTeam, type CreateInput } from "./create.ts";
 import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { InboxStore } from "../ports/inbox-store.ts";
-import type { Launcher } from "../ports/launcher.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
 
@@ -59,30 +58,12 @@ function makeInboxStore(): InboxStore {
   };
 }
 
-function makeLauncher(): Launcher {
-  return {
-    async preflight() {
-      return ok(undefined);
-    },
-    async launch() {
-      return ok("%1");
-    },
-    async isAlive() {
-      return true;
-    },
-    async kill() {
-      return ok(undefined);
-    },
-  };
-}
-
 function makeCtx(overrides?: {
   configStore?: ConfigStore;
 }): AppContext {
   return {
     configStore: overrides?.configStore ?? makeConfigStore(),
     inboxStore: makeInboxStore(),
-    launcher: makeLauncher(),
   };
 }
 
@@ -110,7 +91,7 @@ describe("core/create", () => {
     const lead = createdConfig!.members[0];
     expect(lead.name).toBe("team-lead");
     expect(lead.agentType).toBe("team-lead");
-    expect(lead.tmuxPaneId).toBe("");
+    expect(lead.processId).toBe("");
     expect(lead.subscriptions).toEqual([]);
   });
 

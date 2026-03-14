@@ -1,6 +1,7 @@
 import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
 import { ok } from "../types/result.ts";
+import { isProcessAlive, killProcess } from "../lib/process.ts";
 
 export interface DestroyInput {
   team: string;
@@ -8,7 +9,7 @@ export interface DestroyInput {
 
 export interface DestroyPlan {
   team: string;
-  activeAgents: { name: string; paneId: string }[];
+  activeAgents: { name: string; processId: string }[];
   inboxes: string[];
 }
 
@@ -21,11 +22,12 @@ export async function planDestroy(
 
   const config = teamResult.value;
 
-  // Check which agents are still alive
-  const activeAgents: { name: string; paneId: string }[] = [];
+  // Check which agents are still alive via PID
+  const activeAgents: { name: string; processId: string }[] = [];
   for (const member of config.members) {
-    if (member.tmuxPaneId && (await ctx.launcher.isAlive(member.tmuxPaneId))) {
-      activeAgents.push({ name: member.name, paneId: member.tmuxPaneId });
+    const pid = parseInt(member.processId, 10);
+    if (member.processId && isProcessAlive(pid)) {
+      activeAgents.push({ name: member.name, processId: member.processId });
     }
   }
 
@@ -40,9 +42,9 @@ export async function executeDestroy(
   ctx: AppContext,
   plan: DestroyPlan,
 ): Promise<Result<void>> {
-  // 1. Kill active agents (ignore errors — pane may already be dead)
+  // 1. Kill active agents via PID (ignore failures — process may already be dead)
   for (const agent of plan.activeAgents) {
-    await ctx.launcher.kill(agent.paneId);
+    killProcess(parseInt(agent.processId, 10));
   }
 
   // 2. Delete inbox files

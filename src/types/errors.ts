@@ -8,11 +8,7 @@ export type CrewError =
   | { kind: "lock_failed"; path: string; detail: string }
   | { kind: "json_parse_failed"; path: string; detail: string }
   | { kind: "schema_validation_failed"; path: string; detail: string }
-  | { kind: "tmux_not_installed" }
-  | { kind: "tmux_server_not_running" }
   | { kind: "claude_not_installed" }
-  | { kind: "tmux_exec_failed"; detail: string }
-  | { kind: "tmux_timeout"; command: string }
   | { kind: "launch_failed"; detail: string }
   | { kind: "preflight_failed"; detail: string }
   | { kind: "spawn_failed"; detail: string }

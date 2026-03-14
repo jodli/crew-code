@@ -16,13 +16,6 @@ export interface TestTeam {
   cleanup: () => Promise<void>;
 }
 
-export interface LaunchedAgent {
-  proc: ReturnType<typeof Bun.spawn>;
-  paneId: string;
-  name: string;
-  agentId: string;
-}
-
 // ---------------------------------------------------------------------------
 // Paths
 // ---------------------------------------------------------------------------
@@ -78,7 +71,7 @@ export async function createTestTeam(testSlug: string): Promise<TestTeam> {
         name: "team-lead",
         agentType: "team-lead",
         joinedAt: ts,
-        tmuxPaneId: "",
+        processId: "",
         cwd: process.cwd(),
         subscriptions: [],
       },
@@ -117,10 +110,9 @@ export async function registerAgent(
     model: opts.model,
     color: opts.color,
     joinedAt: Date.now(),
-    tmuxPaneId: "",
+    processId: "",
     cwd: process.cwd(),
     subscriptions: [],
-    backendType: "tmux",
     isActive: true,
   });
 

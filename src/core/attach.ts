@@ -1,5 +1,5 @@
 import type { AppContext } from "../types/context.ts";
-import type { LaunchOptions } from "../ports/launcher.ts";
+import type { LaunchOptions } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 

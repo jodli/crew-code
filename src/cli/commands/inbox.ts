@@ -3,7 +3,6 @@ import pc from "picocolors";
 import { getInbox } from "../../core/inbox.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { TmuxLauncher } from "../../adapters/tmux-launcher.ts";
 import { renderError } from "../errors.ts";
 import type { AppContext } from "../../types/context.ts";
 import type { InboxMessage } from "../../types/domain.ts";
@@ -84,7 +83,6 @@ export default defineCommand({
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
-      launcher: new TmuxLauncher(),
     };
 
     const result = await getInbox(ctx, args.team, args.agent, {

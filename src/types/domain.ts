@@ -7,10 +7,9 @@ export interface AgentMember {
   color?: string;
   planModeRequired?: boolean;
   joinedAt: number;
-  tmuxPaneId: string;
+  processId: string;
   cwd: string;
   subscriptions: string[];
-  backendType?: string;
   isActive?: boolean;
   sessionId?: string;
 }
@@ -22,6 +21,17 @@ export interface TeamConfig {
   leadAgentId: string;
   leadSessionId: string;
   members: AgentMember[];
+}
+
+export interface LaunchOptions {
+  agentId: string;
+  agentName: string;
+  teamName: string;
+  cwd: string;
+  color?: string;
+  parentSessionId?: string;
+  model?: string;
+  sessionId?: string;
 }
 
 export interface InboxMessage {

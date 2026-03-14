@@ -33,16 +33,8 @@ const messages: Record<string, (e: CrewError) => string> = {
     const { path, detail } = e as { path: string; detail: string };
     return `Schema validation failed for ${path}: ${detail}`;
   },
-  tmux_not_installed: () =>
-    "tmux is not installed. Install it with your package manager.",
-  tmux_server_not_running: () =>
-    "tmux server is not running. Start a tmux session first.",
   claude_not_installed: () =>
     "Claude Code CLI not found. Install it from https://claude.ai/code",
-  tmux_exec_failed: (e) =>
-    `tmux command failed: ${(e as { detail: string }).detail}`,
-  tmux_timeout: (e) =>
-    `tmux command timed out: ${(e as { command: string }).command}`,
   launch_failed: (e) =>
     `Failed to launch agent: ${(e as { detail: string }).detail}`,
   preflight_failed: (e) =>

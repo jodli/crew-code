@@ -1,10 +1,10 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
 import { attachAgent } from "../../core/attach.ts";
-import { execClaude } from "../../lib/exec-claude.ts";
+import { launchClaude } from "../../lib/exec-claude.ts";
+import { activateAgent } from "../../core/spawn.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { TmuxLauncher } from "../../adapters/tmux-launcher.ts";
 import { renderError } from "../errors.ts";
 import type { AppContext } from "../../types/context.ts";
 
@@ -29,7 +29,6 @@ export default defineCommand({
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
-      launcher: new TmuxLauncher(),
     };
 
     const result = await attachAgent(ctx, {
@@ -47,6 +46,9 @@ export default defineCommand({
     );
     console.error(`  Resuming session ${result.value.launchOptions.sessionId}\n`);
 
-    await execClaude(result.value.launchOptions, { mode: "resume" });
+    const { pid, exited } = launchClaude(result.value.launchOptions, { mode: "resume" });
+    await activateAgent(ctx, args.team, result.value.agentId, String(pid));
+    const code = await exited;
+    process.exit(code);
   },
 });

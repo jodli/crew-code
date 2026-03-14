@@ -8,7 +8,6 @@ Wraps the experimental file-based agent teams protocol to let you create teams o
 
 - [Bun](https://bun.sh) runtime
 - [Claude Code](https://claude.ai/code) CLI installed
-- [tmux](https://github.com/tmux/tmux) for agent session management
 - `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable
 
 ## Install
@@ -35,7 +34,7 @@ bun run src/main.ts <command>
 | --------- | ---------------------------------------- |
 | `create`  | Create a new agent team                  |
 | `spawn`   | Spawn an agent into an existing team     |
-| `attach`  | Attach to a running agent session        |
+| `attach`  | Re-attach to an agent session            |
 | `status`  | Show team and agent status               |
 | `send`    | Send a message to an agent               |
 | `inbox`   | View an agent's inbox                    |
@@ -45,23 +44,23 @@ bun run src/main.ts <command>
 ## Usage
 
 ```bash
-# Create a team with agents
-crew create --name my-team --agents "planner,coder,reviewer"
+# Create a team (launches you as team-lead)
+crew create --name my-team
 
-# Spawn a single agent into an existing team
-crew spawn --name my-team --agent coder --task "Implement the auth module"
+# Spawn an agent into an existing team
+crew spawn --team my-team --name coder --task "Implement the auth module"
 
 # Check status
-crew status --name my-team
+crew status
 
 # Send a message to an agent
-crew send --name my-team --to coder --message "Focus on the login flow first"
+crew send --team my-team --agent coder --message "Focus on the login flow first"
 
-# Attach to an agent's tmux session
-crew attach --name my-team --agent coder
+# Re-attach to a previous session after a terminal restart
+crew attach --team my-team
 
 # Clean up
-crew destroy --name my-team
+crew destroy --team my-team
 ```
 
 ## Development

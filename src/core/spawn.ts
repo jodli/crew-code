@@ -1,24 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { AppContext } from "../types/context.ts";
-import type { AgentMember, InboxMessage } from "../types/domain.ts";
-import type { LaunchOptions } from "../ports/launcher.ts";
+import type { AgentMember, InboxMessage, LaunchOptions } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
-
-export interface SpawnInput {
-  team: string;
-  name?: string;
-  task?: string;
-  model?: string;
-  color?: string;
-}
-
-export interface SpawnOutput {
-  agentId: string;
-  name: string;
-  team: string;
-  paneId: string;
-}
 
 export interface RegisterInput {
   team: string;
@@ -76,7 +60,7 @@ export async function registerAgent(
     });
   }
 
-  // 4. Add member to config (isActive: false, tmuxPaneId: "")
+  // 4. Add member to config (isActive: false, processId: "")
   const cwd = process.cwd();
   const sessionId = randomUUID();
   const newMember: AgentMember = {
@@ -85,10 +69,9 @@ export async function registerAgent(
     model: input.model,
     color: input.color,
     joinedAt: Date.now(),
-    tmuxPaneId: "",
+    processId: "",
     cwd,
     subscriptions: [],
-    backendType: "tmux",
     isActive: false,
     sessionId,
   };
@@ -144,46 +127,13 @@ export async function activateAgent(
   ctx: AppContext,
   team: string,
   agentId: string,
-  paneId: string,
+  processId: string,
 ): Promise<Result<void>> {
   return ctx.configStore.updateTeam(team, (cfg) => ({
     ...cfg,
     members: cfg.members.map((m) =>
-      m.agentId === agentId ? { ...m, tmuxPaneId: paneId, isActive: true } : m,
+      m.agentId === agentId ? { ...m, processId, isActive: true } : m,
     ),
   })) as Promise<Result<void>>;
 }
 
-export async function spawn(
-  ctx: AppContext,
-  input: SpawnInput,
-): Promise<Result<SpawnOutput>> {
-  // 1. Preflight (tmux check — only needed for pane mode)
-  const preflightResult = await ctx.launcher.preflight();
-  if (!preflightResult.ok) return preflightResult as Result<never>;
-
-  // 2. Register
-  const regResult = await registerAgent(ctx, input);
-  if (!regResult.ok) return regResult as Result<never>;
-
-  // 3. Launch in tmux pane
-  const launchResult = await ctx.launcher.launch(regResult.value.launchOptions);
-  if (!launchResult.ok) {
-    // Rollback: remove member from config
-    await ctx.configStore.updateTeam(input.team, (cfg) => ({
-      ...cfg,
-      members: cfg.members.filter((m) => m.agentId !== regResult.value.agentId),
-    }));
-    return launchResult as Result<never>;
-  }
-
-  // 4. Activate (set pane ID + isActive)
-  await activateAgent(ctx, input.team, regResult.value.agentId, launchResult.value);
-
-  return ok({
-    agentId: regResult.value.agentId,
-    name: regResult.value.name,
-    team: regResult.value.team,
-    paneId: launchResult.value,
-  });
-}

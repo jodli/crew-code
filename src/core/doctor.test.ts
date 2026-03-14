@@ -26,12 +26,6 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
       listInboxes: async () => ok([]),
       deleteInbox: async () => ok(undefined),
     },
-    launcher: {
-      preflight: async () => ok(undefined),
-      launch: async () => ok("%0"),
-      isAlive: async () => false,
-      kill: async () => ok(undefined),
-    },
     ...overrides,
   };
 }
@@ -48,7 +42,7 @@ const healthyConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      tmuxPaneId: "%0",
+      processId: String(process.pid), // current process — alive
       cwd: "/tmp",
       subscriptions: [],
       isActive: true,
@@ -57,7 +51,7 @@ const healthyConfig: TeamConfig = {
       agentId: "scout@my-team",
       name: "scout",
       joinedAt: 1773387766070,
-      tmuxPaneId: "%1",
+      processId: "",
       cwd: "/tmp",
       subscriptions: [],
       isActive: false,
@@ -79,11 +73,6 @@ describe("doctor core", () => {
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
         },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async (paneId: string) => paneId === "%0", // team-lead is active
-        },
       });
 
       const results = await diagnose(ctx, {});
@@ -94,57 +83,14 @@ describe("doctor core", () => {
       expect(failures).toHaveLength(0);
     });
 
-    test("detects tmux not installed", async () => {
-      const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
-          listTeams: async () => ok([]),
-        },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => err({ kind: "tmux_not_installed" }),
-        },
-      });
-
-      const results = await diagnose(ctx, {});
-      expect(results.ok).toBe(true);
-      if (!results.ok) return;
-
-      const tmuxCheck = results.value.find((r) => r.checkId === "tmux-installed");
-      expect(tmuxCheck).toBeDefined();
-      expect(tmuxCheck!.status).toBe("error");
-    });
-
-    test("detects tmux server not running", async () => {
-      const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
-          listTeams: async () => ok([]),
-        },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => err({ kind: "tmux_server_not_running" }),
-        },
-      });
-
-      const results = await diagnose(ctx, {});
-      expect(results.ok).toBe(true);
-      if (!results.ok) return;
-
-      const tmuxCheck = results.value.find((r) => r.checkId === "tmux-installed");
-      expect(tmuxCheck).toBeDefined();
-      expect(tmuxCheck!.status).toBe("warn");
-      expect(tmuxCheck!.message).toMatch(/not running/i);
-    });
-
-    test("detects stale isActive (pane is gone)", async () => {
+    test("detects stale isActive (process is gone)", async () => {
       const staleConfig: TeamConfig = {
         ...healthyConfig,
         members: [
           {
             ...healthyConfig.members[0],
             isActive: true,
-            tmuxPaneId: "%99", // pane is gone
+            processId: "99999999", // non-existent PID
           },
         ],
       };
@@ -159,11 +105,6 @@ describe("doctor core", () => {
           ...makeCtx().inboxStore,
           listInboxes: async () => ok(["team-lead"]),
           readMessages: async () => ok([]),
-        },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async () => false, // pane is gone
         },
       });
 
@@ -193,13 +134,8 @@ describe("doctor core", () => {
         },
         inboxStore: {
           ...makeCtx().inboxStore,
-          listInboxes: async () => ok(["team-lead", "ghost-agent"]), // ghost-agent has no member
+          listInboxes: async () => ok(["team-lead", "ghost-agent"]),
           readMessages: async () => ok([]),
-        },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async (paneId: string) => paneId === "%0",
         },
       });
 
@@ -230,10 +166,6 @@ describe("doctor core", () => {
         inboxStore: {
           ...makeCtx().inboxStore,
           listInboxes: async () => ok([]),
-        },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
         },
       });
 
@@ -269,11 +201,6 @@ describe("doctor core", () => {
             return ok([]);
           },
         },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async (paneId: string) => paneId === "%0",
-        },
       });
 
       const results = await diagnose(ctx, {});
@@ -304,18 +231,12 @@ describe("doctor core", () => {
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
         },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async () => true,
-        },
       });
 
       const results = await diagnose(ctx, { team: "team-a" });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
-      // Should only have diagnostics for team-a, plus the tmux check
       const teamBChecks = results.value.filter((r) => r.team === "team-b");
       expect(teamBChecks).toHaveLength(0);
     });
@@ -330,7 +251,7 @@ describe("doctor core", () => {
           {
             ...healthyConfig.members[0],
             isActive: true,
-            tmuxPaneId: "%99",
+            processId: "99999999",
           },
         ],
       };
@@ -351,11 +272,6 @@ describe("doctor core", () => {
           ...makeCtx().inboxStore,
           listInboxes: async () => ok(["team-lead"]),
           readMessages: async () => ok([]),
-        },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async () => false,
         },
       });
 
@@ -390,11 +306,6 @@ describe("doctor core", () => {
             return ok(undefined);
           },
         },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async (paneId: string) => paneId === "%0",
-        },
       });
 
       const diagResult = await diagnose(ctx, {});
@@ -417,11 +328,6 @@ describe("doctor core", () => {
           ...makeCtx().inboxStore,
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
-        },
-        launcher: {
-          ...makeCtx().launcher,
-          preflight: async () => ok(undefined),
-          isAlive: async (paneId: string) => paneId === "%0",
         },
       });
 

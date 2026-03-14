@@ -3,7 +3,6 @@ import { attachAgent } from "./attach.ts";
 import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { InboxStore } from "../ports/inbox-store.ts";
-import type { Launcher } from "../ports/launcher.ts";
 import type { TeamConfig, InboxMessage } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
 
@@ -18,7 +17,7 @@ const baseConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      tmuxPaneId: "",
+      processId: "",
       cwd: "/home/user/repos/project",
       subscriptions: [],
       sessionId: "lead-session-uuid",
@@ -27,10 +26,9 @@ const baseConfig: TeamConfig = {
       agentId: "scout@test-team",
       name: "scout",
       joinedAt: 1773387770000,
-      tmuxPaneId: "",
+      processId: "",
       cwd: "/home/user/repos/project",
       subscriptions: [],
-      backendType: "tmux",
       isActive: false,
       model: "opus",
       color: "blue",
@@ -87,30 +85,12 @@ function makeInboxStore(): InboxStore {
   };
 }
 
-function makeLauncher(): Launcher {
-  return {
-    async preflight() {
-      return ok(undefined);
-    },
-    async launch() {
-      return ok("%1");
-    },
-    async isAlive() {
-      return true;
-    },
-    async kill() {
-      return ok(undefined);
-    },
-  };
-}
-
 function makeCtx(overrides?: {
   configStore?: ConfigStore;
 }): AppContext {
   return {
     configStore: overrides?.configStore ?? makeConfigStore(),
     inboxStore: makeInboxStore(),
-    launcher: makeLauncher(),
   };
 }
 
@@ -203,7 +183,7 @@ describe("core/attach", () => {
           name: "team-lead",
           agentType: "team-lead",
           joinedAt: 1773387766070,
-          tmuxPaneId: "",
+          processId: "",
           cwd: "/tmp",
           subscriptions: [],
           // no sessionId

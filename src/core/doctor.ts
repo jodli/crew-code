@@ -1,6 +1,7 @@
 import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
 import { ok } from "../types/result.ts";
+import { isProcessAlive } from "../lib/process.ts";
 
 export type DiagnosticStatus = "ok" | "warn" | "error";
 
@@ -29,38 +30,30 @@ export async function diagnose(
 ): Promise<Result<DiagnosticResult[]>> {
   const results: DiagnosticResult[] = [];
 
-  // Check 1: tmux preflight
-  const preflightResult = await ctx.launcher.preflight();
-  if (!preflightResult.ok) {
-    const error = preflightResult.error;
-    if (error.kind === "tmux_not_installed") {
+  // Check 1: claude CLI installed
+  try {
+    const proc = Bun.spawn(["which", "claude"], { stdout: "pipe", stderr: "pipe" });
+    const exitCode = await proc.exited;
+    if (exitCode !== 0) {
       results.push({
-        checkId: "tmux-installed",
+        checkId: "claude-installed",
         status: "error",
-        message: "tmux is not installed",
-        fixable: false,
-      });
-    } else if (error.kind === "tmux_server_not_running") {
-      results.push({
-        checkId: "tmux-installed",
-        status: "warn",
-        message: "tmux server is not running",
+        message: "Claude Code CLI is not installed",
         fixable: false,
       });
     } else {
       results.push({
-        checkId: "tmux-installed",
-        status: "error",
-        message: "tmux preflight failed",
-        detail: String(error.kind),
+        checkId: "claude-installed",
+        status: "ok",
+        message: "Claude Code CLI is available",
         fixable: false,
       });
     }
-  } else {
+  } catch {
     results.push({
-      checkId: "tmux-installed",
-      status: "ok",
-      message: "tmux is available",
+      checkId: "claude-installed",
+      status: "error",
+      message: "Could not check for Claude Code CLI",
       fixable: false,
     });
   }
@@ -111,15 +104,16 @@ export async function diagnose(
     const config = teamResult.value;
     const memberNames = new Set(config.members.map((m) => m.name));
 
-    // Check: stale isActive (pane is gone but isActive is true)
+    // Check: stale isActive (process is gone but isActive is true)
     for (const member of config.members) {
       if (member.isActive) {
-        const alive = await ctx.launcher.isAlive(member.tmuxPaneId);
+        const pid = parseInt(member.processId, 10);
+        const alive = isProcessAlive(pid);
         if (!alive) {
           results.push({
             checkId: "stale-active",
             status: "warn",
-            message: `Agent "${member.name}" in team "${teamName}" is marked active but pane ${member.tmuxPaneId} is gone`,
+            message: `Agent "${member.name}" in team "${teamName}" is marked active but process ${member.processId} is gone`,
             detail: member.name,
             team: teamName,
             fixable: true,

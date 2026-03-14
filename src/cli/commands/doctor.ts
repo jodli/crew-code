@@ -3,7 +3,6 @@ import pc from "picocolors";
 import { diagnose, applyFixes } from "../../core/doctor.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { TmuxLauncher } from "../../adapters/tmux-launcher.ts";
 import { renderError } from "../errors.ts";
 import type { AppContext } from "../../types/context.ts";
 
@@ -34,7 +33,6 @@ export default defineCommand({
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
-      launcher: new TmuxLauncher(),
     };
 
     const result = await diagnose(ctx, { team: args.team });

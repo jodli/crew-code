@@ -1,4 +1,4 @@
-import type { LaunchOptions } from "../ports/launcher.ts";
+import type { LaunchOptions } from "../types/domain.ts";
 
 export const CLAUDE_TEAMS_ENV_VAR = "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS";
 

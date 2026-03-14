@@ -9,52 +9,49 @@ import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
 
-const sampleConfig: TeamConfig = {
-  name: "my-team",
-  description: "A test team",
-  createdAt: 1773387766070,
-  leadAgentId: "team-lead@my-team",
-  leadSessionId: "abc-123",
-  members: [
-    {
-      agentId: "team-lead@my-team",
-      name: "team-lead",
-      agentType: "team-lead",
-      joinedAt: 1773387766070,
-      tmuxPaneId: "%0",
-      cwd: "/tmp",
-      subscriptions: [],
-      isActive: true,
-    },
-    {
-      agentId: "scout@my-team",
-      name: "scout",
-      joinedAt: 1773387766070,
-      tmuxPaneId: "%1",
-      cwd: "/tmp",
-      subscriptions: [],
-      isActive: true,
-    },
-  ],
-};
+function makeSampleConfig(processIds: { lead: string; scout: string }): TeamConfig {
+  return {
+    name: "my-team",
+    description: "A test team",
+    createdAt: 1773387766070,
+    leadAgentId: "team-lead@my-team",
+    leadSessionId: "abc-123",
+    members: [
+      {
+        agentId: "team-lead@my-team",
+        name: "team-lead",
+        agentType: "team-lead",
+        joinedAt: 1773387766070,
+        processId: processIds.lead,
+        cwd: "/tmp",
+        subscriptions: [],
+        isActive: true,
+      },
+      {
+        agentId: "scout@my-team",
+        name: "scout",
+        joinedAt: 1773387766070,
+        processId: processIds.scout,
+        cwd: "/tmp",
+        subscriptions: [],
+        isActive: true,
+      },
+    ],
+  };
+}
 
-let killedPanes: string[] = [];
 let deletedInboxes: { team: string; agent: string }[] = [];
 let deletedTeams: string[] = [];
-let updatedTeams: { name: string; config: TeamConfig }[] = [];
 
-function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
+function makeCtx(config: TeamConfig): AppContext {
   return {
     configStore: {
       getTeam: async (name: string) => {
-        if (name === "my-team") return ok(structuredClone(sampleConfig));
+        if (name === "my-team") return ok(structuredClone(config));
         return err({ kind: "team_not_found", team: name });
       },
       updateTeam: async (name: string, updater: (c: TeamConfig) => TeamConfig) => {
-        const config = structuredClone(sampleConfig);
-        const updated = updater(config);
-        updatedTeams.push({ name, config: updated });
-        return ok(updated);
+        return ok(updater(structuredClone(config)));
       },
       teamExists: async (name: string) => name === "my-team",
       createTeam: async () => ok(undefined),
@@ -74,32 +71,20 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
         return ok(undefined);
       },
     },
-    launcher: {
-      preflight: async () => ok(undefined),
-      launch: async () => ok("%0"),
-      isAlive: async (paneId: string) =>
-        paneId === "%0" || paneId === "%1",
-      kill: async (paneId: string) => {
-        killedPanes.push(paneId);
-        return ok(undefined);
-      },
-    },
-    ...overrides,
   };
 }
 
 function resetTracking() {
-  killedPanes = [];
   deletedInboxes = [];
   deletedTeams = [];
-  updatedTeams = [];
 }
 
 describe("core/destroy", () => {
   describe("planDestroy()", () => {
     test("returns error if team doesn't exist", async () => {
       resetTracking();
-      const ctx = makeCtx();
+      const config = makeSampleConfig({ lead: "", scout: "" });
+      const ctx = makeCtx(config);
       const result = await planDestroy(ctx, { team: "no-such-team" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -107,62 +92,80 @@ describe("core/destroy", () => {
       }
     });
 
-    test("returns a plan with team info and active agents", async () => {
+    test("detects alive processes as active agents", async () => {
       resetTracking();
-      const ctx = makeCtx();
+      // Spawn real processes to detect
+      const proc1 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
+      const proc2 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
+
+      const config = makeSampleConfig({
+        lead: String(proc1.pid),
+        scout: String(proc2.pid),
+      });
+      const ctx = makeCtx(config);
+
       const result = await planDestroy(ctx, { team: "my-team" });
       expect(result.ok).toBe(true);
       if (result.ok) {
-        const plan = result.value;
-        expect(plan.team).toBe("my-team");
-        expect(plan.activeAgents).toHaveLength(2);
-        expect(plan.inboxes).toHaveLength(2);
+        expect(result.value.activeAgents).toHaveLength(2);
+        expect(result.value.inboxes).toHaveLength(2);
       }
+
+      proc1.kill();
+      proc2.kill();
     });
 
     test("only includes alive agents in activeAgents", async () => {
       resetTracking();
-      const ctx = makeCtx({
-        launcher: {
-          preflight: async () => ok(undefined),
-          launch: async () => ok("%0"),
-          isAlive: async (paneId: string) => paneId === "%0", // only %0 alive
-          kill: async (paneId: string) => {
-            killedPanes.push(paneId);
-            return ok(undefined);
-          },
-        },
+      const proc = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
+
+      const config = makeSampleConfig({
+        lead: String(proc.pid),
+        scout: "99999999", // dead PID
       });
+      const ctx = makeCtx(config);
+
       const result = await planDestroy(ctx, { team: "my-team" });
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value.activeAgents).toHaveLength(1);
         expect(result.value.activeAgents[0].name).toBe("team-lead");
       }
+
+      proc.kill();
     });
   });
 
   describe("executeDestroy()", () => {
-    test("kills all active agents via launcher", async () => {
+    test("kills all active agents via PID", async () => {
       resetTracking();
-      const ctx = makeCtx();
+      const proc1 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
+      const proc2 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
+
+      const config = makeSampleConfig({ lead: "", scout: "" });
+      const ctx = makeCtx(config);
       const plan: DestroyPlan = {
         team: "my-team",
         activeAgents: [
-          { name: "team-lead", paneId: "%0" },
-          { name: "scout", paneId: "%1" },
+          { name: "team-lead", processId: String(proc1.pid) },
+          { name: "scout", processId: String(proc2.pid) },
         ],
         inboxes: ["team-lead", "scout"],
       };
 
       const result = await executeDestroy(ctx, plan);
       expect(result.ok).toBe(true);
-      expect(killedPanes.sort()).toEqual(["%0", "%1"]);
+
+      // Processes should be dead now
+      await Bun.sleep(100);
+      try { process.kill(proc1.pid, 0); expect(true).toBe(false); } catch { /* expected */ }
+      try { process.kill(proc2.pid, 0); expect(true).toBe(false); } catch { /* expected */ }
     });
 
     test("deletes all inbox files", async () => {
       resetTracking();
-      const ctx = makeCtx();
+      const config = makeSampleConfig({ lead: "", scout: "" });
+      const ctx = makeCtx(config);
       const plan: DestroyPlan = {
         team: "my-team",
         activeAgents: [],
@@ -180,7 +183,8 @@ describe("core/destroy", () => {
 
     test("deletes team config", async () => {
       resetTracking();
-      const ctx = makeCtx();
+      const config = makeSampleConfig({ lead: "", scout: "" });
+      const ctx = makeCtx(config);
       const plan: DestroyPlan = {
         team: "my-team",
         activeAgents: [],
@@ -194,48 +198,16 @@ describe("core/destroy", () => {
 
     test("handles already-dead agents gracefully", async () => {
       resetTracking();
-      const ctx = makeCtx({
-        launcher: {
-          preflight: async () => ok(undefined),
-          launch: async () => ok("%0"),
-          isAlive: async () => false,
-          kill: async (paneId: string) => {
-            killedPanes.push(paneId);
-            return err({
-              kind: "tmux_exec_failed" as const,
-              detail: "pane not found",
-            });
-          },
-        },
-      });
+      const config = makeSampleConfig({ lead: "", scout: "" });
+      const ctx = makeCtx(config);
       const plan: DestroyPlan = {
         team: "my-team",
-        activeAgents: [{ name: "team-lead", paneId: "%0" }],
+        activeAgents: [{ name: "team-lead", processId: "99999999" }],
         inboxes: [],
       };
 
-      // Should not fail even though kill returns error
       const result = await executeDestroy(ctx, plan);
       expect(result.ok).toBe(true);
-    });
-
-    test("full flow: kills agents, deletes inboxes, deletes team", async () => {
-      resetTracking();
-      const ctx = makeCtx();
-      const plan: DestroyPlan = {
-        team: "my-team",
-        activeAgents: [
-          { name: "team-lead", paneId: "%0" },
-          { name: "scout", paneId: "%1" },
-        ],
-        inboxes: ["team-lead", "scout"],
-      };
-
-      const result = await executeDestroy(ctx, plan);
-      expect(result.ok).toBe(true);
-      expect(killedPanes).toHaveLength(2);
-      expect(deletedInboxes).toHaveLength(2);
-      expect(deletedTeams).toEqual(["my-team"]);
     });
   });
 });

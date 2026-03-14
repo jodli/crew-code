@@ -9,10 +9,9 @@ export const AgentMemberSchema = z.object({
   color: z.string().optional(),
   planModeRequired: z.boolean().optional(),
   joinedAt: z.number(),
-  tmuxPaneId: z.string(),
+  processId: z.string(),
   cwd: z.string(),
   subscriptions: z.array(z.string()),
-  backendType: z.string().optional(),
   isActive: z.boolean().optional(),
   sessionId: z.string().optional(),
 });

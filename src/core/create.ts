@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { AppContext } from "../types/context.ts";
-import type { AgentMember, TeamConfig } from "../types/domain.ts";
-import type { LaunchOptions } from "../ports/launcher.ts";
+import type { AgentMember, TeamConfig, LaunchOptions } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 
@@ -34,7 +33,7 @@ export async function createTeam(
     name: "team-lead",
     agentType: "team-lead",
     joinedAt: now,
-    tmuxPaneId: "",
+    processId: "",
     cwd: process.cwd(),
     subscriptions: [],
     sessionId: leadSessionId,

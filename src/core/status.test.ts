@@ -22,12 +22,6 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
       listInboxes: async () => ok([]),
       deleteInbox: async () => ok(undefined),
     },
-    launcher: {
-      preflight: async () => ok(undefined),
-      launch: async () => ok("%0"),
-      isAlive: async () => false,
-      kill: async () => ok(undefined),
-    },
     ...overrides,
   };
 }
@@ -44,7 +38,7 @@ const sampleConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      tmuxPaneId: "%0",
+      processId: "%0",
       cwd: "/home/user/repos/project",
       subscriptions: [],
       isActive: true,
@@ -54,7 +48,7 @@ const sampleConfig: TeamConfig = {
       agentId: "scout@my-team",
       name: "scout",
       joinedAt: 1773387766070,
-      tmuxPaneId: "%1",
+      processId: "%1",
       cwd: "/home/user/repos/project",
       subscriptions: [],
       isActive: false,
