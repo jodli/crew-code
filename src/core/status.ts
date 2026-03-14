@@ -6,13 +6,13 @@ export interface TeamSummary {
   name: string;
   description?: string;
   memberCount: number;
-  activeCount: number;
 }
 
 export interface MemberDetail {
   name: string;
   agentId: string;
-  isActive: boolean;
+  sessionId?: string;
+  cwd: string;
   unreadCount: number;
 }
 
@@ -38,7 +38,6 @@ export async function listTeams(
       name: config.name,
       description: config.description,
       memberCount: config.members.length,
-      activeCount: config.members.filter((m) => m.isActive).length,
     });
   }
 
@@ -64,7 +63,8 @@ export async function getTeamDetail(
     members.push({
       name: member.name,
       agentId: member.agentId,
-      isActive: member.isActive ?? false,
+      sessionId: member.sessionId,
+      cwd: member.cwd,
       unreadCount,
     });
   }

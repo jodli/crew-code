@@ -45,16 +45,17 @@ const sampleConfig: TeamConfig = {
       agentType: "team-lead",
       joinedAt: 1773387766070,
       tmuxPaneId: "%0",
-      cwd: "/tmp",
+      cwd: "/home/user/repos/project",
       subscriptions: [],
       isActive: true,
+      sessionId: "a1824be0-cc35-49a5-8874-fa2aa58cae81",
     },
     {
       agentId: "scout@my-team",
       name: "scout",
       joinedAt: 1773387766070,
       tmuxPaneId: "%1",
-      cwd: "/tmp",
+      cwd: "/home/user/repos/project",
       subscriptions: [],
       isActive: false,
     },
@@ -82,7 +83,6 @@ describe("status core", () => {
         expect(result.value[0].name).toBe("my-team");
         expect(result.value[0].description).toBe("A test team");
         expect(result.value[0].memberCount).toBe(2);
-        expect(result.value[0].activeCount).toBe(1);
       }
     });
 
@@ -144,11 +144,13 @@ describe("status core", () => {
           (m) => m.name === "team-lead",
         )!;
         expect(lead.unreadCount).toBe(2); // two messages with read: false
-        expect(lead.isActive).toBe(true);
+        expect(lead.sessionId).toBe("a1824be0-cc35-49a5-8874-fa2aa58cae81");
+        expect(lead.cwd).toBe("/home/user/repos/project");
 
         const scout = result.value.members.find((m) => m.name === "scout")!;
         expect(scout.unreadCount).toBe(0);
-        expect(scout.isActive).toBe(false);
+        expect(scout.sessionId).toBeUndefined();
+        expect(scout.cwd).toBe("/home/user/repos/project");
       }
     });
 

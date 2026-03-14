@@ -40,15 +40,17 @@ export default defineCommand({
       );
 
       const table = new Table({
-        head: ["Agent", "Active", "Unread"],
+        head: ["Agent", "Session", "Unread", "CWD"],
         style: { head: process.env.NO_COLOR ? [] : ["cyan"] },
       });
 
+      const home = process.env.HOME ?? "";
       for (const m of detail.members) {
         table.push([
           m.name,
-          m.isActive ? pc.green("yes") : "no",
+          m.sessionId ?? "-",
           m.unreadCount > 0 ? pc.yellow(String(m.unreadCount)) : "0",
+          home ? m.cwd.replace(home, "~") : m.cwd,
         ]);
       }
 
@@ -69,7 +71,7 @@ export default defineCommand({
     }
 
     const table = new Table({
-      head: ["Team", "Description", "Members", "Active"],
+      head: ["Team", "Description", "Members"],
       style: { head: process.env.NO_COLOR ? [] : ["cyan"] },
     });
 
@@ -78,7 +80,6 @@ export default defineCommand({
         t.name,
         t.description ?? "",
         String(t.memberCount),
-        String(t.activeCount),
       ]);
     }
 
