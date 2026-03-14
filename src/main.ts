@@ -1,4 +1,5 @@
 import { defineCommand, runMain } from "citty";
+import attach from "./cli/commands/attach.ts";
 import create from "./cli/commands/create.ts";
 import spawn from "./cli/commands/spawn.ts";
 import status from "./cli/commands/status.ts";
@@ -14,6 +15,7 @@ const main = defineCommand({
     version: "0.1.0",
   },
   subCommands: {
+    attach,
     create,
     spawn,
     status,
