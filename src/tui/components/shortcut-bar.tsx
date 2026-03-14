@@ -20,9 +20,16 @@ const teamShortcuts: Shortcut[] = [
   { key: "d", label: "destroy" },
 ];
 
+const agentShortcuts: Shortcut[] = [
+  { key: "j/k", label: "navigate" },
+  { key: "s", label: "spawn" },
+  { key: "a", label: "attach" },
+  { key: "x", label: "kill" },
+];
+
 export function ShortcutBar({ panel }: ShortcutBarProps) {
-  const contextShortcuts = panel === "teams" ? teamShortcuts : [];
-  const all = [...contextShortcuts, ...globalShortcuts];
+  const contextShortcuts = panel === "teams" ? teamShortcuts : agentShortcuts;
+  const all = [...contextShortcuts, { key: "tab", label: "switch panel" }, ...globalShortcuts];
 
   const text = all.map((s) => `[${s.key}] ${s.label}`).join("  ");
 

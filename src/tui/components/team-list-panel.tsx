@@ -38,7 +38,7 @@ export function TeamListPanel({ teams, selectedIndex, focused }: TeamListPanelPr
     >
       {teams.map((team, i) => {
         const isSelected = i === selectedIndex;
-        const prefix = isSelected ? ">" : " ";
+        const prefix = isSelected && focused ? ">" : " ";
         const aliveColor =
           team.aliveCount === team.agentCount
             ? "#9ece6a" // all alive = green

@@ -3,8 +3,10 @@ import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 import { JsonFileConfigStore } from "../adapters/json-file-config-store.ts";
 import { useTeams } from "./hooks/use-teams.ts";
+import { useAgents } from "./hooks/use-agents.ts";
 import { navReducer, initialNavState } from "./views/navigation.ts";
 import { TeamListPanel } from "./components/team-list-panel.tsx";
+import { AgentListPanel } from "./components/agent-list-panel.tsx";
 import { ShortcutBar } from "./components/shortcut-bar.tsx";
 import { HelpOverlay } from "./components/help-overlay.tsx";
 
@@ -16,10 +18,15 @@ export function App() {
   const [nav, dispatch] = useReducer(navReducer, initialNavState);
   const [exiting, setExiting] = useState(false);
 
+  const selectedTeamName = nav !== "quit" && teams[nav.teamIndex]
+    ? teams[nav.teamIndex].name
+    : null;
+
+  const agents = useAgents(configStore, selectedTeamName);
+
   const handleKey = useCallback(
     (key: KeyEvent) => {
-      if (exiting) return;
-      if (nav === "quit") return;
+      if (exiting || nav === "quit") return;
 
       // Global keys
       if (key.name === "q" && !key.ctrl) {
@@ -41,16 +48,28 @@ export function App() {
         return;
       }
 
+      if (key.name === "tab") {
+        dispatch({ type: "switch_panel" });
+        return;
+      }
+
       // Dashboard navigation
       if (nav.view.screen === "dashboard") {
         if (key.name === "up" || key.name === "k") {
           dispatch({ type: "move_up" });
         } else if (key.name === "down" || key.name === "j") {
-          dispatch({ type: "move_down", maxIndex: Math.max(0, teams.length - 1) });
+          const maxIndex = nav.panel === "teams"
+            ? Math.max(0, teams.length - 1)
+            : Math.max(0, agents.length - 1);
+          dispatch({ type: "move_down", maxIndex });
+        } else if ((key.name === "return" || key.name === "l") && nav.panel === "teams") {
+          dispatch({ type: "focus_agents" });
+        } else if (key.name === "h" && nav.panel === "agents") {
+          dispatch({ type: "focus_teams" });
         }
       }
     },
-    [nav, teams.length, exiting],
+    [nav, teams.length, agents.length, exiting],
   );
 
   useKeyboard(handleKey);
@@ -66,12 +85,18 @@ export function App() {
         <text content="crew tui" fg="#7aa2f7" />
       </box>
 
-      {/* Main content */}
+      {/* Main content — two panels side by side */}
       <box flexGrow={1} flexDirection="row">
         <TeamListPanel
           teams={teams}
-          selectedIndex={nav.selectedIndex}
+          selectedIndex={nav.teamIndex}
           focused={nav.panel === "teams"}
+        />
+        <AgentListPanel
+          agents={agents}
+          selectedIndex={nav.agentIndex}
+          focused={nav.panel === "agents"}
+          teamName={selectedTeamName}
         />
       </box>
 
