@@ -13,12 +13,15 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
+    "@opentui/core": "^0.1.87",
+    "@opentui/react": "^0.1.87",
     "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
     "env-paths": "^3.0.0",
     "ora": "^8.1.1",
     "picocolors": "^1.1.1",
     "proper-lockfile": "^4.1.2",
+    "react": "^19.2.4",
     "zod": "^3.24.2"
   },
   "devDependencies": {
