@@ -12,6 +12,7 @@ export interface AgentMember {
   subscriptions: string[];
   backendType?: string;
   isActive?: boolean;
+  sessionId?: string;
 }
 
 export interface TeamConfig {

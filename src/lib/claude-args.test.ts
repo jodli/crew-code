@@ -104,6 +104,39 @@ describe("buildClaudeArgs", () => {
     expect(args).not.toContain("--agent-color");
     expect(args).not.toContain("--parent-session-id");
     expect(args).not.toContain("--model");
+    expect(args).not.toContain("--session-id");
+    expect(args).not.toContain("--resume");
+  });
+
+  test("includes --session-id when sessionId provided in new mode (default)", () => {
+    const args = buildClaudeArgs({
+      agentId: "scout@my-team",
+      agentName: "scout",
+      teamName: "my-team",
+      cwd: "/home/user/repos",
+      sessionId: "abc-def-123",
+    });
+
+    expect(args).toContain("--session-id");
+    expect(args).toContain("abc-def-123");
+    expect(args).not.toContain("--resume");
+  });
+
+  test("includes --resume when sessionId provided in resume mode", () => {
+    const args = buildClaudeArgs(
+      {
+        agentId: "scout@my-team",
+        agentName: "scout",
+        teamName: "my-team",
+        cwd: "/home/user/repos",
+        sessionId: "abc-def-123",
+      },
+      "resume",
+    );
+
+    expect(args).toContain("--resume");
+    expect(args).toContain("abc-def-123");
+    expect(args).not.toContain("--session-id");
   });
 });
 

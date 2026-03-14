@@ -208,4 +208,27 @@ describe("core/create", () => {
       expect(result.value.launchOptions.parentSessionId).toBeUndefined();
     }
   });
+
+  test("stores sessionId on lead member matching leadSessionId", async () => {
+    createdConfig = undefined;
+    const ctx = makeCtx();
+    await createTeam(ctx, { name: "my-team" });
+
+    expect(createdConfig!.members[0].sessionId).toBe(
+      createdConfig!.leadSessionId,
+    );
+  });
+
+  test("returns launchOptions with sessionId matching leadSessionId", async () => {
+    createdConfig = undefined;
+    const ctx = makeCtx();
+    const result = await createTeam(ctx, { name: "my-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.launchOptions.sessionId).toBe(
+        createdConfig!.leadSessionId,
+      );
+    }
+  });
 });

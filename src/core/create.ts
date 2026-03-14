@@ -37,6 +37,7 @@ export async function createTeam(
     tmuxPaneId: "",
     cwd: process.cwd(),
     subscriptions: [],
+    sessionId: leadSessionId,
   };
 
   const config: TeamConfig = {
@@ -56,6 +57,7 @@ export async function createTeam(
     agentName: "team-lead",
     teamName: input.name,
     cwd: process.cwd(),
+    sessionId: leadSessionId,
   };
 
   return ok({ name: input.name, leadAgentId, launchOptions });

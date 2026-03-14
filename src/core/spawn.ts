@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { AppContext } from "../types/context.ts";
 import type { AgentMember, InboxMessage } from "../types/domain.ts";
 import type { LaunchOptions } from "../ports/launcher.ts";
@@ -77,6 +78,7 @@ export async function registerAgent(
 
   // 4. Add member to config (isActive: false, tmuxPaneId: "")
   const cwd = process.cwd();
+  const sessionId = randomUUID();
   const newMember: AgentMember = {
     agentId,
     name: agentName,
@@ -88,6 +90,7 @@ export async function registerAgent(
     subscriptions: [],
     backendType: "tmux",
     isActive: false,
+    sessionId,
   };
 
   const addResult = await ctx.configStore.updateTeam(input.team, (cfg) => ({
@@ -131,6 +134,7 @@ export async function registerAgent(
     color: input.color,
     parentSessionId: config.leadSessionId,
     model: input.model,
+    sessionId,
   };
 
   return ok({ agentId, name: agentName, team: input.team, launchOptions });

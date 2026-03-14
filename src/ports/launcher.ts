@@ -9,6 +9,7 @@ export interface LaunchOptions {
   color?: string;
   parentSessionId?: string;
   model?: string;
+  sessionId?: string;
 }
 
 export interface Launcher {

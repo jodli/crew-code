@@ -493,6 +493,41 @@ describe("core/registerAgent", () => {
 
     expect(launcher.launchedWith).toBeUndefined();
   });
+
+  test("generates sessionId as UUID and stores on member", async () => {
+    const configStore = makeConfigStore();
+    const ctx = makeCtx({ configStore });
+    await registerAgent(ctx, {
+      team: "test-team",
+      name: "scout",
+      task: "work",
+    });
+
+    const scout = configStore.lastUpdated?.members.find(
+      (m) => m.name === "scout",
+    );
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    expect(scout?.sessionId).toMatch(uuidRegex);
+  });
+
+  test("returns launchOptions with sessionId matching stored member sessionId", async () => {
+    const configStore = makeConfigStore();
+    const ctx = makeCtx({ configStore });
+    const result = await registerAgent(ctx, {
+      team: "test-team",
+      name: "scout",
+      task: "work",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const scout = configStore.lastUpdated?.members.find(
+        (m) => m.name === "scout",
+      );
+      expect(result.value.launchOptions.sessionId).toBe(scout?.sessionId);
+    }
+  });
 });
 
 describe("core/activateAgent", () => {
