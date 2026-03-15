@@ -25,6 +25,7 @@ const agentShortcuts: Shortcut[] = [
   { key: "s", label: "spawn" },
   { key: "a", label: "attach" },
   { key: "x", label: "kill" },
+  { key: "r", label: "remove" },
   { key: "i", label: "inbox" },
   { key: "m", label: "msg" },
 ];
