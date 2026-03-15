@@ -10,7 +10,9 @@ import { AgentListPanel } from "./components/agent-list-panel.tsx";
 import { ShortcutBar } from "./components/shortcut-bar.tsx";
 import { HelpOverlay } from "./components/help-overlay.tsx";
 import { CreateTeamForm } from "./components/create-team-form.tsx";
+import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
+import { buildCreateCommand, buildSpawnCommand } from "./launcher/commands.ts";
 
 const configStore = new JsonFileConfigStore();
 
@@ -36,8 +38,8 @@ export function App({ launcher }: AppProps) {
     (key: KeyEvent) => {
       if (exiting || nav === "quit") return;
 
-      // When an overlay with its own keyboard handling is active, only handle Esc globally
-      if (nav.view.screen === "create-team") return;
+      // When an overlay with its own keyboard handling is active, let it handle keys
+      if (nav.view.screen === "create-team" || nav.view.screen === "spawn-agent") return;
 
       // Global keys
       if (key.name === "q" && !key.ctrl) {
@@ -79,6 +81,8 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "focus_teams" });
         } else if (key.name === "n" && nav.panel === "teams") {
           dispatch({ type: "open_create_team" });
+        } else if (key.name === "s" && nav.panel === "agents" && selectedTeamName) {
+          dispatch({ type: "open_spawn_agent" });
         }
       }
     },
@@ -89,10 +93,20 @@ export function App({ launcher }: AppProps) {
 
   const handleCreateTeam = useCallback(
     async (name: string, cwd: string) => {
-      await launcher.openTerminal(["crew", "create", "--name", name], cwd, `crew:${name}`);
+      await launcher.openTerminal(buildCreateCommand(name), cwd, `crew:${name}`);
       dispatch({ type: "close_overlay" });
     },
     [launcher],
+  );
+
+  const handleSpawnAgent = useCallback(
+    async (opts: { name: string; task: string; model: string; cwd: string }) => {
+      if (!selectedTeamName) return;
+      const args = buildSpawnCommand(selectedTeamName, opts);
+      await launcher.openTerminal(args, opts.cwd, `crew:${opts.name || "agent"}`);
+      dispatch({ type: "close_overlay" });
+    },
+    [launcher, selectedTeamName],
   );
 
   const handleCancelOverlay = useCallback(() => {
@@ -135,6 +149,14 @@ export function App({ launcher }: AppProps) {
         <CreateTeamForm
           defaultCwd={process.cwd()}
           onSubmit={handleCreateTeam}
+          onCancel={handleCancelOverlay}
+        />
+      )}
+      {nav.view.screen === "spawn-agent" && selectedTeamName && (
+        <SpawnAgentForm
+          teamName={selectedTeamName}
+          defaultCwd={process.cwd()}
+          onSubmit={handleSpawnAgent}
           onCancel={handleCancelOverlay}
         />
       )}

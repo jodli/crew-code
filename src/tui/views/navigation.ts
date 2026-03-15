@@ -1,6 +1,7 @@
 export type View =
   | { screen: "dashboard" }
   | { screen: "create-team" }
+  | { screen: "spawn-agent" }
   | { screen: "help" };
 
 export type Panel = "teams" | "agents";
@@ -26,6 +27,7 @@ export type NavAction =
   | { type: "focus_teams" }
   | { type: "focus_agents" }
   | { type: "open_create_team" }
+  | { type: "open_spawn_agent" }
   | { type: "toggle_help" }
   | { type: "close_overlay" }
   | { type: "quit" };
@@ -61,6 +63,9 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
 
     case "open_create_team":
       return { ...state, view: { screen: "create-team" } };
+
+    case "open_spawn_agent":
+      return { ...state, view: { screen: "spawn-agent" } };
 
     case "toggle_help":
       if (state.view.screen === "help") {

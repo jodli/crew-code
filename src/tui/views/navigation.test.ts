@@ -141,6 +141,22 @@ describe("navReducer", () => {
     });
   });
 
+  describe("spawn-agent overlay", () => {
+    test("open_spawn_agent switches to spawn-agent view", () => {
+      const state: NavState = { ...initialNavState, panel: "agents" };
+      const s = navReducer(state, { type: "open_spawn_agent" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("spawn-agent");
+    });
+
+    test("close_overlay returns to dashboard from spawn-agent", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "spawn-agent" } };
+      const s = navReducer(state, { type: "close_overlay" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("dashboard");
+    });
+  });
+
   test("quit returns 'quit'", () => {
     const s = navReducer(initialNavState, { type: "quit" });
     expect(s).toBe("quit");
