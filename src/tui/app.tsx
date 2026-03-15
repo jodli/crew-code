@@ -18,9 +18,9 @@ import { InboxView } from "./components/inbox-view.tsx";
 import { SendMessageForm } from "./components/send-message-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
-import { killProcess } from "../lib/process.ts";
-import { planDestroy, executeDestroy } from "../core/destroy.ts";
-import { sendMessage } from "../core/send.ts";
+import { killAgent } from "../actions/kill-agent.ts";
+import { destroyTeam } from "../actions/destroy-team.ts";
+import { sendMessage } from "../actions/send-message.ts";
 
 const configStore = new JsonFileConfigStore();
 const inboxStore = new JsonFileInboxStore();
@@ -172,22 +172,16 @@ export function App({ launcher }: AppProps) {
     if (nav === "quit") return;
     const agent = agents[nav.agentIndex];
     if (agent) {
-      const pid = parseInt(agent.processId, 10);
-      if (pid > 0) killProcess(pid);
+      killAgent(agent.processId);
     }
     dispatch({ type: "close_overlay" });
   }, [nav, agents]);
 
   const handleConfirmDestroy = useCallback(async () => {
     if (!selectedTeamName) return;
-    const planResult = await planDestroy(ctx, { team: selectedTeamName });
-    if (planResult.ok) {
-      const result = await executeDestroy(ctx, planResult.value);
-      if (!result.ok) {
-        setError(`Destroy failed: ${result.error.kind}`);
-      }
-    } else {
-      setError(`Destroy failed: ${planResult.error.kind}`);
+    const result = await destroyTeam(ctx, { team: selectedTeamName });
+    if (!result.ok) {
+      setError(`Destroy failed: ${result.error.kind}`);
     }
     dispatch({ type: "close_overlay" });
   }, [selectedTeamName]);

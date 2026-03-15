@@ -1,7 +1,8 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
 import { confirm } from "@clack/prompts";
-import { planRemove, executeRemove } from "../../core/remove.ts";
+import { planRemove } from "../../core/remove.ts";
+import { removeAgent } from "../../actions/remove-agent.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
@@ -67,7 +68,7 @@ export default defineCommand({
       }
     }
 
-    const result = await executeRemove(ctx, plan);
+    const result = await removeAgent(ctx, { team: args.team, name: args.name });
     if (!result.ok) {
       console.error(renderError(result.error));
       process.exit(1);

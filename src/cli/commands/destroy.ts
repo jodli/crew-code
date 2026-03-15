@@ -1,7 +1,8 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
 import { confirm } from "@clack/prompts";
-import { planDestroy, executeDestroy } from "../../core/destroy.ts";
+import { planDestroy } from "../../core/destroy.ts";
+import { destroyTeam } from "../../actions/destroy-team.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
@@ -60,7 +61,7 @@ export default defineCommand({
       }
     }
 
-    const result = await executeDestroy(ctx, plan);
+    const result = await destroyTeam(ctx, { team: args.team });
     if (!result.ok) {
       console.error(renderError(result.error));
       process.exit(1);

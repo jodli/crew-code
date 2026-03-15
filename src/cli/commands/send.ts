@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { sendMessage } from "../../core/send.ts";
+import { sendMessage } from "../../actions/send-message.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
