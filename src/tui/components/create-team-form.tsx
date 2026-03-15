@@ -4,17 +4,19 @@ import type { KeyEvent } from "@opentui/core";
 
 interface CreateTeamFormProps {
   defaultCwd: string;
-  onSubmit: (name: string, cwd: string) => void;
+  onSubmit: (name: string, cwd: string, extraArgs: string[]) => void;
   onCancel: () => void;
 }
 
-type Field = "name" | "cwd";
+type Field = "name" | "cwd" | "args";
 
 export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFormProps) {
   const [name, setName] = useState("");
   const [cwd, setCwd] = useState(defaultCwd);
+  const [args, setArgs] = useState("");
   const [activeField, setActiveField] = useState<Field>("name");
   const [error, setError] = useState("");
+  const fields: Field[] = ["name", "cwd", "args"];
 
   const handleKey = useCallback(
     (key: KeyEvent) => {
@@ -24,7 +26,13 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
       }
 
       if (key.name === "tab") {
-        setActiveField((f) => (f === "name" ? "cwd" : "name"));
+        setActiveField((f) => {
+          const idx = fields.indexOf(f);
+          const next = key.shift
+            ? fields[(idx - 1 + fields.length) % fields.length]
+            : fields[(idx + 1) % fields.length];
+          return next;
+        });
         return;
       }
 
@@ -37,16 +45,25 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
           setError("CWD is required");
           return;
         }
-        onSubmit(name.trim(), cwd.trim());
+        const extraArgs = args.trim().split(/\s+/).filter(Boolean);
+        onSubmit(name.trim(), cwd.trim(), extraArgs);
         return;
       }
 
       // Text input handling
-      const setter = activeField === "name" ? setName : setCwd;
-      const value = activeField === "name" ? name : cwd;
+      const textFields: Record<Field, string> = { name, cwd, args };
+      const textSetters: Record<Field, (v: string) => void> = { name: setName, cwd: setCwd, args: setArgs };
+      const setter = textSetters[activeField];
+      const value = textFields[activeField];
 
       if (key.name === "backspace") {
         setter(value.slice(0, -1));
+        setError("");
+        return;
+      }
+
+      if (key.name === "space") {
+        setter(value + " ");
         setError("");
         return;
       }
@@ -57,13 +74,14 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
         setError("");
       }
     },
-    [name, cwd, activeField, onSubmit, onCancel],
+    [name, cwd, args, activeField, onSubmit, onCancel],
   );
 
   useKeyboard(handleKey);
 
   const nameLabel = activeField === "name" ? "> Name:" : "  Name:";
   const cwdLabel = activeField === "cwd" ? "> CWD: " : "  CWD: ";
+  const argsLabel = activeField === "args" ? "> Args:" : "  Args:";
 
   return (
     <box
@@ -71,7 +89,7 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
       top={4}
       left={4}
       width="60%"
-      height={error ? 10 : 9}
+      height={error ? 12 : 11}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
@@ -89,6 +107,11 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
       <text
         content={`${cwdLabel} ${cwd}${activeField === "cwd" ? "_" : ""}`}
         fg={activeField === "cwd" ? "#c0caf5" : "#a9b1d6"}
+      />
+      <text content="" />
+      <text
+        content={`${argsLabel} ${args}${activeField === "args" ? "_" : ""}`}
+        fg={activeField === "args" ? "#c0caf5" : "#a9b1d6"}
       />
       <text content="" />
       {error ? (

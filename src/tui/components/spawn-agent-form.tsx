@@ -7,6 +7,7 @@ export interface SpawnAgentResult {
   task: string;
   model: string;
   cwd: string;
+  extraArgs: string[];
 }
 
 interface SpawnAgentFormProps {
@@ -23,14 +24,15 @@ const MODEL_OPTIONS = [
   "claude-haiku-4-5-20251001",
 ] as const;
 
-type Field = "name" | "task" | "model" | "cwd";
-const fields: Field[] = ["name", "task", "model", "cwd"];
+type Field = "name" | "task" | "model" | "cwd" | "args";
+const fields: Field[] = ["name", "task", "model", "cwd", "args"];
 
 export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: SpawnAgentFormProps) {
   const [name, setName] = useState("");
   const [task, setTask] = useState("");
   const [modelIndex, setModelIndex] = useState(0);
   const [cwd, setCwd] = useState(defaultCwd);
+  const [args, setArgs] = useState("");
   const [activeField, setActiveField] = useState<Field>("name");
   const [error, setError] = useState("");
 
@@ -56,7 +58,8 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
           return;
         }
         const selectedModel = modelIndex === 0 ? "" : MODEL_OPTIONS[modelIndex];
-        onSubmit({ name: name.trim(), task: task.trim(), model: selectedModel, cwd: cwd.trim() });
+        const extraArgs = args.trim().split(/\s+/).filter(Boolean);
+        onSubmit({ name: name.trim(), task: task.trim(), model: selectedModel, cwd: cwd.trim(), extraArgs });
         return;
       }
 
@@ -71,11 +74,17 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       }
 
       // Text input for other fields
-      const textFields = { name, task, cwd } as Record<string, string>;
-      const textSetters = { name: setName, task: setTask, cwd: setCwd } as Record<string, (v: string) => void>;
+      const textFields = { name, task, cwd, args } as Record<string, string>;
+      const textSetters = { name: setName, task: setTask, cwd: setCwd, args: setArgs } as Record<string, (v: string) => void>;
 
       if (key.name === "backspace") {
         textSetters[activeField](textFields[activeField].slice(0, -1));
+        setError("");
+        return;
+      }
+
+      if (key.name === "space") {
+        textSetters[activeField](textFields[activeField] + " ");
         setError("");
         return;
       }
@@ -85,7 +94,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
         setError("");
       }
     },
-    [name, task, modelIndex, cwd, activeField, defaultCwd, onSubmit, onCancel, error],
+    [name, task, modelIndex, cwd, args, activeField, defaultCwd, onSubmit, onCancel, error],
   );
 
   useKeyboard(handleKey);
@@ -103,6 +112,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
   const nameField = textLine("name", "Name: ", name);
   const taskField = textLine("task", "Task: ", task);
   const cwdField = textLine("cwd", "CWD:  ", cwd);
+  const argsField = textLine("args", "Args: ", args);
 
   const modelActive = activeField === "model";
   const modelPrefix = modelActive ? "> " : "  ";
@@ -115,7 +125,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       top={3}
       left={4}
       width="60%"
-      height={error ? 16 : 14}
+      height={error ? 18 : 16}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
@@ -135,6 +145,8 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       />
       <text content="" />
       <text content={cwdField.content} fg={cwdField.fg} />
+      <text content="" />
+      <text content={argsField.content} fg={argsField.fg} />
       <text content="" />
       {error ? (
         <>

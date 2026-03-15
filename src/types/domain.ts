@@ -32,6 +32,7 @@ export interface LaunchOptions {
   parentSessionId?: string;
   model?: string;
   sessionId?: string;
+  extraArgs?: string[];
 }
 
 export interface InboxMessage {

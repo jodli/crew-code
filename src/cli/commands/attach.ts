@@ -6,6 +6,7 @@ import { activateAgent } from "../../core/spawn.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
+import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
 import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
@@ -25,7 +26,7 @@ export default defineCommand({
       required: false,
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
@@ -46,6 +47,7 @@ export default defineCommand({
     );
     console.error(`  Resuming session ${result.value.launchOptions.sessionId}\n`);
 
+    result.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
     const { pid, exited } = launchClaude(result.value.launchOptions, { mode: "resume" });
     await activateAgent(ctx, args.team, result.value.agentId, String(pid));
     const code = await exited;

@@ -35,6 +35,12 @@ export function SendMessageForm({ teamName, agentName, onSubmit, onCancel }: Sen
         return;
       }
 
+      if (key.name === "space") {
+        setMessage((m) => m + " ");
+        setError("");
+        return;
+      }
+
       if (key.name && key.name.length === 1 && !key.ctrl && !key.meta) {
         setMessage((m) => m + key.name);
         setError("");

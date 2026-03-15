@@ -5,6 +5,7 @@ import { launchClaude } from "../../lib/exec-claude.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
+import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
 import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
@@ -39,7 +40,7 @@ export default defineCommand({
       required: false,
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
@@ -64,6 +65,7 @@ export default defineCommand({
     console.error(`  Agent ID: ${regResult.value.agentId}`);
     console.error(`  Launching Claude...\n`);
 
+    regResult.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
     const { pid, exited } = launchClaude(regResult.value.launchOptions);
     await activateAgent(ctx, args.team, regResult.value.agentId, String(pid));
     const code = await exited;

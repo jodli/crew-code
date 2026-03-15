@@ -6,6 +6,7 @@ import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
 import { launchClaude } from "../../lib/exec-claude.ts";
 import { activateAgent } from "../../core/spawn.ts";
+import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
 import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
@@ -25,7 +26,7 @@ export default defineCommand({
       required: false,
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
@@ -44,6 +45,7 @@ export default defineCommand({
     console.error(`Team ${pc.bold(result.value.name)} created.`);
     console.error(`  Becoming team-lead...\n`);
 
+    result.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
     const { pid, exited } = launchClaude(result.value.launchOptions);
     await activateAgent(ctx, args.name, result.value.leadAgentId, String(pid));
     const code = await exited;

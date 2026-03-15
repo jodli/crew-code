@@ -138,6 +138,54 @@ describe("buildClaudeArgs", () => {
     expect(args).toContain("abc-def-123");
     expect(args).not.toContain("--session-id");
   });
+
+  test("appends extraArgs at the end when provided", () => {
+    const args = buildClaudeArgs({
+      agentId: "scout@my-team",
+      agentName: "scout",
+      teamName: "my-team",
+      cwd: "/home/user/repos",
+      extraArgs: ["--verbose", "--effort", "high"],
+    });
+
+    expect(args).toEqual([
+      "--agent-id", "scout@my-team",
+      "--agent-name", "scout",
+      "--team-name", "my-team",
+      "--verbose", "--effort", "high",
+    ]);
+  });
+
+  test("does not append anything when extraArgs is undefined", () => {
+    const args = buildClaudeArgs({
+      agentId: "scout@my-team",
+      agentName: "scout",
+      teamName: "my-team",
+      cwd: "/home/user/repos",
+    });
+
+    expect(args).toEqual([
+      "--agent-id", "scout@my-team",
+      "--agent-name", "scout",
+      "--team-name", "my-team",
+    ]);
+  });
+
+  test("does not append anything when extraArgs is empty array", () => {
+    const args = buildClaudeArgs({
+      agentId: "scout@my-team",
+      agentName: "scout",
+      teamName: "my-team",
+      cwd: "/home/user/repos",
+      extraArgs: [],
+    });
+
+    expect(args).toEqual([
+      "--agent-id", "scout@my-team",
+      "--agent-name", "scout",
+      "--team-name", "my-team",
+    ]);
+  });
 });
 
 describe("CLAUDE_TEAMS_ENV_VAR", () => {

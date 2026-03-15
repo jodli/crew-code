@@ -23,5 +23,7 @@ export function buildClaudeArgs(opts: LaunchOptions, mode: LaunchMode = "new"): 
     }
   }
 
+  if (opts.extraArgs?.length) args.push(...opts.extraArgs);
+
   return args;
 }

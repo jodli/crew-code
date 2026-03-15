@@ -146,9 +146,9 @@ export function App({ launcher }: AppProps) {
   useKeyboard(handleKey);
 
   const handleCreateTeam = useCallback(
-    async (name: string, cwd: string) => {
+    async (name: string, cwd: string, extraArgs: string[]) => {
       try {
-        await launcher.openTerminal(buildCreateCommand(name), cwd, `crew:${name}`);
+        await launcher.openTerminal(buildCreateCommand(name, extraArgs), cwd, `crew:${name}`);
       } catch (e: any) {
         setError(`Failed to create: ${e.message}`);
       }
@@ -158,7 +158,7 @@ export function App({ launcher }: AppProps) {
   );
 
   const handleSpawnAgent = useCallback(
-    async (opts: { name: string; task: string; model: string; cwd: string }) => {
+    async (opts: { name: string; task: string; model: string; cwd: string; extraArgs: string[] }) => {
       if (!selectedTeamName) return;
       const args = buildSpawnCommand(selectedTeamName, opts);
       try {

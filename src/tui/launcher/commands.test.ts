@@ -27,11 +27,36 @@ describe("buildSpawnCommand", () => {
       "--task", "do stuff",
     ]);
   });
+
+  test("appends -- and extra args when provided", () => {
+    expect(buildSpawnCommand("my-team", { name: "coder", extraArgs: ["--verbose"] })).toEqual([
+      "crew", "spawn", "--team", "my-team",
+      "--name", "coder",
+      "--", "--verbose",
+    ]);
+  });
+
+  test("omits -- when extraArgs is empty", () => {
+    expect(buildSpawnCommand("my-team", { extraArgs: [] })).toEqual([
+      "crew", "spawn", "--team", "my-team",
+    ]);
+  });
 });
 
 describe("buildCreateCommand", () => {
   test("builds create command", () => {
     expect(buildCreateCommand("alpha")).toEqual(["crew", "create", "--name", "alpha"]);
+  });
+
+  test("appends -- and extra args when provided", () => {
+    expect(buildCreateCommand("alpha", ["--verbose", "--effort", "high"])).toEqual([
+      "crew", "create", "--name", "alpha",
+      "--", "--verbose", "--effort", "high",
+    ]);
+  });
+
+  test("omits -- when extra args is empty", () => {
+    expect(buildCreateCommand("alpha", [])).toEqual(["crew", "create", "--name", "alpha"]);
   });
 });
 
