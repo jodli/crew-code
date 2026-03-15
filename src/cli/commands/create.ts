@@ -35,6 +35,7 @@ export default defineCommand({
     const result = await createTeam(ctx, {
       name: args.name,
       description: args.description || undefined,
+      extraArgs: parsePassthroughArgs(rawArgs),
     });
 
     if (!result.ok) {
@@ -44,8 +45,6 @@ export default defineCommand({
 
     console.error(`Team ${pc.bold(result.value.name)} created.`);
     console.error(`  Becoming team-lead...\n`);
-
-    result.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
     const { pid, exited } = launchClaude(result.value.launchOptions);
     await activateAgent(ctx, args.name, result.value.leadAgentId, String(pid));
     const code = await exited;

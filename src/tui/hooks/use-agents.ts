@@ -13,6 +13,7 @@ export interface AgentSummary {
   model?: string;
   cwd: string;
   unreadCount: number;
+  extraArgs?: string[];
 }
 
 function summarizeAgent(member: AgentMember, unreadCount: number): AgentSummary {
@@ -28,6 +29,7 @@ function summarizeAgent(member: AgentMember, unreadCount: number): AgentSummary 
     model: member.model,
     cwd: member.cwd,
     unreadCount,
+    extraArgs: member.extraArgs,
   };
 }
 

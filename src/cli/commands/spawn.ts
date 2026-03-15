@@ -53,6 +53,7 @@ export default defineCommand({
       name: args.name || undefined,
       model: args.model || undefined,
       color: args.color || undefined,
+      extraArgs: parsePassthroughArgs(rawArgs),
     });
 
     if (!result.ok) {
@@ -65,8 +66,6 @@ export default defineCommand({
     );
     console.error(`  Agent ID: ${result.value.agentId}`);
     console.error(`  Launching Claude...\n`);
-
-    result.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
     const { pid, exited } = launchClaude(result.value.launchOptions);
     await activateAgent(ctx, args.team, result.value.agentId, String(pid));
     const code = await exited;

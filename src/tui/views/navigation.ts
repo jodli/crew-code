@@ -7,7 +7,8 @@ export type View =
   | { screen: "confirm-remove" }
   | { screen: "inbox" }
   | { screen: "send-message" }
-  | { screen: "help" };
+  | { screen: "help" }
+  | { screen: "attach-form" };
 
 export type Panel = "teams" | "agents";
 
@@ -38,6 +39,7 @@ export type NavAction =
   | { type: "open_confirm_remove" }
   | { type: "open_inbox" }
   | { type: "open_send_message" }
+  | { type: "open_attach_form" }
   | { type: "toggle_help" }
   | { type: "close_overlay" }
   | { type: "quit" };
@@ -91,6 +93,9 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
 
     case "open_send_message":
       return { ...state, view: { screen: "send-message" } };
+
+    case "open_attach_form":
+      return { ...state, view: { screen: "attach-form" } };
 
     case "toggle_help":
       if (state.view.screen === "help") {

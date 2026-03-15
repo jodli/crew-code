@@ -89,6 +89,16 @@ describe("core/planCreate", () => {
     }
   });
 
+  test("passes through extraArgs", async () => {
+    const ctx = makeCtx();
+    const result = await planCreate(ctx, { name: "my-team", extraArgs: ["--verbose"] });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.extraArgs).toEqual(["--verbose"]);
+    }
+  });
+
   test("generates leadSessionId as a UUID", async () => {
     const ctx = makeCtx();
     const result = await planCreate(ctx, { name: "my-team" });
@@ -133,6 +143,19 @@ describe("core/executeCreate", () => {
     expect(lead.agentType).toBe("team-lead");
     expect(lead.processId).toBe("");
     expect(lead.sessionId).toBe("lead-uuid-123");
+  });
+
+  test("stores extraArgs in member and launchOptions", async () => {
+    createdConfig = undefined;
+    const ctx = makeCtx();
+    const plan: CreatePlan = { ...basePlan, extraArgs: ["--verbose", "--effort", "high"] };
+    const result = await executeCreate(ctx, plan);
+
+    expect(createdConfig!.members[0].extraArgs).toEqual(["--verbose", "--effort", "high"]);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.launchOptions.extraArgs).toEqual(["--verbose", "--effort", "high"]);
+    }
   });
 
   test("returns launchOptions with correct fields", async () => {

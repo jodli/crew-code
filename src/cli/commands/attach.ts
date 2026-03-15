@@ -47,7 +47,16 @@ export default defineCommand({
     );
     console.error(`  Resuming session ${result.value.launchOptions.sessionId}\n`);
 
-    result.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
+    const cliArgs = parsePassthroughArgs(rawArgs);
+    if (cliArgs.length > 0) {
+      result.value.launchOptions.extraArgs = cliArgs;
+      await ctx.configStore.updateTeam(args.team, (cfg) => ({
+        ...cfg,
+        members: cfg.members.map((m) =>
+          m.agentId === result.value.agentId ? { ...m, extraArgs: cliArgs } : m,
+        ),
+      }));
+    }
     const { pid, exited } = launchClaude(result.value.launchOptions, { mode: "resume" });
     await activateAgent(ctx, args.team, result.value.agentId, String(pid));
     const code = await exited;

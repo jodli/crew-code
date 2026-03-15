@@ -84,7 +84,7 @@ export function AgentListPanel({ agents, selectedIndex, focused, teamName }: Age
 
       {/* Detail section for selected agent */}
       <box
-        height={6}
+        height={7}
         border
         borderStyle="single"
         borderColor="#565f89"
@@ -101,6 +101,10 @@ export function AgentListPanel({ agents, selectedIndex, focused, teamName }: Age
         />
         <text
           content={`Model    ${selected.model || "(default)"}`}
+          fg="#a9b1d6"
+        />
+        <text
+          content={`Args     ${selected.extraArgs?.length ? selected.extraArgs.join(" ") : "-"}`}
           fg="#a9b1d6"
         />
         <text

@@ -16,6 +16,7 @@ import { ConfirmBar } from "./components/confirm-bar.tsx";
 import { ErrorToast } from "./components/error-toast.tsx";
 import { InboxView } from "./components/inbox-view.tsx";
 import { SendMessageForm } from "./components/send-message-form.tsx";
+import { AttachForm } from "./components/attach-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
 import { killAgent } from "../actions/kill-agent.ts";
@@ -85,7 +86,8 @@ export function App({ launcher }: AppProps) {
     nav.view.screen === "create-team" ||
     nav.view.screen === "spawn-agent" ||
     nav.view.screen === "send-message" ||
-    nav.view.screen === "inbox"
+    nav.view.screen === "inbox" ||
+    nav.view.screen === "attach-form"
   );
 
   const handleKey = useCallback(
@@ -138,18 +140,7 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_spawn_agent" });
         } else if ((key.name === "a" || key.name === "return") && nav.panel === "agents") {
           if (selectedAgent && selectedTeamName) {
-            const team = selectedTeamName;
-            const agent = selectedAgent;
-            attachAgent(ctx, { team, name: agent.name }).then((result) => {
-              if (!result.ok) {
-                setError(tuiErrorMessage(result.error));
-                return;
-              }
-              const args = buildAttachCommand(team, agent.name);
-              launcher.openTerminal(args, agent.cwd, `crew:${agent.name}`).catch((e) => {
-                setError(`Failed to attach: ${e.message}`);
-              });
-            });
+            dispatch({ type: "open_attach_form" });
           }
         } else if (key.name === "x" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_confirm_kill" });
@@ -252,6 +243,26 @@ export function App({ launcher }: AppProps) {
       dispatch({ type: "close_overlay" });
     },
     [selectedTeamName, selectedAgent],
+  );
+
+  const handleAttach = useCallback(
+    async (extraArgs: string[]) => {
+      if (!selectedTeamName || !selectedAgent) return;
+      const result = await attachAgent(ctx, { team: selectedTeamName, name: selectedAgent.name });
+      if (!result.ok) {
+        setError(tuiErrorMessage(result.error));
+        dispatch({ type: "close_overlay" });
+        return;
+      }
+      const args = buildAttachCommand(selectedTeamName, selectedAgent.name, extraArgs);
+      try {
+        await launcher.openTerminal(args, selectedAgent.cwd, `crew:${selectedAgent.name}`);
+      } catch (e: any) {
+        setError(`Failed to attach: ${e.message}`);
+      }
+      dispatch({ type: "close_overlay" });
+    },
+    [launcher, selectedTeamName, selectedAgent],
   );
 
   const handleCancelOverlay = useCallback(() => {
@@ -357,6 +368,14 @@ export function App({ launcher }: AppProps) {
           teamName={selectedTeamName}
           defaultCwd={process.cwd()}
           onSubmit={handleSpawnAgent}
+          onCancel={handleCancelOverlay}
+        />
+      )}
+      {nav.view.screen === "attach-form" && selectedTeamName && selectedAgent && (
+        <AttachForm
+          agentName={selectedAgent.name}
+          storedArgs={selectedAgent.extraArgs ?? []}
+          onSubmit={handleAttach}
           onCancel={handleCancelOverlay}
         />
       )}

@@ -7,6 +7,7 @@ import { ok, err } from "../types/result.ts";
 export interface CreateInput {
   name: string;
   description?: string;
+  extraArgs?: string[];
 }
 
 export interface CreatePlan {
@@ -15,6 +16,7 @@ export interface CreatePlan {
   leadAgentId: string;
   leadSessionId: string;
   cwd: string;
+  extraArgs?: string[];
 }
 
 export interface CreateOutput {
@@ -38,6 +40,7 @@ export async function planCreate(
     leadAgentId: `team-lead@${input.name}`,
     leadSessionId: randomUUID(),
     cwd: process.cwd(),
+    extraArgs: input.extraArgs,
   });
 }
 
@@ -56,6 +59,7 @@ export async function executeCreate(
     cwd: plan.cwd,
     subscriptions: [],
     sessionId: plan.leadSessionId,
+    extraArgs: plan.extraArgs,
   };
 
   const config: TeamConfig = {
@@ -76,6 +80,7 @@ export async function executeCreate(
     teamName: plan.name,
     cwd: plan.cwd,
     sessionId: plan.leadSessionId,
+    extraArgs: plan.extraArgs,
   };
 
   return ok({ name: plan.name, leadAgentId: plan.leadAgentId, launchOptions });

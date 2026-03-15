@@ -66,4 +66,17 @@ describe("buildAttachCommand", () => {
       "crew", "attach", "--team", "alpha", "--name", "coder",
     ]);
   });
+
+  test("appends -- and extra args when provided", () => {
+    expect(buildAttachCommand("alpha", "coder", ["--verbose"])).toEqual([
+      "crew", "attach", "--team", "alpha", "--name", "coder",
+      "--", "--verbose",
+    ]);
+  });
+
+  test("omits -- when extra args is empty", () => {
+    expect(buildAttachCommand("alpha", "coder", [])).toEqual([
+      "crew", "attach", "--team", "alpha", "--name", "coder",
+    ]);
+  });
 });

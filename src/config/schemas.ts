@@ -14,6 +14,7 @@ export const AgentMemberSchema = z.object({
   subscriptions: z.array(z.string()),
   isActive: z.boolean().optional(),
   sessionId: z.string().optional(),
+  extraArgs: z.array(z.string()).optional(),
 });
 
 export const TeamConfigSchema = z.object({

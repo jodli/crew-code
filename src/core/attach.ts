@@ -65,6 +65,7 @@ export async function attachAgent(
     color: member.color,
     parentSessionId: isTeamLead ? undefined : config.leadSessionId,
     sessionId: member.sessionId,
+    extraArgs: member.extraArgs,
   };
 
   return ok({

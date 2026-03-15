@@ -10,6 +10,7 @@ export interface SpawnInput {
   name?: string;
   model?: string;
   color?: string;
+  extraArgs?: string[];
 }
 
 export interface SpawnPlan {
@@ -22,6 +23,7 @@ export interface SpawnPlan {
   color?: string;
   parentSessionId: string;
   task?: string;
+  extraArgs?: string[];
 }
 
 export interface SpawnOutput {
@@ -75,6 +77,7 @@ export async function planSpawn(
     color: input.color,
     parentSessionId: config.leadSessionId,
     task: input.task,
+    extraArgs: input.extraArgs,
   });
 }
 
@@ -93,6 +96,7 @@ export async function executeSpawn(
     subscriptions: [],
     isActive: false,
     sessionId: plan.sessionId,
+    extraArgs: plan.extraArgs,
   };
 
   const addResult = await ctx.configStore.updateTeam(plan.team, (cfg) => ({
@@ -135,6 +139,7 @@ export async function executeSpawn(
     parentSessionId: plan.parentSessionId,
     model: plan.model,
     sessionId: plan.sessionId,
+    extraArgs: plan.extraArgs,
   };
 
   return ok({ agentId: plan.agentId, name: plan.agentName, team: plan.team, launchOptions });

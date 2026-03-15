@@ -58,6 +58,23 @@ describe("config/schemas", () => {
       expect(result.success).toBe(false);
     });
 
+    test("accepts extraArgs on agent member", () => {
+      const withExtraArgs = {
+        ...validConfig,
+        members: [
+          {
+            ...validConfig.members[0],
+            extraArgs: ["--verbose", "--effort", "high"],
+          },
+        ],
+      };
+      const result = TeamConfigSchema.safeParse(withExtraArgs);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.members[0].extraArgs).toEqual(["--verbose", "--effort", "high"]);
+      }
+    });
+
     test("allows optional fields to be missing", () => {
       const minimal = {
         name: "test",
