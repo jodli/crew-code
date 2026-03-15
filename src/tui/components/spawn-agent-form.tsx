@@ -32,6 +32,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
   const [modelIndex, setModelIndex] = useState(0);
   const [cwd, setCwd] = useState(defaultCwd);
   const [activeField, setActiveField] = useState<Field>("name");
+  const [error, setError] = useState("");
 
   const handleKey = useCallback(
     (key: KeyEvent) => {
@@ -50,8 +51,12 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       }
 
       if (key.name === "return") {
+        if (!cwd.trim()) {
+          setError("CWD is required");
+          return;
+        }
         const selectedModel = modelIndex === 0 ? "" : MODEL_OPTIONS[modelIndex];
-        onSubmit({ name: name.trim(), task: task.trim(), model: selectedModel, cwd: cwd.trim() || defaultCwd });
+        onSubmit({ name: name.trim(), task: task.trim(), model: selectedModel, cwd: cwd.trim() });
         return;
       }
 
@@ -71,14 +76,16 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
 
       if (key.name === "backspace") {
         textSetters[activeField](textFields[activeField].slice(0, -1));
+        setError("");
         return;
       }
 
       if (key.name && key.name.length === 1 && !key.ctrl && !key.meta) {
         textSetters[activeField](textFields[activeField] + key.name);
+        setError("");
       }
     },
-    [name, task, modelIndex, cwd, activeField, defaultCwd, onSubmit, onCancel],
+    [name, task, modelIndex, cwd, activeField, defaultCwd, onSubmit, onCancel, error],
   );
 
   useKeyboard(handleKey);
@@ -108,7 +115,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       top={3}
       left={4}
       width="60%"
-      height={14}
+      height={error ? 16 : 14}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
@@ -129,6 +136,12 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       <text content="" />
       <text content={cwdField.content} fg={cwdField.fg} />
       <text content="" />
+      {error ? (
+        <>
+          <text content={`  ${error}`} fg="#f7768e" />
+          <text content="" />
+        </>
+      ) : null}
       <text content="  [Enter] spawn   [Tab] next field   [Esc] cancel" fg="#565f89" />
     </box>
   );

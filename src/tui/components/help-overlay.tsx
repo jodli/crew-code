@@ -9,18 +9,18 @@ const helpText = [
   "  h           Focus teams panel",
   "",
   "Teams Panel",
-  "  n           New team (coming soon)",
-  "  d           Destroy team (coming soon)",
+  "  n           Create new team",
+  "  d           Destroy team",
   "",
   "Agents Panel",
-  "  s           Spawn agent (coming soon)",
-  "  a           Attach to agent (coming soon)",
-  "  x           Kill agent (coming soon)",
+  "  s           Spawn new agent",
+  "  a / Enter   Attach to agent",
+  "  x           Kill agent",
   "",
   "General",
   "  ?           Toggle this help",
   "  q           Quit",
-  "  Esc         Close overlay",
+  "  Esc         Close overlay / cancel",
 ].join("\n");
 
 export function HelpOverlay() {
@@ -30,7 +30,7 @@ export function HelpOverlay() {
       top={2}
       left={4}
       width="60%"
-      height={18}
+      height={25}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"

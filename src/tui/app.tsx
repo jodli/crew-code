@@ -1,4 +1,4 @@
-import { useState, useReducer, useCallback } from "react";
+import { useState, useReducer, useCallback, useEffect } from "react";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 import { JsonFileConfigStore } from "../adapters/json-file-config-store.ts";
@@ -13,6 +13,7 @@ import { HelpOverlay } from "./components/help-overlay.tsx";
 import { CreateTeamForm } from "./components/create-team-form.tsx";
 import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
 import { ConfirmBar } from "./components/confirm-bar.tsx";
+import { ErrorToast } from "./components/error-toast.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
 import { killProcess } from "../lib/process.ts";
@@ -31,12 +32,29 @@ export function App({ launcher }: AppProps) {
   const teams = useTeams(configStore);
   const [nav, dispatch] = useReducer(navReducer, initialNavState);
   const [exiting, setExiting] = useState(false);
+  const [error, setError] = useState("");
+
+  // Clamp teamIndex when teams list shrinks (e.g. after destroy)
+  useEffect(() => {
+    if (nav === "quit") return;
+    if (teams.length > 0 && nav.teamIndex >= teams.length) {
+      dispatch({ type: "move_up" });
+    }
+  }, [teams.length, nav]);
 
   const selectedTeamName = nav !== "quit" && teams[nav.teamIndex]
     ? teams[nav.teamIndex].name
     : null;
 
   const agents = useAgents(configStore, selectedTeamName);
+
+  // Clamp agentIndex when agents list shrinks
+  useEffect(() => {
+    if (nav === "quit") return;
+    if (agents.length > 0 && nav.agentIndex >= agents.length) {
+      dispatch({ type: "move_up" });
+    }
+  }, [agents.length, nav]);
 
   const isOverlay = nav !== "quit" && nav.view.screen !== "dashboard";
   const isConfirm = nav !== "quit" && (nav.view.screen === "confirm-kill" || nav.view.screen === "confirm-destroy");
@@ -96,7 +114,9 @@ export function App({ launcher }: AppProps) {
           const agent = agents[nav.agentIndex];
           if (agent && selectedTeamName) {
             const args = buildAttachCommand(selectedTeamName, agent.name);
-            launcher.openTerminal(args, agent.cwd, `crew:${agent.name}`);
+            launcher.openTerminal(args, agent.cwd, `crew:${agent.name}`).catch((e) => {
+              setError(`Failed to attach: ${e.message}`);
+            });
           }
         } else if (key.name === "x" && nav.panel === "agents" && agents[nav.agentIndex]) {
           dispatch({ type: "open_confirm_kill" });
@@ -112,7 +132,11 @@ export function App({ launcher }: AppProps) {
 
   const handleCreateTeam = useCallback(
     async (name: string, cwd: string) => {
-      await launcher.openTerminal(buildCreateCommand(name), cwd, `crew:${name}`);
+      try {
+        await launcher.openTerminal(buildCreateCommand(name), cwd, `crew:${name}`);
+      } catch (e: any) {
+        setError(`Failed to create: ${e.message}`);
+      }
       dispatch({ type: "close_overlay" });
     },
     [launcher],
@@ -122,7 +146,11 @@ export function App({ launcher }: AppProps) {
     async (opts: { name: string; task: string; model: string; cwd: string }) => {
       if (!selectedTeamName) return;
       const args = buildSpawnCommand(selectedTeamName, opts);
-      await launcher.openTerminal(args, opts.cwd, `crew:${opts.name || "agent"}`);
+      try {
+        await launcher.openTerminal(args, opts.cwd, `crew:${opts.name || "agent"}`);
+      } catch (e: any) {
+        setError(`Failed to spawn: ${e.message}`);
+      }
       dispatch({ type: "close_overlay" });
     },
     [launcher, selectedTeamName],
@@ -142,13 +170,22 @@ export function App({ launcher }: AppProps) {
     if (!selectedTeamName) return;
     const planResult = await planDestroy(ctx, { team: selectedTeamName });
     if (planResult.ok) {
-      await executeDestroy(ctx, planResult.value);
+      const result = await executeDestroy(ctx, planResult.value);
+      if (!result.ok) {
+        setError(`Destroy failed: ${result.error.kind}`);
+      }
+    } else {
+      setError(`Destroy failed: ${planResult.error.kind}`);
     }
     dispatch({ type: "close_overlay" });
   }, [selectedTeamName]);
 
   const handleCancelOverlay = useCallback(() => {
     dispatch({ type: "close_overlay" });
+  }, []);
+
+  const handleDismissError = useCallback(() => {
+    setError("");
   }, []);
 
   if (nav === "quit" || exiting) {
@@ -221,6 +258,9 @@ export function App({ launcher }: AppProps) {
           onCancel={handleCancelOverlay}
         />
       )}
+
+      {/* Error toast */}
+      {error && <ErrorToast message={error} onDismiss={handleDismissError} />}
     </box>
   );
 }
