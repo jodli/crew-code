@@ -22,7 +22,10 @@ afterEach(async () => {
   await rm(tmpDir, { recursive: true, force: true });
 });
 
-function makeTeam(name: string, members: { name: string; processId: string; sessionId?: string }[]): TeamConfig {
+function makeTeam(
+  name: string,
+  members: { name: string; processId: string; sessionId?: string; model?: string }[],
+): TeamConfig {
   return {
     name,
     createdAt: Date.now(),
@@ -32,6 +35,7 @@ function makeTeam(name: string, members: { name: string; processId: string; sess
       agentId: `${m.name}@${name}`,
       name: m.name,
       agentType: i === 0 ? "team-lead" : undefined,
+      model: m.model,
       joinedAt: Date.now(),
       processId: m.processId,
       cwd: "/tmp/project",
@@ -50,7 +54,9 @@ function summarizeFromConfig(team: TeamConfig): AgentSummary[] {
       status: (pid > 0 && isProcessAlive(pid) ? "alive" : "dead") as "alive" | "dead",
       processId: m.processId,
       sessionId: m.sessionId,
+      model: m.model,
       cwd: m.cwd,
+      unreadCount: 0,
     };
   });
 }
@@ -95,7 +101,7 @@ describe("useAgents — data layer", () => {
 
   test("includes all fields in summary", async () => {
     const team = makeTeam("gamma", [
-      { name: "writer", processId: "", sessionId: "sess-w" },
+      { name: "writer", processId: "", sessionId: "sess-w", model: "claude-sonnet-4-6" },
     ]);
     await store.createTeam(team);
 
@@ -109,7 +115,9 @@ describe("useAgents — data layer", () => {
       status: "dead",
       processId: "",
       sessionId: "sess-w",
+      model: "claude-sonnet-4-6",
       cwd: "/tmp/project",
+      unreadCount: 0,
     });
   });
 });

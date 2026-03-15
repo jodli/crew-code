@@ -7,10 +7,6 @@ interface AgentListPanelProps {
   teamName: string | null;
 }
 
-function truncate(s: string, max: number): string {
-  return s.length > max ? s.slice(0, max - 2) + ".." : s;
-}
-
 export function AgentListPanel({ agents, selectedIndex, focused, teamName }: AgentListPanelProps) {
   const borderColor = focused ? "#7aa2f7" : "#565f89";
   const title = teamName ? ` Agents in: ${teamName} ` : " Agents ";
@@ -48,8 +44,7 @@ export function AgentListPanel({ agents, selectedIndex, focused, teamName }: Age
     );
   }
 
-  // Header
-  const header = `  ${"NAME".padEnd(14)} ${"STATUS".padEnd(8)} ${"SESSION".padEnd(14)} CWD`;
+  const selected = agents[selectedIndex] ?? agents[0];
 
   return (
     <box
@@ -61,25 +56,58 @@ export function AgentListPanel({ agents, selectedIndex, focused, teamName }: Age
       flexDirection="column"
       paddingX={1}
     >
-      <text content={header} fg="#565f89" />
-      {agents.map((agent, i) => {
-        const isSelected = i === selectedIndex && focused;
-        const prefix = isSelected ? ">" : " ";
-        const statusIcon = agent.status === "alive" ? "*" : ".";
-        const statusColor = agent.status === "alive" ? "#9ece6a" : "#f7768e";
-        const session = agent.sessionId ? truncate(agent.sessionId, 12) : "-";
-        const cwd = truncate(agent.cwd, 20);
+      {/* Compact agent list */}
+      <box flexGrow={1} flexDirection="column">
+        <text
+          content={`  ${"NAME".padEnd(16)} ${"STATUS".padEnd(8)} INBOX`}
+          fg="#565f89"
+        />
+        {agents.map((agent, i) => {
+          const isSelected = i === selectedIndex;
+          const prefix = isSelected && focused ? ">" : " ";
+          const statusIcon = agent.status === "alive" ? "*" : ".";
+          const inbox = agent.unreadCount > 0
+            ? `${agent.unreadCount} unread`
+            : "-";
 
-        const line = `${prefix} ${agent.name.padEnd(14)} ${statusIcon} ${agent.status.padEnd(6)} ${session.padEnd(14)} ${cwd}`;
+          const line = `${prefix} ${agent.name.padEnd(16)} ${statusIcon} ${agent.status.padEnd(6)} ${inbox}`;
 
-        return (
-          <text
-            key={agent.agentId}
-            content={line}
-            fg={isSelected ? "#c0caf5" : "#a9b1d6"}
-          />
-        );
-      })}
+          return (
+            <text
+              key={agent.agentId}
+              content={line}
+              fg={isSelected ? "#c0caf5" : "#a9b1d6"}
+            />
+          );
+        })}
+      </box>
+
+      {/* Detail section for selected agent */}
+      <box
+        height={6}
+        border
+        borderStyle="single"
+        borderColor="#565f89"
+        flexDirection="column"
+        paddingX={1}
+      >
+        <text
+          content={`Session  ${selected.sessionId || "-"}`}
+          fg="#a9b1d6"
+        />
+        <text
+          content={`CWD      ${selected.cwd}`}
+          fg="#a9b1d6"
+        />
+        <text
+          content={`Model    ${selected.model || "(default)"}`}
+          fg="#a9b1d6"
+        />
+        <text
+          content={`PID      ${selected.processId || "-"}`}
+          fg="#565f89"
+        />
+      </box>
     </box>
   );
 }

@@ -46,7 +46,7 @@ export function App({ launcher }: AppProps) {
     ? teams[nav.teamIndex].name
     : null;
 
-  const agents = useAgents(configStore, selectedTeamName);
+  const agents = useAgents(configStore, inboxStore, selectedTeamName);
 
   // Clamp agentIndex when agents list shrinks
   useEffect(() => {

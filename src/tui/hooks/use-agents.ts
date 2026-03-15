@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ConfigStore } from "../../ports/config-store.ts";
+import type { InboxStore } from "../../ports/inbox-store.ts";
 import type { AgentMember } from "../../types/domain.ts";
 import { isProcessAlive } from "../../lib/process.ts";
 
@@ -9,10 +10,12 @@ export interface AgentSummary {
   status: "alive" | "dead";
   processId: string;
   sessionId?: string;
+  model?: string;
   cwd: string;
+  unreadCount: number;
 }
 
-function summarizeAgent(member: AgentMember): AgentSummary {
+function summarizeAgent(member: AgentMember, unreadCount: number): AgentSummary {
   const pid = parseInt(member.processId, 10);
   const alive = pid > 0 && isProcessAlive(pid);
 
@@ -22,12 +25,15 @@ function summarizeAgent(member: AgentMember): AgentSummary {
     status: alive ? "alive" : "dead",
     processId: member.processId,
     sessionId: member.sessionId,
+    model: member.model,
     cwd: member.cwd,
+    unreadCount,
   };
 }
 
 export function useAgents(
   configStore: ConfigStore,
+  inboxStore: InboxStore,
   teamName: string | null,
   pollIntervalMs = 2000,
 ) {
@@ -45,8 +51,19 @@ export function useAgents(
       return;
     }
 
-    setAgents(result.value.members.map(summarizeAgent));
-  }, [configStore, teamName]);
+    const summaries = await Promise.all(
+      result.value.members.map(async (member) => {
+        let unread = 0;
+        const inboxResult = await inboxStore.readMessages(teamName, member.name);
+        if (inboxResult.ok) {
+          unread = inboxResult.value.filter((m) => !m.read).length;
+        }
+        return summarizeAgent(member, unread);
+      }),
+    );
+
+    setAgents(summaries);
+  }, [configStore, inboxStore, teamName]);
 
   useEffect(() => {
     refresh();
