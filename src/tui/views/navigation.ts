@@ -1,5 +1,6 @@
 export type View =
   | { screen: "dashboard" }
+  | { screen: "create-team" }
   | { screen: "help" };
 
 export type Panel = "teams" | "agents";
@@ -24,6 +25,7 @@ export type NavAction =
   | { type: "switch_panel" }
   | { type: "focus_teams" }
   | { type: "focus_agents" }
+  | { type: "open_create_team" }
   | { type: "toggle_help" }
   | { type: "close_overlay" }
   | { type: "quit" };
@@ -56,6 +58,9 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
 
     case "focus_agents":
       return { ...state, panel: "agents" };
+
+    case "open_create_team":
+      return { ...state, view: { screen: "create-team" } };
 
     case "toggle_help":
       if (state.view.screen === "help") {
