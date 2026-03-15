@@ -12,7 +12,7 @@ import { HelpOverlay } from "./components/help-overlay.tsx";
 import { CreateTeamForm } from "./components/create-team-form.tsx";
 import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
-import { buildCreateCommand, buildSpawnCommand } from "./launcher/commands.ts";
+import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
 
 const configStore = new JsonFileConfigStore();
 
@@ -83,6 +83,12 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_create_team" });
         } else if (key.name === "s" && nav.panel === "agents" && selectedTeamName) {
           dispatch({ type: "open_spawn_agent" });
+        } else if ((key.name === "a" || key.name === "return") && nav.panel === "agents") {
+          const agent = agents[nav.agentIndex];
+          if (agent && selectedTeamName) {
+            const args = buildAttachCommand(selectedTeamName, agent.name);
+            launcher.openTerminal(args, agent.cwd, `crew:${agent.name}`);
+          }
         }
       }
     },
