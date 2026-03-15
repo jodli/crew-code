@@ -14,4 +14,5 @@ export type CrewError =
   | { kind: "spawn_failed"; detail: string }
   | { kind: "team_already_exists"; team: string }
   | { kind: "agent_not_found"; agent: string; team: string }
-  | { kind: "no_session_id"; agent: string; team: string };
+  | { kind: "no_session_id"; agent: string; team: string }
+  | { kind: "cannot_remove_lead"; agent: string; team: string };

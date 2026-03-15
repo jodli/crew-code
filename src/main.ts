@@ -7,6 +7,7 @@ import send from "./cli/commands/send.ts";
 import destroy from "./cli/commands/destroy.ts";
 import doctor from "./cli/commands/doctor.ts";
 import inbox from "./cli/commands/inbox.ts";
+import remove from "./cli/commands/remove.ts";
 import tui from "./cli/commands/tui.ts";
 
 const main = defineCommand({
@@ -24,6 +25,7 @@ const main = defineCommand({
     destroy,
     doctor,
     inbox,
+    remove,
     tui,
   },
 });

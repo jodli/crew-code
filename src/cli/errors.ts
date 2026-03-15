@@ -51,6 +51,10 @@ const messages: Record<string, (e: CrewError) => string> = {
     const { agent, team } = e as { agent: string; team: string };
     return `Agent "${agent}" in team "${team}" has no stored session ID. It was created before session tracking was added.`;
   },
+  cannot_remove_lead: (e) => {
+    const { agent, team } = e as { agent: string; team: string };
+    return `Cannot remove team lead "${agent}" from "${team}". Use "crew destroy" to remove the entire team.`;
+  },
 };
 
 export function renderError(e: CrewError): string {
