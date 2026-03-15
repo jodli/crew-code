@@ -14,10 +14,13 @@ import { CreateTeamForm } from "./components/create-team-form.tsx";
 import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
 import { ConfirmBar } from "./components/confirm-bar.tsx";
 import { ErrorToast } from "./components/error-toast.tsx";
+import { InboxView } from "./components/inbox-view.tsx";
+import { SendMessageForm } from "./components/send-message-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
 import { killProcess } from "../lib/process.ts";
 import { planDestroy, executeDestroy } from "../core/destroy.ts";
+import { sendMessage } from "../core/send.ts";
 
 const configStore = new JsonFileConfigStore();
 const inboxStore = new JsonFileInboxStore();
@@ -56,16 +59,22 @@ export function App({ launcher }: AppProps) {
     }
   }, [agents.length, nav]);
 
+  const selectedAgent = nav !== "quit" ? agents[nav.agentIndex] ?? null : null;
+
   const isOverlay = nav !== "quit" && nav.view.screen !== "dashboard";
   const isConfirm = nav !== "quit" && (nav.view.screen === "confirm-kill" || nav.view.screen === "confirm-destroy");
+  // Views that handle all their own keyboard input
+  const isDelegatedView = nav !== "quit" && (
+    nav.view.screen === "create-team" ||
+    nav.view.screen === "spawn-agent" ||
+    nav.view.screen === "send-message" ||
+    nav.view.screen === "inbox"
+  );
 
   const handleKey = useCallback(
     (key: KeyEvent) => {
       if (exiting || nav === "quit") return;
-
-      // Overlays with their own keyboard handling
-      if (nav.view.screen === "create-team" || nav.view.screen === "spawn-agent") return;
-      // Confirm bars handle their own y/n/Esc
+      if (isDelegatedView) return;
       if (isConfirm) return;
 
       // Global keys
@@ -111,21 +120,24 @@ export function App({ launcher }: AppProps) {
         } else if (key.name === "s" && nav.panel === "agents" && selectedTeamName) {
           dispatch({ type: "open_spawn_agent" });
         } else if ((key.name === "a" || key.name === "return") && nav.panel === "agents") {
-          const agent = agents[nav.agentIndex];
-          if (agent && selectedTeamName) {
-            const args = buildAttachCommand(selectedTeamName, agent.name);
-            launcher.openTerminal(args, agent.cwd, `crew:${agent.name}`).catch((e) => {
+          if (selectedAgent && selectedTeamName) {
+            const args = buildAttachCommand(selectedTeamName, selectedAgent.name);
+            launcher.openTerminal(args, selectedAgent.cwd, `crew:${selectedAgent.name}`).catch((e) => {
               setError(`Failed to attach: ${e.message}`);
             });
           }
-        } else if (key.name === "x" && nav.panel === "agents" && agents[nav.agentIndex]) {
+        } else if (key.name === "x" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_confirm_kill" });
         } else if (key.name === "d" && nav.panel === "teams" && selectedTeamName) {
           dispatch({ type: "open_confirm_destroy" });
+        } else if (key.name === "i" && nav.panel === "agents" && selectedAgent) {
+          dispatch({ type: "open_inbox" });
+        } else if (key.name === "m" && nav.panel === "agents" && selectedAgent && selectedTeamName) {
+          dispatch({ type: "open_send_message" });
         }
       }
     },
-    [nav, teams.length, agents.length, exiting, isConfirm, selectedTeamName],
+    [nav, teams.length, agents.length, exiting, isDelegatedView, isConfirm, selectedTeamName, selectedAgent],
   );
 
   useKeyboard(handleKey);
@@ -180,6 +192,23 @@ export function App({ launcher }: AppProps) {
     dispatch({ type: "close_overlay" });
   }, [selectedTeamName]);
 
+  const handleSendMessage = useCallback(
+    async (message: string) => {
+      if (!selectedTeamName || !selectedAgent) return;
+      const result = await sendMessage(ctx, {
+        team: selectedTeamName,
+        agent: selectedAgent.name,
+        message,
+        from: "tui",
+      });
+      if (!result.ok) {
+        setError(`Send failed: ${result.error.kind}`);
+      }
+      dispatch({ type: "close_overlay" });
+    },
+    [selectedTeamName, selectedAgent],
+  );
+
   const handleCancelOverlay = useCallback(() => {
     dispatch({ type: "close_overlay" });
   }, []);
@@ -192,8 +221,25 @@ export function App({ launcher }: AppProps) {
     return <text content="Goodbye!" />;
   }
 
+  // Inbox view replaces the dashboard entirely
+  if (nav.view.screen === "inbox" && selectedTeamName && selectedAgent) {
+    return (
+      <box width={width} height={height} flexDirection="column">
+        <InboxView
+          inboxStore={inboxStore}
+          teamName={selectedTeamName}
+          agentName={selectedAgent.name}
+          onClose={handleCancelOverlay}
+          onSend={() => dispatch({ type: "open_send_message" })}
+        />
+        {nav.view.screen === "inbox" && error && (
+          <ErrorToast message={error} onDismiss={handleDismissError} />
+        )}
+      </box>
+    );
+  }
+
   // Build confirm messages
-  const selectedAgent = agents[nav.agentIndex];
   const killMessage = selectedAgent
     ? `Kill agent "${selectedAgent.name}"?`
     : "";
@@ -255,6 +301,14 @@ export function App({ launcher }: AppProps) {
           teamName={selectedTeamName}
           defaultCwd={process.cwd()}
           onSubmit={handleSpawnAgent}
+          onCancel={handleCancelOverlay}
+        />
+      )}
+      {nav.view.screen === "send-message" && selectedTeamName && selectedAgent && (
+        <SendMessageForm
+          teamName={selectedTeamName}
+          agentName={selectedAgent.name}
+          onSubmit={handleSendMessage}
           onCancel={handleCancelOverlay}
         />
       )}

@@ -16,6 +16,8 @@ const helpText = [
   "  s           Spawn new agent",
   "  a / Enter   Attach to agent",
   "  x           Kill agent",
+  "  i           Open inbox",
+  "  m           Send message",
   "",
   "General",
   "  ?           Toggle this help",
@@ -30,7 +32,7 @@ export function HelpOverlay() {
       top={2}
       left={4}
       width="60%"
-      height={25}
+      height={27}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"

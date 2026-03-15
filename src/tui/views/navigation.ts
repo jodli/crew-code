@@ -4,6 +4,8 @@ export type View =
   | { screen: "spawn-agent" }
   | { screen: "confirm-kill" }
   | { screen: "confirm-destroy" }
+  | { screen: "inbox" }
+  | { screen: "send-message" }
   | { screen: "help" };
 
 export type Panel = "teams" | "agents";
@@ -32,6 +34,8 @@ export type NavAction =
   | { type: "open_spawn_agent" }
   | { type: "open_confirm_kill" }
   | { type: "open_confirm_destroy" }
+  | { type: "open_inbox" }
+  | { type: "open_send_message" }
   | { type: "toggle_help" }
   | { type: "close_overlay" }
   | { type: "quit" };
@@ -76,6 +80,12 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
 
     case "open_confirm_destroy":
       return { ...state, view: { screen: "confirm-destroy" } };
+
+    case "open_inbox":
+      return { ...state, view: { screen: "inbox" } };
+
+    case "open_send_message":
+      return { ...state, view: { screen: "send-message" } };
 
     case "toggle_help":
       if (state.view.screen === "help") {

@@ -188,6 +188,38 @@ describe("navReducer", () => {
     });
   });
 
+  describe("inbox view", () => {
+    test("open_inbox switches to inbox view", () => {
+      const state: NavState = { ...initialNavState, panel: "agents" };
+      const s = navReducer(state, { type: "open_inbox" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("inbox");
+    });
+
+    test("close_overlay returns to dashboard from inbox", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "inbox" } };
+      const s = navReducer(state, { type: "close_overlay" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("dashboard");
+    });
+  });
+
+  describe("send-message overlay", () => {
+    test("open_send_message switches to send-message view", () => {
+      const state: NavState = { ...initialNavState, panel: "agents" };
+      const s = navReducer(state, { type: "open_send_message" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("send-message");
+    });
+
+    test("close_overlay returns to dashboard from send-message", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "send-message" } };
+      const s = navReducer(state, { type: "close_overlay" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("dashboard");
+    });
+  });
+
   test("quit returns 'quit'", () => {
     const s = navReducer(initialNavState, { type: "quit" });
     expect(s).toBe("quit");
