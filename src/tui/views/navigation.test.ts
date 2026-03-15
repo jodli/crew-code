@@ -157,6 +157,37 @@ describe("navReducer", () => {
     });
   });
 
+  describe("confirm-kill-agent", () => {
+    test("open_confirm_kill switches to confirm-kill view", () => {
+      const state: NavState = { ...initialNavState, panel: "agents" };
+      const s = navReducer(state, { type: "open_confirm_kill" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("confirm-kill");
+    });
+
+    test("close_overlay returns to dashboard from confirm-kill", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "confirm-kill" } };
+      const s = navReducer(state, { type: "close_overlay" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("dashboard");
+    });
+  });
+
+  describe("confirm-destroy-team", () => {
+    test("open_confirm_destroy switches to confirm-destroy view", () => {
+      const s = navReducer(initialNavState, { type: "open_confirm_destroy" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("confirm-destroy");
+    });
+
+    test("close_overlay returns to dashboard from confirm-destroy", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "confirm-destroy" } };
+      const s = navReducer(state, { type: "close_overlay" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("dashboard");
+    });
+  });
+
   test("quit returns 'quit'", () => {
     const s = navReducer(initialNavState, { type: "quit" });
     expect(s).toBe("quit");

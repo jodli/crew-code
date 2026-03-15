@@ -2,6 +2,7 @@ import { useState, useReducer, useCallback } from "react";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 import { JsonFileConfigStore } from "../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../adapters/json-file-inbox-store.ts";
 import { useTeams } from "./hooks/use-teams.ts";
 import { useAgents } from "./hooks/use-agents.ts";
 import { navReducer, initialNavState } from "./views/navigation.ts";
@@ -11,10 +12,15 @@ import { ShortcutBar } from "./components/shortcut-bar.tsx";
 import { HelpOverlay } from "./components/help-overlay.tsx";
 import { CreateTeamForm } from "./components/create-team-form.tsx";
 import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
+import { ConfirmBar } from "./components/confirm-bar.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
+import { killProcess } from "../lib/process.ts";
+import { planDestroy, executeDestroy } from "../core/destroy.ts";
 
 const configStore = new JsonFileConfigStore();
+const inboxStore = new JsonFileInboxStore();
+const ctx = { configStore, inboxStore };
 
 interface AppProps {
   launcher: Launcher;
@@ -33,13 +39,16 @@ export function App({ launcher }: AppProps) {
   const agents = useAgents(configStore, selectedTeamName);
 
   const isOverlay = nav !== "quit" && nav.view.screen !== "dashboard";
+  const isConfirm = nav !== "quit" && (nav.view.screen === "confirm-kill" || nav.view.screen === "confirm-destroy");
 
   const handleKey = useCallback(
     (key: KeyEvent) => {
       if (exiting || nav === "quit") return;
 
-      // When an overlay with its own keyboard handling is active, let it handle keys
+      // Overlays with their own keyboard handling
       if (nav.view.screen === "create-team" || nav.view.screen === "spawn-agent") return;
+      // Confirm bars handle their own y/n/Esc
+      if (isConfirm) return;
 
       // Global keys
       if (key.name === "q" && !key.ctrl) {
@@ -89,10 +98,14 @@ export function App({ launcher }: AppProps) {
             const args = buildAttachCommand(selectedTeamName, agent.name);
             launcher.openTerminal(args, agent.cwd, `crew:${agent.name}`);
           }
+        } else if (key.name === "x" && nav.panel === "agents" && agents[nav.agentIndex]) {
+          dispatch({ type: "open_confirm_kill" });
+        } else if (key.name === "d" && nav.panel === "teams" && selectedTeamName) {
+          dispatch({ type: "open_confirm_destroy" });
         }
       }
     },
-    [nav, teams.length, agents.length, exiting],
+    [nav, teams.length, agents.length, exiting, isConfirm, selectedTeamName],
   );
 
   useKeyboard(handleKey);
@@ -115,6 +128,25 @@ export function App({ launcher }: AppProps) {
     [launcher, selectedTeamName],
   );
 
+  const handleConfirmKill = useCallback(() => {
+    if (nav === "quit") return;
+    const agent = agents[nav.agentIndex];
+    if (agent) {
+      const pid = parseInt(agent.processId, 10);
+      if (pid > 0) killProcess(pid);
+    }
+    dispatch({ type: "close_overlay" });
+  }, [nav, agents]);
+
+  const handleConfirmDestroy = useCallback(async () => {
+    if (!selectedTeamName) return;
+    const planResult = await planDestroy(ctx, { team: selectedTeamName });
+    if (planResult.ok) {
+      await executeDestroy(ctx, planResult.value);
+    }
+    dispatch({ type: "close_overlay" });
+  }, [selectedTeamName]);
+
   const handleCancelOverlay = useCallback(() => {
     dispatch({ type: "close_overlay" });
   }, []);
@@ -122,6 +154,15 @@ export function App({ launcher }: AppProps) {
   if (nav === "quit" || exiting) {
     return <text content="Goodbye!" />;
   }
+
+  // Build confirm messages
+  const selectedAgent = agents[nav.agentIndex];
+  const killMessage = selectedAgent
+    ? `Kill agent "${selectedAgent.name}"?`
+    : "";
+  const destroyMessage = selectedTeamName
+    ? `Destroy team "${selectedTeamName}"? Kills ${agents.filter(a => a.status === "alive").length} agent(s).`
+    : "";
 
   return (
     <box width={width} height={height} flexDirection="column">
@@ -146,8 +187,22 @@ export function App({ launcher }: AppProps) {
         />
       </box>
 
-      {/* Shortcut bar */}
-      <ShortcutBar panel={nav.panel} />
+      {/* Bottom bar — either shortcut bar or confirm bar */}
+      {nav.view.screen === "confirm-kill" ? (
+        <ConfirmBar
+          message={killMessage}
+          onConfirm={handleConfirmKill}
+          onCancel={handleCancelOverlay}
+        />
+      ) : nav.view.screen === "confirm-destroy" ? (
+        <ConfirmBar
+          message={destroyMessage}
+          onConfirm={handleConfirmDestroy}
+          onCancel={handleCancelOverlay}
+        />
+      ) : (
+        <ShortcutBar panel={nav.panel} />
+      )}
 
       {/* Overlays */}
       {nav.view.screen === "help" && <HelpOverlay />}

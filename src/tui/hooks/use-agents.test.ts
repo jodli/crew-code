@@ -48,6 +48,7 @@ function summarizeFromConfig(team: TeamConfig): AgentSummary[] {
       name: m.name,
       agentId: m.agentId,
       status: (pid > 0 && isProcessAlive(pid) ? "alive" : "dead") as "alive" | "dead",
+      processId: m.processId,
       sessionId: m.sessionId,
       cwd: m.cwd,
     };
@@ -106,6 +107,7 @@ describe("useAgents — data layer", () => {
       name: "writer",
       agentId: "writer@gamma",
       status: "dead",
+      processId: "",
       sessionId: "sess-w",
       cwd: "/tmp/project",
     });

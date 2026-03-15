@@ -7,6 +7,7 @@ export interface AgentSummary {
   name: string;
   agentId: string;
   status: "alive" | "dead";
+  processId: string;
   sessionId?: string;
   cwd: string;
 }
@@ -19,6 +20,7 @@ function summarizeAgent(member: AgentMember): AgentSummary {
     name: member.name,
     agentId: member.agentId,
     status: alive ? "alive" : "dead",
+    processId: member.processId,
     sessionId: member.sessionId,
     cwd: member.cwd,
   };

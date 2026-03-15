@@ -2,6 +2,8 @@ export type View =
   | { screen: "dashboard" }
   | { screen: "create-team" }
   | { screen: "spawn-agent" }
+  | { screen: "confirm-kill" }
+  | { screen: "confirm-destroy" }
   | { screen: "help" };
 
 export type Panel = "teams" | "agents";
@@ -28,6 +30,8 @@ export type NavAction =
   | { type: "focus_agents" }
   | { type: "open_create_team" }
   | { type: "open_spawn_agent" }
+  | { type: "open_confirm_kill" }
+  | { type: "open_confirm_destroy" }
   | { type: "toggle_help" }
   | { type: "close_overlay" }
   | { type: "quit" };
@@ -66,6 +70,12 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
 
     case "open_spawn_agent":
       return { ...state, view: { screen: "spawn-agent" } };
+
+    case "open_confirm_kill":
+      return { ...state, view: { screen: "confirm-kill" } };
+
+    case "open_confirm_destroy":
+      return { ...state, view: { screen: "confirm-destroy" } };
 
     case "toggle_help":
       if (state.view.screen === "help") {
