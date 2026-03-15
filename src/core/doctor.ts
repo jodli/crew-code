@@ -2,6 +2,8 @@ import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
 import { ok } from "../types/result.ts";
 import { isProcessAlive } from "../lib/process.ts";
+import { sessionExistsOnDisk } from "../lib/claude-session.ts";
+import { executeRemove, type RemovePlan } from "./remove.ts";
 
 export type DiagnosticStatus = "ok" | "warn" | "error";
 
@@ -17,6 +19,7 @@ export interface DiagnosticResult {
 
 export interface DiagnoseInput {
   team?: string;
+  checkSession?: (cwd: string, sessionId: string) => boolean;
 }
 
 export interface FixResult {
@@ -130,6 +133,41 @@ export async function diagnose(
               );
               if (!updateResult.ok) return updateResult;
               return ok(`Set ${agentName} isActive to false in team "${teamName}"`);
+            },
+          });
+        }
+      }
+    }
+
+    // Check: stale session (sessionId stored but no file on disk)
+    const checkSession = input.checkSession ?? sessionExistsOnDisk;
+    for (const member of config.members) {
+      if (member.sessionId && member.agentType !== "team-lead") {
+        if (!checkSession(member.cwd, member.sessionId)) {
+          const agentName = member.name;
+          const agentId = member.agentId;
+          const processId = member.processId;
+          results.push({
+            checkId: "stale-session",
+            status: "warn",
+            message: `Agent "${agentName}" in team "${teamName}" has a stale session (no conversation on disk)`,
+            detail: agentName,
+            team: teamName,
+            fixable: true,
+            fix: async (fixCtx: AppContext) => {
+              const inboxList = await fixCtx.inboxStore.listInboxes(teamName);
+              const hasInbox = inboxList.ok ? inboxList.value.includes(agentName) : false;
+              const plan: RemovePlan = {
+                team: teamName,
+                name: agentName,
+                agentId,
+                processId,
+                isAlive: false,
+                hasInbox,
+              };
+              const removeResult = await executeRemove(fixCtx, plan);
+              if (!removeResult.ok) return removeResult;
+              return ok(`Removed agent "${agentName}" from team "${teamName}"`);
             },
           });
         }

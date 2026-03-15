@@ -2,10 +2,12 @@ import type { AppContext } from "../types/context.ts";
 import type { LaunchOptions } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
+import { sessionExistsOnDisk } from "../lib/claude-session.ts";
 
 export interface AttachInput {
   team: string;
   name?: string;
+  checkSession?: (cwd: string, sessionId: string) => boolean;
 }
 
 export interface AttachOutput {
@@ -38,6 +40,15 @@ export async function attachAgent(
   if (!member.sessionId) {
     return err({
       kind: "no_session_id",
+      agent: agentName,
+      team: input.team,
+    });
+  }
+
+  const checkSession = input.checkSession ?? sessionExistsOnDisk;
+  if (!checkSession(member.cwd, member.sessionId)) {
+    return err({
+      kind: "stale_session",
       agent: agentName,
       team: input.team,
     });
