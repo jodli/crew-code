@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { attachAgent } from "../../core/attach.ts";
+import { attachAgent } from "../../actions/attach-agent.ts";
 import { launchClaude } from "../../lib/exec-claude.ts";
 import { activateAgent } from "../../core/spawn.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";

@@ -1,8 +1,9 @@
-import { describe, expect, test, beforeEach } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
-  registerAgent,
+  planSpawn,
+  executeSpawn,
   activateAgent,
-  type RegisterInput,
+  type SpawnPlan,
 } from "./spawn.ts";
 import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
@@ -102,14 +103,11 @@ function makeCtx(overrides?: {
   };
 }
 
-describe("core/registerAgent", () => {
-
+describe("core/planSpawn", () => {
   test("returns team_not_found if team doesn't exist", async () => {
     const ctx = makeCtx({ configStore: makeConfigStore(null) });
-    const result = await registerAgent(ctx, {
-      team: "no-team",
-      task: "work",
-    });
+    const result = await planSpawn(ctx, { team: "no-team", task: "work" });
+
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.kind).toBe("team_not_found");
@@ -118,100 +116,25 @@ describe("core/registerAgent", () => {
 
   test("returns agent_already_exists for duplicate name", async () => {
     const ctx = makeCtx();
-    const result = await registerAgent(ctx, {
+    const result = await planSpawn(ctx, {
       team: "test-team",
       name: "team-lead",
       task: "work",
     });
+
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.kind).toBe("agent_already_exists");
     }
   });
 
-  test("adds member to config with isActive: false, processId: empty", async () => {
-    const configStore = makeConfigStore();
-    const ctx = makeCtx({ configStore });
-    const result = await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "do stuff",
-    });
-
-    expect(result.ok).toBe(true);
-    expect(configStore.lastUpdated?.members).toHaveLength(2);
-    const scout = configStore.lastUpdated?.members.find(
-      (m) => m.name === "scout",
-    );
-    expect(scout).toBeDefined();
-    expect(scout?.isActive).toBe(false);
-    expect(scout?.processId).toBe("");
-  });
-
-  test("seeds inbox with task message", async () => {
-    const inboxStore = makeInboxStore();
-    const ctx = makeCtx({ inboxStore });
-    await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "do stuff",
-    });
-
-    expect(inboxStore.created).toHaveLength(1);
-    expect(inboxStore.created[0].team).toBe("test-team");
-    expect(inboxStore.created[0].agent).toBe("scout");
-    expect(inboxStore.created[0].messages).toHaveLength(1);
-    expect(inboxStore.created[0].messages![0].text).toBe("do stuff");
-    expect(inboxStore.created[0].messages![0].read).toBe(false);
-  });
-
-  test("returns launchOptions with correct parentSessionId from config", async () => {
-    const ctx = makeCtx();
-    const result = await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "work",
-      model: "opus",
-      color: "blue",
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.launchOptions.parentSessionId).toBe("abc-123");
-      expect(result.value.launchOptions.agentId).toBe("scout@test-team");
-      expect(result.value.launchOptions.agentName).toBe("scout");
-      expect(result.value.launchOptions.teamName).toBe("test-team");
-      expect(result.value.launchOptions.model).toBe("opus");
-      expect(result.value.launchOptions.color).toBe("blue");
-    }
-  });
-
-  test("returns agentId, name, and team", async () => {
-    const ctx = makeCtx();
-    const result = await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "work",
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.agentId).toBe("scout@test-team");
-      expect(result.value.name).toBe("scout");
-      expect(result.value.team).toBe("test-team");
-    }
-  });
-
   test("auto-generates name if not provided", async () => {
     const ctx = makeCtx();
-    const result = await registerAgent(ctx, {
-      team: "test-team",
-      task: "work",
-    });
+    const result = await planSpawn(ctx, { team: "test-team", task: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.name).toBe("agent-1");
+      expect(result.value.agentName).toBe("agent-1");
       expect(result.value.agentId).toBe("agent-1@test-team");
     }
   });
@@ -232,149 +155,177 @@ describe("core/registerAgent", () => {
       ],
     };
     const ctx = makeCtx({ configStore: makeConfigStore(configWithAgent3) });
-    const result = await registerAgent(ctx, {
-      team: "test-team",
-      task: "work",
-    });
+    const result = await planSpawn(ctx, { team: "test-team", task: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.name).toBe("agent-4");
+      expect(result.value.agentName).toBe("agent-4");
     }
   });
 
-  test("rolls back config if inbox seeding fails", async () => {
-    const configStore = makeConfigStore();
-    const inboxStore: InboxStore = {
-      async createInbox() {
-        return err({
-          kind: "file_write_failed" as const,
-          path: "/fake",
-          detail: "boom",
-        });
-      },
-      async readMessages() {
-        return ok([] as InboxMessage[]);
-      },
-      async appendMessage() {
-        return ok(undefined);
-      },
-      async listInboxes() {
-        return ok([] as string[]);
-      },
-      async deleteInbox() {
-        return ok(undefined);
-      },
-    };
-    const ctx = makeCtx({ configStore, inboxStore });
+  test("generates sessionId as UUID", async () => {
+    const ctx = makeCtx();
+    const result = await planSpawn(ctx, { team: "test-team", name: "scout", task: "work" });
 
-    const result = await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "work",
-    });
-
-    expect(result.ok).toBe(false);
-    // After rollback, only original member should remain
-    expect(configStore.lastUpdated?.members).toHaveLength(1);
-    expect(configStore.lastUpdated?.members[0].name).toBe("team-lead");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      expect(result.value.sessionId).toMatch(uuidRegex);
+    }
   });
 
-  test("generates sessionId as UUID and stores on member", async () => {
-    const configStore = makeConfigStore();
-    const ctx = makeCtx({ configStore });
-    await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "work",
-    });
+  test("includes parentSessionId from team config", async () => {
+    const ctx = makeCtx();
+    const result = await planSpawn(ctx, { team: "test-team", name: "scout", task: "work" });
 
-    const scout = configStore.lastUpdated?.members.find(
-      (m) => m.name === "scout",
-    );
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    expect(scout?.sessionId).toMatch(uuidRegex);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.parentSessionId).toBe("abc-123");
+    }
   });
 
-  test("returns launchOptions with sessionId matching stored member sessionId", async () => {
-    const configStore = makeConfigStore();
-    const ctx = makeCtx({ configStore });
-    const result = await registerAgent(ctx, {
+  test("carries model and color through", async () => {
+    const ctx = makeCtx();
+    const result = await planSpawn(ctx, {
       team: "test-team",
       name: "scout",
-      task: "work",
+      model: "opus",
+      color: "blue",
     });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const scout = configStore.lastUpdated?.members.find(
-        (m) => m.name === "scout",
-      );
-      expect(result.value.launchOptions.sessionId).toBe(scout?.sessionId);
+      expect(result.value.model).toBe("opus");
+      expect(result.value.color).toBe("blue");
     }
   });
 });
 
-describe("core/activateAgent", () => {
+describe("core/executeSpawn", () => {
+  const basePlan: SpawnPlan = {
+    team: "test-team",
+    agentName: "scout",
+    agentId: "scout@test-team",
+    cwd: "/tmp",
+    sessionId: "test-session-uuid",
+    parentSessionId: "abc-123",
+    task: "do stuff",
+  };
 
-  test("updates member's processId and isActive in config", async () => {
-    // First register an agent so we have one to activate
+  test("adds member to config with isActive: false", async () => {
     const configStore = makeConfigStore();
     const ctx = makeCtx({ configStore });
-    const regResult = await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "work",
-    });
-    expect(regResult.ok).toBe(true);
+    const result = await executeSpawn(ctx, basePlan);
 
-    // Now activate it
+    expect(result.ok).toBe(true);
+    expect(configStore.lastUpdated?.members).toHaveLength(2);
+    const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
+    expect(scout?.isActive).toBe(false);
+    expect(scout?.processId).toBe("");
+    expect(scout?.sessionId).toBe("test-session-uuid");
+  });
+
+  test("seeds inbox with task message", async () => {
+    const inboxStore = makeInboxStore();
+    const ctx = makeCtx({ inboxStore });
+    await executeSpawn(ctx, basePlan);
+
+    expect(inboxStore.created).toHaveLength(1);
+    expect(inboxStore.created[0].team).toBe("test-team");
+    expect(inboxStore.created[0].agent).toBe("scout");
+    expect(inboxStore.created[0].messages).toHaveLength(1);
+    expect(inboxStore.created[0].messages![0].text).toBe("do stuff");
+    expect(inboxStore.created[0].messages![0].read).toBe(false);
+  });
+
+  test("does not seed inbox when no task", async () => {
+    const inboxStore = makeInboxStore();
+    const ctx = makeCtx({ inboxStore });
+    await executeSpawn(ctx, { ...basePlan, task: undefined });
+
+    expect(inboxStore.created[0].messages).toHaveLength(0);
+  });
+
+  test("returns launchOptions with correct fields", async () => {
+    const ctx = makeCtx();
+    const result = await executeSpawn(ctx, { ...basePlan, model: "opus", color: "blue" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.launchOptions.agentId).toBe("scout@test-team");
+      expect(result.value.launchOptions.agentName).toBe("scout");
+      expect(result.value.launchOptions.teamName).toBe("test-team");
+      expect(result.value.launchOptions.parentSessionId).toBe("abc-123");
+      expect(result.value.launchOptions.sessionId).toBe("test-session-uuid");
+      expect(result.value.launchOptions.model).toBe("opus");
+      expect(result.value.launchOptions.color).toBe("blue");
+    }
+  });
+
+  test("rolls back config if inbox creation fails", async () => {
+    const configStore = makeConfigStore();
+    const inboxStore: InboxStore = {
+      async createInbox() {
+        return err({ kind: "file_write_failed" as const, path: "/fake", detail: "boom" });
+      },
+      async readMessages() { return ok([] as InboxMessage[]); },
+      async appendMessage() { return ok(undefined); },
+      async listInboxes() { return ok([] as string[]); },
+      async deleteInbox() { return ok(undefined); },
+    };
+    const ctx = makeCtx({ configStore, inboxStore });
+    const result = await executeSpawn(ctx, basePlan);
+
+    expect(result.ok).toBe(false);
+    expect(configStore.lastUpdated?.members).toHaveLength(1);
+    expect(configStore.lastUpdated?.members[0].name).toBe("team-lead");
+  });
+});
+
+describe("core/activateAgent", () => {
+  test("updates member's processId and isActive in config", async () => {
+    const configStore = makeConfigStore();
+    const ctx = makeCtx({ configStore });
+
+    // First add an agent via executeSpawn
+    await executeSpawn(ctx, {
+      team: "test-team",
+      agentName: "scout",
+      agentId: "scout@test-team",
+      cwd: "/tmp",
+      sessionId: "s1",
+      parentSessionId: "abc-123",
+    });
+
     const result = await activateAgent(ctx, "test-team", "scout@test-team", "%42");
     expect(result.ok).toBe(true);
 
-    const scout = configStore.lastUpdated?.members.find(
-      (m) => m.name === "scout",
-    );
+    const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
     expect(scout?.processId).toBe("%42");
     expect(scout?.isActive).toBe(true);
   });
 
   test("only updates the specified agent, leaves others unchanged", async () => {
-    // Register two agents
     const configStore = makeConfigStore();
     const ctx = makeCtx({ configStore });
 
-    await registerAgent(ctx, {
-      team: "test-team",
-      name: "scout",
-      task: "work",
+    await executeSpawn(ctx, {
+      team: "test-team", agentName: "scout", agentId: "scout@test-team",
+      cwd: "/tmp", sessionId: "s1", parentSessionId: "abc-123",
     });
-    await registerAgent(ctx, {
-      team: "test-team",
-      name: "worker",
-      task: "other work",
+    await executeSpawn(ctx, {
+      team: "test-team", agentName: "worker", agentId: "worker@test-team",
+      cwd: "/tmp", sessionId: "s2", parentSessionId: "abc-123",
     });
 
-    // Activate only scout
     await activateAgent(ctx, "test-team", "scout@test-team", "%42");
 
-    const scout = configStore.lastUpdated?.members.find(
-      (m) => m.name === "scout",
-    );
-    const worker = configStore.lastUpdated?.members.find(
-      (m) => m.name === "worker",
-    );
-    const lead = configStore.lastUpdated?.members.find(
-      (m) => m.name === "team-lead",
-    );
+    const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
+    const worker = configStore.lastUpdated?.members.find((m) => m.name === "worker");
 
     expect(scout?.processId).toBe("%42");
     expect(scout?.isActive).toBe(true);
-
     expect(worker?.processId).toBe("");
     expect(worker?.isActive).toBe(false);
-
-    expect(lead?.processId).toBe("");
   });
 });

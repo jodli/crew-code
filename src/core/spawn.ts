@@ -4,7 +4,7 @@ import type { AgentMember, InboxMessage, LaunchOptions } from "../types/domain.t
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 
-export interface RegisterInput {
+export interface SpawnInput {
   team: string;
   task?: string;
   name?: string;
@@ -12,7 +12,19 @@ export interface RegisterInput {
   color?: string;
 }
 
-export interface RegisterOutput {
+export interface SpawnPlan {
+  team: string;
+  agentName: string;
+  agentId: string;
+  cwd: string;
+  sessionId: string;
+  model?: string;
+  color?: string;
+  parentSessionId: string;
+  task?: string;
+}
+
+export interface SpawnOutput {
   agentId: string;
   name: string;
   team: string;
@@ -28,11 +40,10 @@ function nextAgentName(members: AgentMember[]): string {
   return `agent-${max + 1}`;
 }
 
-export async function registerAgent(
+export async function planSpawn(
   ctx: AppContext,
-  input: RegisterInput,
-): Promise<Result<RegisterOutput>> {
-  // 1. Get team config
+  input: SpawnInput,
+): Promise<Result<SpawnPlan>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) {
     if (teamResult.error.kind === "config_not_found") {
@@ -42,12 +53,9 @@ export async function registerAgent(
   }
 
   const config = teamResult.value;
-
-  // 2. Generate or validate agent name
   const agentName = input.name ?? nextAgentName(config.members);
   const agentId = `${agentName}@${input.team}`;
 
-  // 3. Check for duplicates
   const existing = config.members.find((m) => m.name === agentName);
   if (existing) {
     return err({
@@ -57,34 +65,47 @@ export async function registerAgent(
     });
   }
 
-  // 4. Add member to config (isActive: false, processId: "")
-  const cwd = process.cwd();
-  const sessionId = randomUUID();
-  const newMember: AgentMember = {
+  return ok({
+    team: input.team,
+    agentName,
     agentId,
-    name: agentName,
+    cwd: process.cwd(),
+    sessionId: randomUUID(),
     model: input.model,
     color: input.color,
+    parentSessionId: config.leadSessionId,
+    task: input.task,
+  });
+}
+
+export async function executeSpawn(
+  ctx: AppContext,
+  plan: SpawnPlan,
+): Promise<Result<SpawnOutput>> {
+  const newMember: AgentMember = {
+    agentId: plan.agentId,
+    name: plan.agentName,
+    model: plan.model,
+    color: plan.color,
     joinedAt: Date.now(),
     processId: "",
-    cwd,
+    cwd: plan.cwd,
     subscriptions: [],
     isActive: false,
-    sessionId,
+    sessionId: plan.sessionId,
   };
 
-  const addResult = await ctx.configStore.updateTeam(input.team, (cfg) => ({
+  const addResult = await ctx.configStore.updateTeam(plan.team, (cfg) => ({
     ...cfg,
     members: [...cfg.members, newMember],
   }));
   if (!addResult.ok) return addResult as Result<never>;
 
-  // 5. Create inbox (seed with task if provided)
-  const initialMessages: InboxMessage[] = input.task
+  const initialMessages: InboxMessage[] = plan.task
     ? [
         {
           from: "team-lead",
-          text: input.task,
+          text: plan.task,
           timestamp: new Date().toISOString(),
           read: false,
         },
@@ -92,32 +113,31 @@ export async function registerAgent(
     : [];
 
   const inboxResult = await ctx.inboxStore.createInbox(
-    input.team,
-    agentName,
+    plan.team,
+    plan.agentName,
     initialMessages,
   );
   if (!inboxResult.ok) {
     // Rollback: remove member from config
-    await ctx.configStore.updateTeam(input.team, (cfg) => ({
+    await ctx.configStore.updateTeam(plan.team, (cfg) => ({
       ...cfg,
-      members: cfg.members.filter((m) => m.agentId !== agentId),
+      members: cfg.members.filter((m) => m.agentId !== plan.agentId),
     }));
     return inboxResult as Result<never>;
   }
 
-  // 6. Build LaunchOptions
   const launchOptions: LaunchOptions = {
-    agentId,
-    agentName,
-    teamName: input.team,
-    cwd,
-    color: input.color,
-    parentSessionId: config.leadSessionId,
-    model: input.model,
-    sessionId,
+    agentId: plan.agentId,
+    agentName: plan.agentName,
+    teamName: plan.team,
+    cwd: plan.cwd,
+    color: plan.color,
+    parentSessionId: plan.parentSessionId,
+    model: plan.model,
+    sessionId: plan.sessionId,
   };
 
-  return ok({ agentId, name: agentName, team: input.team, launchOptions });
+  return ok({ agentId: plan.agentId, name: plan.agentName, team: plan.team, launchOptions });
 }
 
 export async function activateAgent(
@@ -133,4 +153,3 @@ export async function activateAgent(
     ),
   })) as Promise<Result<void>>;
 }
-

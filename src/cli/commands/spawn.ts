@@ -1,7 +1,8 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { registerAgent, activateAgent } from "../../core/spawn.ts";
+import { spawnAgent } from "../../actions/spawn-agent.ts";
 import { launchClaude } from "../../lib/exec-claude.ts";
+import { activateAgent } from "../../core/spawn.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
@@ -46,7 +47,7 @@ export default defineCommand({
       inboxStore: new JsonFileInboxStore(),
     };
 
-    const regResult = await registerAgent(ctx, {
+    const result = await spawnAgent(ctx, {
       team: args.team,
       task: args.task,
       name: args.name || undefined,
@@ -54,20 +55,20 @@ export default defineCommand({
       color: args.color || undefined,
     });
 
-    if (!regResult.ok) {
-      console.error(renderError(regResult.error));
+    if (!result.ok) {
+      console.error(renderError(result.error));
       process.exit(1);
     }
 
     console.error(
-      `Agent ${pc.bold(regResult.value.name)} registered in ${pc.bold(args.team)}`,
+      `Agent ${pc.bold(result.value.name)} registered in ${pc.bold(args.team)}`,
     );
-    console.error(`  Agent ID: ${regResult.value.agentId}`);
+    console.error(`  Agent ID: ${result.value.agentId}`);
     console.error(`  Launching Claude...\n`);
 
-    regResult.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
-    const { pid, exited } = launchClaude(regResult.value.launchOptions);
-    await activateAgent(ctx, args.team, regResult.value.agentId, String(pid));
+    result.value.launchOptions.extraArgs = parsePassthroughArgs(rawArgs);
+    const { pid, exited } = launchClaude(result.value.launchOptions);
+    await activateAgent(ctx, args.team, result.value.agentId, String(pid));
     const code = await exited;
     process.exit(code);
   },

@@ -22,6 +22,22 @@ import { killAgent } from "../actions/kill-agent.ts";
 import { destroyTeam } from "../actions/destroy-team.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
 import { sendMessage } from "../actions/send-message.ts";
+import { attachAgent } from "../actions/attach-agent.ts";
+import { planSpawn } from "../actions/spawn-agent.ts";
+import { planCreate } from "../actions/create-team.ts";
+import type { CrewError } from "../types/errors.ts";
+
+function tuiErrorMessage(error: CrewError): string {
+  switch (error.kind) {
+    case "stale_session": return `Agent "${(error as any).agent}" has a stale session. Press 'r' to remove.`;
+    case "team_not_found": return `Team "${(error as any).team}" no longer exists.`;
+    case "agent_not_found": return `Agent "${(error as any).agent}" not found in team.`;
+    case "agent_already_exists": return `Agent name "${(error as any).agent}" already exists.`;
+    case "team_already_exists": return `Team "${(error as any).team}" already exists.`;
+    case "no_session_id": return `Agent "${(error as any).agent}" has no session ID.`;
+    default: return error.kind;
+  }
+}
 
 const configStore = new JsonFileConfigStore();
 const inboxStore = new JsonFileInboxStore();
@@ -122,9 +138,17 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_spawn_agent" });
         } else if ((key.name === "a" || key.name === "return") && nav.panel === "agents") {
           if (selectedAgent && selectedTeamName) {
-            const args = buildAttachCommand(selectedTeamName, selectedAgent.name);
-            launcher.openTerminal(args, selectedAgent.cwd, `crew:${selectedAgent.name}`).catch((e) => {
-              setError(`Failed to attach: ${e.message}`);
+            const team = selectedTeamName;
+            const agent = selectedAgent;
+            attachAgent(ctx, { team, name: agent.name }).then((result) => {
+              if (!result.ok) {
+                setError(tuiErrorMessage(result.error));
+                return;
+              }
+              const args = buildAttachCommand(team, agent.name);
+              launcher.openTerminal(args, agent.cwd, `crew:${agent.name}`).catch((e) => {
+                setError(`Failed to attach: ${e.message}`);
+              });
             });
           }
         } else if (key.name === "x" && nav.panel === "agents" && selectedAgent) {
@@ -147,6 +171,12 @@ export function App({ launcher }: AppProps) {
 
   const handleCreateTeam = useCallback(
     async (name: string, cwd: string, extraArgs: string[]) => {
+      const validation = await planCreate(ctx, { name });
+      if (!validation.ok) {
+        setError(tuiErrorMessage(validation.error));
+        dispatch({ type: "close_overlay" });
+        return;
+      }
       try {
         await launcher.openTerminal(buildCreateCommand(name, extraArgs), cwd, `crew:${name}`);
       } catch (e: any) {
@@ -160,6 +190,15 @@ export function App({ launcher }: AppProps) {
   const handleSpawnAgent = useCallback(
     async (opts: { name: string; task: string; model: string; cwd: string; extraArgs: string[] }) => {
       if (!selectedTeamName) return;
+      const validation = await planSpawn(ctx, {
+        team: selectedTeamName,
+        name: opts.name || undefined,
+      });
+      if (!validation.ok) {
+        setError(tuiErrorMessage(validation.error));
+        dispatch({ type: "close_overlay" });
+        return;
+      }
       const args = buildSpawnCommand(selectedTeamName, opts);
       try {
         await launcher.openTerminal(args, opts.cwd, `crew:${opts.name || "agent"}`);

@@ -9,42 +9,61 @@ export interface CreateInput {
   description?: string;
 }
 
+export interface CreatePlan {
+  name: string;
+  description?: string;
+  leadAgentId: string;
+  leadSessionId: string;
+  cwd: string;
+}
+
 export interface CreateOutput {
   name: string;
   leadAgentId: string;
   launchOptions: LaunchOptions;
 }
 
-export async function createTeam(
+export async function planCreate(
   ctx: AppContext,
   input: CreateInput,
-): Promise<Result<CreateOutput>> {
+): Promise<Result<CreatePlan>> {
   const exists = await ctx.configStore.teamExists(input.name);
   if (exists) {
     return err({ kind: "team_already_exists", team: input.name });
   }
 
-  const leadAgentId = `team-lead@${input.name}`;
-  const leadSessionId = randomUUID();
+  return ok({
+    name: input.name,
+    description: input.description,
+    leadAgentId: `team-lead@${input.name}`,
+    leadSessionId: randomUUID(),
+    cwd: process.cwd(),
+  });
+}
+
+export async function executeCreate(
+  ctx: AppContext,
+  plan: CreatePlan,
+): Promise<Result<CreateOutput>> {
   const now = Date.now();
 
   const leadMember: AgentMember = {
-    agentId: leadAgentId,
+    agentId: plan.leadAgentId,
     name: "team-lead",
     agentType: "team-lead",
     joinedAt: now,
     processId: "",
-    cwd: process.cwd(),
+    cwd: plan.cwd,
     subscriptions: [],
-    sessionId: leadSessionId,
+    sessionId: plan.leadSessionId,
   };
 
   const config: TeamConfig = {
-    name: input.name,
-    description: input.description,
+    name: plan.name,
+    description: plan.description,
     createdAt: now,
-    leadAgentId,
-    leadSessionId,
+    leadAgentId: plan.leadAgentId,
+    leadSessionId: plan.leadSessionId,
     members: [leadMember],
   };
 
@@ -52,12 +71,12 @@ export async function createTeam(
   if (!result.ok) return result as Result<never>;
 
   const launchOptions: LaunchOptions = {
-    agentId: leadAgentId,
+    agentId: plan.leadAgentId,
     agentName: "team-lead",
-    teamName: input.name,
-    cwd: process.cwd(),
-    sessionId: leadSessionId,
+    teamName: plan.name,
+    cwd: plan.cwd,
+    sessionId: plan.leadSessionId,
   };
 
-  return ok({ name: input.name, leadAgentId, launchOptions });
+  return ok({ name: plan.name, leadAgentId: plan.leadAgentId, launchOptions });
 }

@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { createTeam } from "../../core/create.ts";
+import { createTeam } from "../../actions/create-team.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
