@@ -9,6 +9,7 @@ interface CreateTeamFormProps {
 }
 
 type Field = "name" | "cwd" | "args";
+const fields: Field[] = ["name", "cwd", "args"];
 
 export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFormProps) {
   const [name, setName] = useState("");
@@ -16,72 +17,59 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
   const [args, setArgs] = useState("");
   const [activeField, setActiveField] = useState<Field>("name");
   const [error, setError] = useState("");
-  const fields: Field[] = ["name", "cwd", "args"];
 
-  const handleKey = useCallback(
-    (key: KeyEvent) => {
+  const handleSubmit = useCallback(() => {
+    if (!name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    if (!cwd.trim()) {
+      setError("CWD is required");
+      return;
+    }
+    const extraArgs = args.trim().split(/\s+/).filter(Boolean);
+    onSubmit(name.trim(), cwd.trim(), extraArgs);
+  }, [name, cwd, args, onSubmit]);
+
+  useKeyboard(
+    useCallback((key: KeyEvent) => {
       if (key.name === "escape") {
         onCancel();
         return;
       }
-
       if (key.name === "tab") {
         setActiveField((f) => {
           const idx = fields.indexOf(f);
-          const next = key.shift
+          return key.shift
             ? fields[(idx - 1 + fields.length) % fields.length]
             : fields[(idx + 1) % fields.length];
-          return next;
         });
-        return;
       }
-
-      if (key.name === "return") {
-        if (!name.trim()) {
-          setError("Name is required");
-          return;
-        }
-        if (!cwd.trim()) {
-          setError("CWD is required");
-          return;
-        }
-        const extraArgs = args.trim().split(/\s+/).filter(Boolean);
-        onSubmit(name.trim(), cwd.trim(), extraArgs);
-        return;
-      }
-
-      // Text input handling
-      const textFields: Record<Field, string> = { name, cwd, args };
-      const textSetters: Record<Field, (v: string) => void> = { name: setName, cwd: setCwd, args: setArgs };
-      const setter = textSetters[activeField];
-      const value = textFields[activeField];
-
-      if (key.name === "backspace") {
-        setter(value.slice(0, -1));
-        setError("");
-        return;
-      }
-
-      if (key.name === "space") {
-        setter(value + " ");
-        setError("");
-        return;
-      }
-
-      // Only accept printable characters
-      if (key.name && key.name.length === 1 && !key.ctrl && !key.meta) {
-        setter(value + key.name);
-        setError("");
-      }
-    },
-    [name, cwd, args, activeField, onSubmit, onCancel],
+    }, [onCancel]),
   );
 
-  useKeyboard(handleKey);
+  const handleInput = (setter: (v: string) => void) => (val: string) => {
+    setter(val);
+    setError("");
+  };
 
-  const nameLabel = activeField === "name" ? "> Name:" : "  Name:";
-  const cwdLabel = activeField === "cwd" ? "> CWD: " : "  CWD: ";
-  const argsLabel = activeField === "args" ? "> Args:" : "  Args:";
+  const fieldRow = (field: Field, label: string, placeholder: string, onInput: (val: string) => void) => {
+    const active = activeField === field;
+    const prefix = active ? "> " : "  ";
+    return (
+      <box flexDirection="row" height={1}>
+        <text content={`${prefix}${label}`} fg={active ? "#c0caf5" : "#a9b1d6"} />
+        <input
+          focused={active}
+          placeholder={placeholder}
+          onInput={onInput}
+          onSubmit={handleSubmit}
+          flexGrow={1}
+          fg={active ? "#c0caf5" : "#a9b1d6"}
+        />
+      </box>
+    );
+  };
 
   return (
     <box
@@ -99,20 +87,11 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
       flexDirection="column"
       zIndex={10}
     >
-      <text
-        content={`${nameLabel} ${name}${activeField === "name" ? "_" : ""}`}
-        fg={activeField === "name" ? "#c0caf5" : "#a9b1d6"}
-      />
+      {fieldRow("name", " Name: ", "team name", handleInput(setName))}
       <text content="" />
-      <text
-        content={`${cwdLabel} ${cwd}${activeField === "cwd" ? "_" : ""}`}
-        fg={activeField === "cwd" ? "#c0caf5" : "#a9b1d6"}
-      />
+      {fieldRow("cwd", " CWD:  ", defaultCwd, handleInput(setCwd))}
       <text content="" />
-      <text
-        content={`${argsLabel} ${args}${activeField === "args" ? "_" : ""}`}
-        fg={activeField === "args" ? "#c0caf5" : "#a9b1d6"}
-      />
+      {fieldRow("args", " Args: ", "e.g. --verbose --effort high", handleInput(setArgs))}
       <text content="" />
       {error ? (
         <>

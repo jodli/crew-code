@@ -36,8 +36,18 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
   const [activeField, setActiveField] = useState<Field>("name");
   const [error, setError] = useState("");
 
-  const handleKey = useCallback(
-    (key: KeyEvent) => {
+  const handleSubmit = useCallback(() => {
+    if (!cwd.trim()) {
+      setError("CWD is required");
+      return;
+    }
+    const selectedModel = modelIndex === 0 ? "" : MODEL_OPTIONS[modelIndex];
+    const extraArgs = args.trim().split(/\s+/).filter(Boolean);
+    onSubmit({ name: name.trim(), task: task.trim(), model: selectedModel, cwd: cwd.trim(), extraArgs });
+  }, [name, task, modelIndex, cwd, args, onSubmit]);
+
+  useKeyboard(
+    useCallback((key: KeyEvent) => {
       if (key.name === "escape") {
         onCancel();
         return;
@@ -52,67 +62,41 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
         return;
       }
 
-      if (key.name === "return") {
-        if (!cwd.trim()) {
-          setError("CWD is required");
-          return;
-        }
-        const selectedModel = modelIndex === 0 ? "" : MODEL_OPTIONS[modelIndex];
-        const extraArgs = args.trim().split(/\s+/).filter(Boolean);
-        onSubmit({ name: name.trim(), task: task.trim(), model: selectedModel, cwd: cwd.trim(), extraArgs });
-        return;
-      }
-
-      // Model field: left/right or h/l to cycle options
+      // Model field: left/right or h/l to cycle options, Enter to submit
       if (activeField === "model") {
         if (key.name === "left" || key.name === "h") {
           setModelIndex((i) => (i - 1 + MODEL_OPTIONS.length) % MODEL_OPTIONS.length);
         } else if (key.name === "right" || key.name === "l") {
           setModelIndex((i) => (i + 1) % MODEL_OPTIONS.length);
+        } else if (key.name === "return") {
+          handleSubmit();
         }
-        return;
       }
-
-      // Text input for other fields
-      const textFields = { name, task, cwd, args } as Record<string, string>;
-      const textSetters = { name: setName, task: setTask, cwd: setCwd, args: setArgs } as Record<string, (v: string) => void>;
-
-      if (key.name === "backspace") {
-        textSetters[activeField](textFields[activeField].slice(0, -1));
-        setError("");
-        return;
-      }
-
-      if (key.name === "space") {
-        textSetters[activeField](textFields[activeField] + " ");
-        setError("");
-        return;
-      }
-
-      if (key.name && key.name.length === 1 && !key.ctrl && !key.meta) {
-        textSetters[activeField](textFields[activeField] + key.name);
-        setError("");
-      }
-    },
-    [name, task, modelIndex, cwd, args, activeField, defaultCwd, onSubmit, onCancel, error],
+    }, [activeField, onCancel, handleSubmit]),
   );
 
-  useKeyboard(handleKey);
-
-  const textLine = (field: Field, label: string, value: string) => {
-    const active = activeField === field;
-    const prefix = active ? "> " : "  ";
-    const cursor = active ? "_" : "";
-    return {
-      content: `${prefix}${label} ${value}${cursor}`,
-      fg: active ? "#c0caf5" : "#a9b1d6",
-    };
+  const handleInput = (setter: (v: string) => void) => (val: string) => {
+    setter(val);
+    setError("");
   };
 
-  const nameField = textLine("name", "Name: ", name);
-  const taskField = textLine("task", "Task: ", task);
-  const cwdField = textLine("cwd", "CWD:  ", cwd);
-  const argsField = textLine("args", "Args: ", args);
+  const textInputRow = (field: Field, label: string, placeholder: string, onInput: (val: string) => void) => {
+    const active = activeField === field;
+    const prefix = active ? "> " : "  ";
+    return (
+      <box flexDirection="row" height={1}>
+        <text content={`${prefix}${label}`} fg={active ? "#c0caf5" : "#a9b1d6"} />
+        <input
+          focused={active}
+          placeholder={placeholder}
+          onInput={onInput}
+          onSubmit={handleSubmit}
+          flexGrow={1}
+          fg={active ? "#c0caf5" : "#a9b1d6"}
+        />
+      </box>
+    );
+  };
 
   const modelActive = activeField === "model";
   const modelPrefix = modelActive ? "> " : "  ";
@@ -135,18 +119,18 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       flexDirection="column"
       zIndex={10}
     >
-      <text content={nameField.content} fg={nameField.fg} />
+      {textInputRow("name", " Name:  ", "agent name", handleInput(setName))}
       <text content="" />
-      <text content={taskField.content} fg={taskField.fg} />
+      {textInputRow("task", " Task:  ", "initial task", handleInput(setTask))}
       <text content="" />
       <text
-        content={`${modelPrefix}Model: ${modelValue}${modelHint}`}
+        content={`${modelPrefix} Model: ${modelValue}${modelHint}`}
         fg={modelActive ? "#c0caf5" : "#a9b1d6"}
       />
       <text content="" />
-      <text content={cwdField.content} fg={cwdField.fg} />
+      {textInputRow("cwd", " CWD:   ", defaultCwd, handleInput(setCwd))}
       <text content="" />
-      <text content={argsField.content} fg={argsField.fg} />
+      {textInputRow("args", " Args:  ", "e.g. --verbose --effort high", handleInput(setArgs))}
       <text content="" />
       {error ? (
         <>

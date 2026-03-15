@@ -11,45 +11,19 @@ interface SendMessageFormProps {
 
 export function SendMessageForm({ teamName, agentName, onSubmit, onCancel }: SendMessageFormProps) {
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
-  const handleKey = useCallback(
-    (key: KeyEvent) => {
+  const handleSubmit = useCallback(() => {
+    if (!message.trim()) return;
+    onSubmit(message.trim());
+  }, [message, onSubmit]);
+
+  useKeyboard(
+    useCallback((key: KeyEvent) => {
       if (key.name === "escape") {
         onCancel();
-        return;
       }
-
-      if (key.name === "return") {
-        if (!message.trim()) {
-          setError("Message cannot be empty");
-          return;
-        }
-        onSubmit(message.trim());
-        return;
-      }
-
-      if (key.name === "backspace") {
-        setMessage((m) => m.slice(0, -1));
-        setError("");
-        return;
-      }
-
-      if (key.name === "space") {
-        setMessage((m) => m + " ");
-        setError("");
-        return;
-      }
-
-      if (key.name && key.name.length === 1 && !key.ctrl && !key.meta) {
-        setMessage((m) => m + key.name);
-        setError("");
-      }
-    },
-    [message, onSubmit, onCancel],
+    }, [onCancel]),
   );
-
-  useKeyboard(handleKey);
 
   return (
     <box
@@ -57,7 +31,7 @@ export function SendMessageForm({ teamName, agentName, onSubmit, onCancel }: Sen
       top={4}
       left={4}
       width="60%"
-      height={error ? 9 : 8}
+      height={7}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
@@ -67,14 +41,18 @@ export function SendMessageForm({ teamName, agentName, onSubmit, onCancel }: Sen
       flexDirection="column"
       zIndex={10}
     >
-      <text content={`> Message: ${message}_`} fg="#c0caf5" />
+      <box flexDirection="row" height={1}>
+        <text content="> Message: " fg="#c0caf5" />
+        <input
+          focused
+          placeholder="type your message..."
+          onInput={setMessage}
+          onSubmit={handleSubmit}
+          flexGrow={1}
+          fg="#c0caf5"
+        />
+      </box>
       <text content="" />
-      {error ? (
-        <>
-          <text content={`  ${error}`} fg="#f7768e" />
-          <text content="" />
-        </>
-      ) : null}
       <text content="  [Enter] send   [Esc] cancel" fg="#565f89" />
     </box>
   );
