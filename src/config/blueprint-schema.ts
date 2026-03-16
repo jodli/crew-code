@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const BlueprintAgentSchema = z.object({
   name: z.string(),
+  isLead: z.boolean().optional(),
   systemPrompt: z.string().optional(),
   model: z.string().optional(),
   color: z.string().optional(),

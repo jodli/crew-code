@@ -1,10 +1,11 @@
+import { randomUUID } from "node:crypto";
 import type { AppContext } from "../types/context.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
 import type { LaunchOptions } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 import { planCreate, executeCreate, type CreatePlan } from "./create.ts";
-import { planSpawn, executeSpawn } from "./spawn.ts";
+import { executeSpawn, type SpawnPlan } from "./spawn.ts";
 
 export interface LoadInput {
   nameOrPath: string;
@@ -16,6 +17,7 @@ export interface LoadPlan {
   blueprint: Blueprint;
   teamName: string;
   createPlan: CreatePlan;
+  spawnPlans: SpawnPlan[];
 }
 
 export interface LoadOutput {
@@ -41,11 +43,41 @@ export async function planLoad(
   });
   if (!createResult.ok) return createResult as Result<never>;
 
-  return ok({
-    blueprint,
-    teamName: blueprint.name,
-    createPlan: createResult.value,
-  });
+  const createPlan = createResult.value;
+  const cwd = input.cwd ?? process.cwd();
+
+  // Pre-validate all spawn plans
+  const spawnPlans: SpawnPlan[] = [];
+  const seenNames = new Set<string>();
+  let hasLead = false;
+
+  for (const agent of blueprint.agents) {
+    if (seenNames.has(agent.name)) {
+      return err({ kind: "agent_already_exists", agent: agent.name, team: blueprint.name });
+    }
+    seenNames.add(agent.name);
+
+    if (agent.isLead) {
+      if (hasLead) return err({ kind: "lead_already_exists", team: blueprint.name });
+      hasLead = true;
+    }
+
+    spawnPlans.push({
+      team: blueprint.name,
+      agentName: agent.name,
+      agentId: `${agent.name}@${blueprint.name}`,
+      isLead: agent.isLead,
+      cwd,
+      sessionId: agent.isLead ? createPlan.leadSessionId : randomUUID(),
+      parentSessionId: agent.isLead ? undefined : createPlan.leadSessionId,
+      systemPrompt: agent.systemPrompt,
+      model: agent.model,
+      color: agent.color,
+      extraArgs: agent.extraArgs,
+    });
+  }
+
+  return ok({ blueprint, teamName: blueprint.name, createPlan, spawnPlans });
 }
 
 export async function executeLoad(
@@ -55,22 +87,11 @@ export async function executeLoad(
   const createResult = await executeCreate(ctx, plan.createPlan);
   if (!createResult.ok) return createResult as Result<never>;
 
-  const launchOptions: LaunchOptions[] = [createResult.value.launchOptions];
+  const launchOptions: LaunchOptions[] = [];
 
-  for (const agent of plan.blueprint.agents) {
-    const spawnPlan = await planSpawn(ctx, {
-      team: plan.teamName,
-      name: agent.name,
-      systemPrompt: agent.systemPrompt,
-      model: agent.model,
-      color: agent.color,
-      extraArgs: agent.extraArgs,
-    });
-    if (!spawnPlan.ok) return spawnPlan as Result<never>;
-
-    const spawnResult = await executeSpawn(ctx, spawnPlan.value);
+  for (const spawnPlan of plan.spawnPlans) {
+    const spawnResult = await executeSpawn(ctx, spawnPlan);
     if (!spawnResult.ok) return spawnResult as Result<never>;
-
     launchOptions.push(spawnResult.value.launchOptions);
   }
 

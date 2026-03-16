@@ -36,10 +36,6 @@ export async function planRemove(
     return err({ kind: "agent_not_found", agent: input.name, team: input.team });
   }
 
-  if (member.agentType === "team-lead") {
-    return err({ kind: "cannot_remove_lead", agent: input.name, team: input.team });
-  }
-
   const pid = parseInt(member.processId, 10);
   const isAlive = member.processId ? isProcessAlive(pid) : false;
 

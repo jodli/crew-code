@@ -30,7 +30,7 @@ export async function attachAgent(
   }
 
   const config = teamResult.value;
-  const agentName = input.name ?? "team-lead";
+  const agentName = input.name ?? config.members.find((m) => m.isLead)?.name ?? "team-lead";
 
   const member = config.members.find((m) => m.name === agentName);
   if (!member) {
@@ -54,8 +54,6 @@ export async function attachAgent(
     });
   }
 
-  const isTeamLead = member.agentType === "team-lead";
-
   const launchOptions: LaunchOptions = {
     agentId: member.agentId,
     agentName: member.name,
@@ -63,7 +61,7 @@ export async function attachAgent(
     cwd: member.cwd,
     model: member.model,
     color: member.color,
-    parentSessionId: isTeamLead ? undefined : config.leadSessionId,
+    parentSessionId: member.isLead ? undefined : config.leadSessionId,
     sessionId: member.sessionId,
     extraArgs: member.extraArgs,
   };

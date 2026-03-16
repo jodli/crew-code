@@ -46,10 +46,10 @@ export default defineCommand({
         console.error(`  ${blueprint.description}`);
       }
       console.error(`\nWould create team "${blueprint.name}" with:`);
-      console.error(`  - team-lead`);
       for (const agent of blueprint.agents) {
         const model = agent.model ? ` (${agent.model})` : "";
-        console.error(`  - ${agent.name}${model}`);
+        const lead = agent.isLead ? " (lead)" : "";
+        console.error(`  - ${agent.name}${model}${lead}`);
       }
       return;
     }

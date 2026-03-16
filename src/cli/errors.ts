@@ -51,10 +51,8 @@ const messages: Record<string, (e: CrewError) => string> = {
     const { agent, team } = e as { agent: string; team: string };
     return `Agent "${agent}" in team "${team}" has no stored session ID. It was created before session tracking was added.`;
   },
-  cannot_remove_lead: (e) => {
-    const { agent, team } = e as { agent: string; team: string };
-    return `Cannot remove team lead "${agent}" from "${team}". Use "crew destroy" to remove the entire team.`;
-  },
+  lead_already_exists: (e) =>
+    `Team "${(e as { team: string }).team}" already has a lead agent.`,
   stale_session: (e) => {
     const { agent, team } = e as { agent: string; team: string };
     return `Agent "${agent}" in team "${team}" has a stale session (no conversation on disk). Run "crew doctor --team ${team}" to fix.`;

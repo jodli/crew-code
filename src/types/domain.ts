@@ -1,7 +1,7 @@
 export interface AgentMember {
   agentId: string;
   name: string;
-  agentType?: string;
+  isLead?: boolean;
   model?: string;
   systemPrompt?: string;
   color?: string;
@@ -19,7 +19,6 @@ export interface TeamConfig {
   name: string;
   description?: string;
   createdAt: number;
-  leadAgentId: string;
   leadSessionId: string;
   members: AgentMember[];
 }

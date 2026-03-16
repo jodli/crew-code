@@ -28,13 +28,12 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
 const baseConfig: TeamConfig = {
   name: "my-team",
   createdAt: 1773387766070,
-  leadAgentId: "team-lead@my-team",
   leadSessionId: "lead-session-123",
   members: [
     {
       agentId: "team-lead@my-team",
       name: "team-lead",
-      agentType: "team-lead",
+      isLead: true,
       joinedAt: 1773387766070,
       processId: String(process.pid),
       cwd: "/tmp",
@@ -83,19 +82,23 @@ describe("core/remove", () => {
       }
     });
 
-    test("returns cannot_remove_lead when targeting team-lead", async () => {
+    test("allows removing the lead agent", async () => {
       const ctx = makeCtx({
         configStore: {
           ...makeCtx().configStore,
           getTeam: async () => ok(baseConfig),
         },
+        inboxStore: {
+          ...makeCtx().inboxStore,
+          listInboxes: async () => ok(["team-lead"]),
+        },
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "team-lead" });
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.kind).toBe("cannot_remove_lead");
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.name).toBe("team-lead");
       }
     });
 

@@ -34,13 +34,12 @@ const healthyConfig: TeamConfig = {
   name: "my-team",
   description: "A test team",
   createdAt: 1773387766070,
-  leadAgentId: "team-lead@my-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@my-team",
       name: "team-lead",
-      agentType: "team-lead",
+      isLead: true,
       joinedAt: 1773387766070,
       processId: String(process.pid), // current process — alive
       cwd: "/tmp",
@@ -276,7 +275,7 @@ describe("doctor core", () => {
       expect(staleCheck).toBeUndefined();
     });
 
-    test("does not flag team-lead session as stale", async () => {
+    test("flags team-lead session as stale just like other agents", async () => {
       const configWithLeadSession: TeamConfig = {
         ...healthyConfig,
         members: [
@@ -306,9 +305,11 @@ describe("doctor core", () => {
       if (!results.ok) return;
 
       const staleCheck = results.value.find(
-        (r) => r.checkId === "stale-session",
+        (r) => r.checkId === "stale-session" && r.detail === "team-lead",
       );
-      expect(staleCheck).toBeUndefined();
+      expect(staleCheck).toBeDefined();
+      expect(staleCheck!.status).toBe("warn");
+      expect(staleCheck!.fixable).toBe(true);
     });
 
     test("scopes to specific team with --team", async () => {

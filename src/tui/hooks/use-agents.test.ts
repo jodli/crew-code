@@ -29,12 +29,11 @@ function makeTeam(
   return {
     name,
     createdAt: Date.now(),
-    leadAgentId: `agent-0@${name}`,
     leadSessionId: "sess-lead",
     members: members.map((m, i) => ({
       agentId: `${m.name}@${name}`,
       name: m.name,
-      agentType: i === 0 ? "team-lead" : undefined,
+      isLead: i === 0 ? true : undefined,
       model: m.model,
       joinedAt: Date.now(),
       processId: m.processId,

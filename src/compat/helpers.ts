@@ -63,13 +63,12 @@ export async function createTestTeam(testSlug: string): Promise<TestTeam> {
   const config = {
     name,
     createdAt: ts,
-    leadAgentId: `team-lead@${name}`,
     leadSessionId,
     members: [
       {
         agentId: `team-lead@${name}`,
         name: "team-lead",
-        agentType: "team-lead",
+        isLead: true,
         joinedAt: ts,
         processId: "",
         cwd: process.cwd(),

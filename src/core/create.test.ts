@@ -79,26 +79,6 @@ describe("core/planCreate", () => {
     }
   });
 
-  test("generates leadAgentId as team-lead@{name}", async () => {
-    const ctx = makeCtx();
-    const result = await planCreate(ctx, { name: "my-team" });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.leadAgentId).toBe("team-lead@my-team");
-    }
-  });
-
-  test("passes through extraArgs", async () => {
-    const ctx = makeCtx();
-    const result = await planCreate(ctx, { name: "my-team", extraArgs: ["--verbose"] });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.extraArgs).toEqual(["--verbose"]);
-    }
-  });
-
   test("generates leadSessionId as a UUID", async () => {
     const ctx = makeCtx();
     const result = await planCreate(ctx, { name: "my-team" });
@@ -115,9 +95,7 @@ describe("core/executeCreate", () => {
   const basePlan: CreatePlan = {
     name: "my-team",
     description: "A test team",
-    leadAgentId: "team-lead@my-team",
     leadSessionId: "lead-uuid-123",
-    cwd: "/tmp",
   };
 
   test("creates team config with correct structure", async () => {
@@ -128,58 +106,25 @@ describe("core/executeCreate", () => {
     expect(createdConfig).toBeDefined();
     expect(createdConfig!.name).toBe("my-team");
     expect(createdConfig!.description).toBe("A test team");
-    expect(createdConfig!.leadAgentId).toBe("team-lead@my-team");
     expect(createdConfig!.leadSessionId).toBe("lead-uuid-123");
   });
 
-  test("creates team-lead member entry", async () => {
+  test("creates team with empty members list", async () => {
     createdConfig = undefined;
     const ctx = makeCtx();
     await executeCreate(ctx, basePlan);
 
-    expect(createdConfig!.members).toHaveLength(1);
-    const lead = createdConfig!.members[0];
-    expect(lead.name).toBe("team-lead");
-    expect(lead.agentType).toBe("team-lead");
-    expect(lead.processId).toBe("");
-    expect(lead.sessionId).toBe("lead-uuid-123");
+    expect(createdConfig!.members).toHaveLength(0);
   });
 
-  test("stores extraArgs in member and launchOptions", async () => {
-    createdConfig = undefined;
-    const ctx = makeCtx();
-    const plan: CreatePlan = { ...basePlan, extraArgs: ["--verbose", "--effort", "high"] };
-    const result = await executeCreate(ctx, plan);
-
-    expect(createdConfig!.members[0].extraArgs).toEqual(["--verbose", "--effort", "high"]);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.launchOptions.extraArgs).toEqual(["--verbose", "--effort", "high"]);
-    }
-  });
-
-  test("returns launchOptions with correct fields", async () => {
-    const ctx = makeCtx();
-    const result = await executeCreate(ctx, basePlan);
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.launchOptions.agentId).toBe("team-lead@my-team");
-      expect(result.value.launchOptions.agentName).toBe("team-lead");
-      expect(result.value.launchOptions.teamName).toBe("my-team");
-      expect(result.value.launchOptions.sessionId).toBe("lead-uuid-123");
-      expect(result.value.launchOptions.parentSessionId).toBeUndefined();
-    }
-  });
-
-  test("returns team name and leadAgentId", async () => {
+  test("returns team name and leadSessionId", async () => {
     const ctx = makeCtx();
     const result = await executeCreate(ctx, basePlan);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.name).toBe("my-team");
-      expect(result.value.leadAgentId).toBe("team-lead@my-team");
+      expect(result.value.leadSessionId).toBe("lead-uuid-123");
     }
   });
 });

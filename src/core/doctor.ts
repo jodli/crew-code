@@ -142,7 +142,7 @@ export async function diagnose(
     // Check: stale session (sessionId stored but no file on disk)
     const checkSession = input.checkSession ?? sessionExistsOnDisk;
     for (const member of config.members) {
-      if (member.sessionId && member.agentType !== "team-lead") {
+      if (member.sessionId) {
         if (!checkSession(member.cwd, member.sessionId)) {
           const agentName = member.name;
           const agentId = member.agentId;

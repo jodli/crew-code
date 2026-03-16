@@ -40,6 +40,11 @@ export default defineCommand({
       description: "Agent color",
       required: false,
     },
+    lead: {
+      type: "boolean",
+      description: "Mark this agent as the team lead",
+      required: false,
+    },
   },
   async run({ args, rawArgs }) {
     const ctx: AppContext = {
@@ -51,6 +56,7 @@ export default defineCommand({
       team: args.team,
       systemPrompt: args["system-prompt"],
       name: args.name || undefined,
+      isLead: args.lead || undefined,
       model: args.model || undefined,
       color: args.color || undefined,
       extraArgs: parsePassthroughArgs(rawArgs),

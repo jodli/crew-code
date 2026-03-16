@@ -12,6 +12,7 @@ const sampleBlueprint: Blueprint = {
   name: "review-team",
   description: "Code review",
   agents: [
+    { name: "team-lead", isLead: true },
     { name: "reviewer", systemPrompt: "Review code", model: "opus", color: "red" },
     { name: "checker", systemPrompt: "Check style" },
   ],
@@ -109,7 +110,6 @@ describe("planLoad", () => {
     await ctx.configStore.createTeam({
       name: "review-team",
       createdAt: Date.now(),
-      leadAgentId: "team-lead@review-team",
       leadSessionId: "abc",
       members: [],
     });
@@ -146,6 +146,10 @@ describe("executeLoad", () => {
     if (!plan.ok) throw new Error("planLoad failed");
 
     await executeLoad(ctx, plan.value);
+
+    // Lead has no systemPrompt, so inbox is empty
+    const leadInbox = ctx.inboxStore.inboxes.get("review-team/team-lead");
+    expect(leadInbox).toHaveLength(0);
 
     const reviewerInbox = ctx.inboxStore.inboxes.get("review-team/reviewer");
     expect(reviewerInbox).toHaveLength(1);

@@ -8,6 +8,7 @@ export interface SpawnInput {
   team: string;
   systemPrompt?: string;
   name?: string;
+  isLead?: boolean;
   model?: string;
   color?: string;
   extraArgs?: string[];
@@ -17,11 +18,12 @@ export interface SpawnPlan {
   team: string;
   agentName: string;
   agentId: string;
+  isLead?: boolean;
   cwd: string;
   sessionId: string;
   model?: string;
   color?: string;
-  parentSessionId: string;
+  parentSessionId?: string;
   systemPrompt?: string;
   extraArgs?: string[];
 }
@@ -67,15 +69,20 @@ export async function planSpawn(
     });
   }
 
+  if (input.isLead && config.members.some((m) => m.isLead)) {
+    return err({ kind: "lead_already_exists", team: input.team });
+  }
+
   return ok({
     team: input.team,
     agentName,
     agentId,
+    isLead: input.isLead,
     cwd: process.cwd(),
-    sessionId: randomUUID(),
+    sessionId: input.isLead ? config.leadSessionId : randomUUID(),
     model: input.model,
     color: input.color,
-    parentSessionId: config.leadSessionId,
+    parentSessionId: input.isLead ? undefined : config.leadSessionId,
     systemPrompt: input.systemPrompt,
     extraArgs: input.extraArgs,
   });
@@ -88,6 +95,7 @@ export async function executeSpawn(
   const newMember: AgentMember = {
     agentId: plan.agentId,
     name: plan.agentName,
+    isLead: plan.isLead,
     model: plan.model,
     color: plan.color,
     joinedAt: Date.now(),

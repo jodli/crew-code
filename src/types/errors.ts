@@ -15,7 +15,7 @@ export type CrewError =
   | { kind: "team_already_exists"; team: string }
   | { kind: "agent_not_found"; agent: string; team: string }
   | { kind: "no_session_id"; agent: string; team: string }
-  | { kind: "cannot_remove_lead"; agent: string; team: string }
+  | { kind: "lead_already_exists"; team: string }
   | { kind: "stale_session"; agent: string; team: string }
   | { kind: "blueprint_not_found"; name: string }
   | { kind: "blueprint_invalid"; name: string; detail: string }

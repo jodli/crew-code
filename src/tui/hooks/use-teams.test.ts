@@ -29,7 +29,7 @@ function makeTeam(name: string, memberCount: number): TeamConfig {
   const members = Array.from({ length: memberCount }, (_, i) => ({
     agentId: `agent-${i}@${name}`,
     name: i === 0 ? "team-lead" : `agent-${i}`,
-    agentType: i === 0 ? "team-lead" : undefined,
+    isLead: i === 0 ? true : undefined,
     joinedAt: Date.now(),
     processId: "",
     cwd: "/tmp",
@@ -39,7 +39,6 @@ function makeTeam(name: string, memberCount: number): TeamConfig {
   return {
     name,
     createdAt: Date.now(),
-    leadAgentId: `agent-0@${name}`,
     leadSessionId: "sess-123",
     members,
   };

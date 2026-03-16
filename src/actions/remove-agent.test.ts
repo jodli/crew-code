@@ -7,13 +7,12 @@ import { ok, err } from "../types/result.ts";
 const baseConfig: TeamConfig = {
   name: "t",
   createdAt: 0,
-  leadAgentId: "team-lead@t",
   leadSessionId: "x",
   members: [
     {
       agentId: "team-lead@t",
       name: "team-lead",
-      agentType: "team-lead",
+      isLead: true,
       joinedAt: 0,
       processId: "",
       cwd: "/tmp",
@@ -64,21 +63,6 @@ describe("actions/remove-agent", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.kind).toBe("agent_not_found");
-    }
-  });
-
-  test("propagates cannot_remove_lead error", async () => {
-    const ctx = makeCtx({
-      configStore: {
-        ...makeCtx().configStore,
-        getTeam: async () => ok(baseConfig),
-      },
-    });
-
-    const result = await removeAgent(ctx, { team: "t", name: "team-lead" });
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.kind).toBe("cannot_remove_lead");
     }
   });
 

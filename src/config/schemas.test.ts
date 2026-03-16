@@ -7,13 +7,12 @@ describe("config/schemas", () => {
       name: "reverse-eng",
       description: "Team purpose",
       createdAt: 1773387766070,
-      leadAgentId: "team-lead@reverse-eng",
       leadSessionId: "2dcc5c49-8e44-45f4-a1b4-c8c7829ce7d0",
       members: [
         {
           agentId: "team-lead@reverse-eng",
           name: "team-lead",
-          agentType: "team-lead",
+          isLead: true,
           model: "claude-opus-4-6",
           joinedAt: 1773387766070,
           processId: "",
@@ -79,7 +78,6 @@ describe("config/schemas", () => {
       const minimal = {
         name: "test",
         createdAt: 1234,
-        leadAgentId: "lead@test",
         leadSessionId: "abc",
         members: [],
       };

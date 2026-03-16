@@ -6,13 +6,12 @@ const baseConfig: TeamConfig = {
   name: "my-team",
   description: "A cool team",
   createdAt: 1773387766070,
-  leadAgentId: "team-lead@my-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@my-team",
       name: "team-lead",
-      agentType: "team-lead",
+      isLead: true,
       joinedAt: 1773387766070,
       processId: "123",
       cwd: "/tmp",
@@ -49,14 +48,16 @@ const baseConfig: TeamConfig = {
 };
 
 describe("teamToBlueprint", () => {
-  test("excludes team-lead from agents", () => {
+  test("includes team-lead in agents with isLead: true", () => {
     const bp = teamToBlueprint(baseConfig);
-    expect(bp.agents.every((a) => a.name !== "team-lead")).toBe(true);
+    const lead = bp.agents.find((a) => a.name === "team-lead");
+    expect(lead).toBeDefined();
+    expect(lead!.isLead).toBe(true);
   });
 
   test("maps agent fields correctly", () => {
     const bp = teamToBlueprint(baseConfig);
-    expect(bp.agents).toHaveLength(2);
+    expect(bp.agents).toHaveLength(3);
 
     const reviewer = bp.agents.find((a) => a.name === "reviewer");
     expect(reviewer).toEqual({
@@ -78,6 +79,7 @@ describe("teamToBlueprint", () => {
     expect(checker).not.toHaveProperty("model");
     expect(checker).not.toHaveProperty("color");
     expect(checker).not.toHaveProperty("extraArgs");
+    expect(checker).not.toHaveProperty("isLead");
   });
 
   test("includes team name and description", () => {
@@ -94,12 +96,13 @@ describe("teamToBlueprint", () => {
 
   test("strips ephemeral fields (processId, sessionId, etc.)", () => {
     const bp = teamToBlueprint(baseConfig);
-    const agent = bp.agents[0];
-    expect(agent).not.toHaveProperty("processId");
-    expect(agent).not.toHaveProperty("sessionId");
-    expect(agent).not.toHaveProperty("isActive");
-    expect(agent).not.toHaveProperty("joinedAt");
-    expect(agent).not.toHaveProperty("cwd");
-    expect(agent).not.toHaveProperty("agentId");
+    for (const agent of bp.agents) {
+      expect(agent).not.toHaveProperty("processId");
+      expect(agent).not.toHaveProperty("sessionId");
+      expect(agent).not.toHaveProperty("isActive");
+      expect(agent).not.toHaveProperty("joinedAt");
+      expect(agent).not.toHaveProperty("cwd");
+      expect(agent).not.toHaveProperty("agentId");
+    }
   });
 });

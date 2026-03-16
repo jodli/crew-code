@@ -1,9 +1,10 @@
 export function buildSpawnCommand(
   team: string,
-  opts: { name?: string; systemPrompt?: string; model?: string; extraArgs?: string[] },
+  opts: { name?: string; isLead?: boolean; systemPrompt?: string; model?: string; extraArgs?: string[] },
 ): string[] {
   const args = ["crew", "spawn", "--team", team];
   if (opts.name) args.push("--name", opts.name);
+  if (opts.isLead) args.push("--lead");
   if (opts.systemPrompt) args.push("--system-prompt", opts.systemPrompt);
   if (opts.model) args.push("--model", opts.model);
   if (opts.extraArgs?.length) args.push("--", ...opts.extraArgs);

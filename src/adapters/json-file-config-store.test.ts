@@ -23,13 +23,12 @@ afterEach(async () => {
 const sampleConfig: TeamConfig = {
   name: "test-team",
   createdAt: 1773387766070,
-  leadAgentId: "team-lead@test-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@test-team",
       name: "team-lead",
-      agentType: "team-lead",
+      isLead: true,
       joinedAt: 1773387766070,
       processId: "",
       cwd: "/tmp",
@@ -113,7 +112,6 @@ describe("JsonFileConfigStore", () => {
       expect(readBack.ok).toBe(true);
       if (readBack.ok) {
         expect(readBack.value.name).toBe("test-team");
-        expect(readBack.value.leadAgentId).toBe("team-lead@test-team");
         expect(readBack.value.members).toHaveLength(1);
       }
     });
