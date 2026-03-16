@@ -3,7 +3,7 @@ export interface AgentMember {
   name: string;
   agentType?: string;
   model?: string;
-  prompt?: string;
+  systemPrompt?: string;
   color?: string;
   planModeRequired?: boolean;
   joinedAt: number;

@@ -6,7 +6,7 @@ import { ok, err } from "../types/result.ts";
 
 export interface SpawnInput {
   team: string;
-  task?: string;
+  systemPrompt?: string;
   name?: string;
   model?: string;
   color?: string;
@@ -22,7 +22,7 @@ export interface SpawnPlan {
   model?: string;
   color?: string;
   parentSessionId: string;
-  task?: string;
+  systemPrompt?: string;
   extraArgs?: string[];
 }
 
@@ -76,7 +76,7 @@ export async function planSpawn(
     model: input.model,
     color: input.color,
     parentSessionId: config.leadSessionId,
-    task: input.task,
+    systemPrompt: input.systemPrompt,
     extraArgs: input.extraArgs,
   });
 }
@@ -96,6 +96,7 @@ export async function executeSpawn(
     subscriptions: [],
     isActive: false,
     sessionId: plan.sessionId,
+    systemPrompt: plan.systemPrompt,
     extraArgs: plan.extraArgs,
   };
 
@@ -105,11 +106,11 @@ export async function executeSpawn(
   }));
   if (!addResult.ok) return addResult as Result<never>;
 
-  const initialMessages: InboxMessage[] = plan.task
+  const initialMessages: InboxMessage[] = plan.systemPrompt
     ? [
         {
           from: "team-lead",
-          text: plan.task,
+          text: plan.systemPrompt,
           timestamp: new Date().toISOString(),
           read: false,
         },

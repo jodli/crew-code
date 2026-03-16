@@ -20,9 +20,9 @@ export default defineCommand({
       description: "Team name to spawn into",
       required: true,
     },
-    task: {
+    "system-prompt": {
       type: "string",
-      description: "Initial task message for the agent",
+      description: "System prompt defining the agent's role in the team",
       required: false,
     },
     name: {
@@ -49,7 +49,7 @@ export default defineCommand({
 
     const result = await spawnAgent(ctx, {
       team: args.team,
-      task: args.task,
+      systemPrompt: args["system-prompt"],
       name: args.name || undefined,
       model: args.model || undefined,
       color: args.color || undefined,

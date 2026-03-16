@@ -106,7 +106,7 @@ function makeCtx(overrides?: {
 describe("core/planSpawn", () => {
   test("returns team_not_found if team doesn't exist", async () => {
     const ctx = makeCtx({ configStore: makeConfigStore(null) });
-    const result = await planSpawn(ctx, { team: "no-team", task: "work" });
+    const result = await planSpawn(ctx, { team: "no-team", systemPrompt: "work" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -119,7 +119,7 @@ describe("core/planSpawn", () => {
     const result = await planSpawn(ctx, {
       team: "test-team",
       name: "team-lead",
-      task: "work",
+      systemPrompt: "work",
     });
 
     expect(result.ok).toBe(false);
@@ -130,7 +130,7 @@ describe("core/planSpawn", () => {
 
   test("auto-generates name if not provided", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", task: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", systemPrompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -155,7 +155,7 @@ describe("core/planSpawn", () => {
       ],
     };
     const ctx = makeCtx({ configStore: makeConfigStore(configWithAgent3) });
-    const result = await planSpawn(ctx, { team: "test-team", task: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", systemPrompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -165,7 +165,7 @@ describe("core/planSpawn", () => {
 
   test("generates sessionId as UUID", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", name: "scout", task: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", name: "scout", systemPrompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -176,7 +176,7 @@ describe("core/planSpawn", () => {
 
   test("includes parentSessionId from team config", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", name: "scout", task: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", name: "scout", systemPrompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -209,7 +209,7 @@ describe("core/executeSpawn", () => {
     cwd: "/tmp",
     sessionId: "test-session-uuid",
     parentSessionId: "abc-123",
-    task: "do stuff",
+    systemPrompt: "do stuff",
   };
 
   test("adds member to config with isActive: false", async () => {
@@ -225,7 +225,16 @@ describe("core/executeSpawn", () => {
     expect(scout?.sessionId).toBe("test-session-uuid");
   });
 
-  test("seeds inbox with task message", async () => {
+  test("persists systemPrompt in config member", async () => {
+    const configStore = makeConfigStore();
+    const ctx = makeCtx({ configStore });
+    await executeSpawn(ctx, basePlan);
+
+    const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
+    expect(scout?.systemPrompt).toBe("do stuff");
+  });
+
+  test("seeds inbox with systemPrompt message", async () => {
     const inboxStore = makeInboxStore();
     const ctx = makeCtx({ inboxStore });
     await executeSpawn(ctx, basePlan);
@@ -238,10 +247,10 @@ describe("core/executeSpawn", () => {
     expect(inboxStore.created[0].messages![0].read).toBe(false);
   });
 
-  test("does not seed inbox when no task", async () => {
+  test("does not seed inbox when no systemPrompt", async () => {
     const inboxStore = makeInboxStore();
     const ctx = makeCtx({ inboxStore });
-    await executeSpawn(ctx, { ...basePlan, task: undefined });
+    await executeSpawn(ctx, { ...basePlan, systemPrompt: undefined });
 
     expect(inboxStore.created[0].messages).toHaveLength(0);
   });

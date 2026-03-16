@@ -4,7 +4,7 @@ import type { KeyEvent } from "@opentui/core";
 
 export interface SpawnAgentResult {
   name: string;
-  task: string;
+  systemPrompt: string;
   model: string;
   cwd: string;
   extraArgs: string[];
@@ -24,12 +24,12 @@ const MODEL_OPTIONS = [
   "claude-haiku-4-5-20251001",
 ] as const;
 
-type Field = "name" | "task" | "model" | "cwd" | "args";
-const fields: Field[] = ["name", "task", "model", "cwd", "args"];
+type Field = "name" | "systemPrompt" | "model" | "cwd" | "args";
+const fields: Field[] = ["name", "systemPrompt", "model", "cwd", "args"];
 
 export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: SpawnAgentFormProps) {
   const [name, setName] = useState("");
-  const [task, setTask] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState("");
   const [modelIndex, setModelIndex] = useState(0);
   const [cwd, setCwd] = useState(defaultCwd);
   const [args, setArgs] = useState("");
@@ -43,8 +43,8 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
     }
     const selectedModel = modelIndex === 0 ? "" : MODEL_OPTIONS[modelIndex];
     const extraArgs = args.trim().split(/\s+/).filter(Boolean);
-    onSubmit({ name: name.trim(), task: task.trim(), model: selectedModel, cwd: cwd.trim(), extraArgs });
-  }, [name, task, modelIndex, cwd, args, onSubmit]);
+    onSubmit({ name: name.trim(), systemPrompt: systemPrompt.trim(), model: selectedModel, cwd: cwd.trim(), extraArgs });
+  }, [name, systemPrompt, modelIndex, cwd, args, onSubmit]);
 
   useKeyboard(
     useCallback((key: KeyEvent) => {
@@ -121,7 +121,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
     >
       {textInputRow("name", " Name:  ", "agent name", handleInput(setName))}
       <text content="" />
-      {textInputRow("task", " Task:  ", "initial task", handleInput(setTask))}
+      {textInputRow("systemPrompt", " Prompt: ", "system prompt", handleInput(setSystemPrompt))}
       <text content="" />
       <text
         content={`${modelPrefix} Model: ${modelValue}${modelHint}`}

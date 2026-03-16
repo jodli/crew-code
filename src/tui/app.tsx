@@ -179,7 +179,7 @@ export function App({ launcher }: AppProps) {
   );
 
   const handleSpawnAgent = useCallback(
-    async (opts: { name: string; task: string; model: string; cwd: string; extraArgs: string[] }) => {
+    async (opts: { name: string; systemPrompt: string; model: string; cwd: string; extraArgs: string[] }) => {
       if (!selectedTeamName) return;
       const validation = await planSpawn(ctx, {
         team: selectedTeamName,
