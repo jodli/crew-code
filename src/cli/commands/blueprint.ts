@@ -1,5 +1,6 @@
 import { defineCommand } from "citty";
 import list from "./blueprint/list.ts";
+import newCmd from "./blueprint/new.ts";
 
 export default defineCommand({
   meta: {
@@ -8,5 +9,6 @@ export default defineCommand({
   },
   subCommands: {
     list,
+    new: newCmd,
   },
 });
