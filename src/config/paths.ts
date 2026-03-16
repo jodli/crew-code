@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { homedir } from "node:os";
+import envPaths from "env-paths";
 
 export function claudeTeamsDir(): string {
   return join(homedir(), ".claude", "teams");
@@ -19,4 +20,14 @@ export function claudeInboxesDir(name: string): string {
 
 export function claudeInboxPath(name: string, agent: string): string {
   return join(claudeInboxesDir(name), `${agent}.json`);
+}
+
+const paths = envPaths("crew", { suffix: "" });
+
+export function blueprintsDir(): string {
+  return join(paths.config, "blueprints");
+}
+
+export function blueprintPath(name: string): string {
+  return join(blueprintsDir(), `${name}.yaml`);
 }

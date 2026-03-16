@@ -5,7 +5,7 @@ export const AgentMemberSchema = z.object({
   name: z.string(),
   agentType: z.string().optional(),
   model: z.string().optional(),
-  prompt: z.string().optional(),
+  systemPrompt: z.string().optional(),
   color: z.string().optional(),
   planModeRequired: z.boolean().optional(),
   joinedAt: z.number(),
