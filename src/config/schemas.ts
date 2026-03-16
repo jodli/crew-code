@@ -3,9 +3,9 @@ import { z } from "zod";
 export const AgentMemberSchema = z.object({
   agentId: z.string(),
   name: z.string(),
-  isLead: z.boolean().optional(),
+  agentType: z.string(),
   model: z.string().optional(),
-  systemPrompt: z.string().optional(),
+  prompt: z.string().optional(),
   color: z.string().optional(),
   planModeRequired: z.boolean().optional(),
   joinedAt: z.number(),
@@ -21,6 +21,7 @@ export const TeamConfigSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   createdAt: z.number(),
+  leadAgentId: z.string(),
   leadSessionId: z.string(),
   members: z.array(AgentMemberSchema),
 });

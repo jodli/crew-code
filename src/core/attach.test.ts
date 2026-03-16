@@ -9,12 +9,13 @@ import { ok, err } from "../types/result.ts";
 const baseConfig: TeamConfig = {
   name: "test-team",
   createdAt: 1773387766070,
+  leadAgentId: "team-lead@test-team",
   leadSessionId: "lead-session-uuid",
   members: [
     {
       agentId: "team-lead@test-team",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 1773387766070,
       processId: "",
       cwd: "/home/user/repos/project",
@@ -24,6 +25,7 @@ const baseConfig: TeamConfig = {
     {
       agentId: "scout@test-team",
       name: "scout",
+      agentType: "general-purpose",
       joinedAt: 1773387770000,
       processId: "",
       cwd: "/home/user/repos/project",
@@ -183,7 +185,7 @@ describe("core/attach", () => {
         {
           agentId: "team-lead@test-team",
           name: "team-lead",
-          isLead: true,
+          agentType: "team-lead",
           joinedAt: 1773387766070,
           processId: "",
           cwd: "/tmp",

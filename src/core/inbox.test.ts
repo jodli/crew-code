@@ -8,12 +8,13 @@ const sampleConfig: TeamConfig = {
   name: "my-team",
   description: "A test team",
   createdAt: 1773387766070,
+  leadAgentId: "team-lead@my-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@my-team",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 1773387766070,
       processId: "%0",
       cwd: "/tmp",
@@ -23,6 +24,7 @@ const sampleConfig: TeamConfig = {
     {
       agentId: "scout@my-team",
       name: "scout",
+      agentType: "general-purpose",
       color: "blue",
       joinedAt: 1773387766070,
       processId: "%1",

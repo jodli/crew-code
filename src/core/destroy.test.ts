@@ -14,12 +14,13 @@ function makeSampleConfig(processIds: { lead: string; scout: string }): TeamConf
     name: "my-team",
     description: "A test team",
     createdAt: 1773387766070,
+    leadAgentId: "team-lead@my-team",
     leadSessionId: "abc-123",
     members: [
       {
         agentId: "team-lead@my-team",
         name: "team-lead",
-        isLead: true,
+        agentType: "team-lead",
         joinedAt: 1773387766070,
         processId: processIds.lead,
         cwd: "/tmp",
@@ -29,6 +30,7 @@ function makeSampleConfig(processIds: { lead: string; scout: string }): TeamConf
       {
         agentId: "scout@my-team",
         name: "scout",
+        agentType: "general-purpose",
         joinedAt: 1773387766070,
         processId: processIds.scout,
         cwd: "/tmp",

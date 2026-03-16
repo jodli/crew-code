@@ -23,12 +23,13 @@ afterEach(async () => {
 const sampleConfig: TeamConfig = {
   name: "test-team",
   createdAt: 1773387766070,
+  leadAgentId: "team-lead@test-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@test-team",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 1773387766070,
       processId: "",
       cwd: "/tmp",

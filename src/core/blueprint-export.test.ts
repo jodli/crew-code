@@ -6,12 +6,13 @@ const baseConfig: TeamConfig = {
   name: "my-team",
   description: "A cool team",
   createdAt: 1773387766070,
+  leadAgentId: "team-lead@my-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@my-team",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 1773387766070,
       processId: "123",
       cwd: "/tmp",
@@ -22,13 +23,14 @@ const baseConfig: TeamConfig = {
     {
       agentId: "reviewer@my-team",
       name: "reviewer",
+      agentType: "general-purpose",
       joinedAt: 1773387766070,
       processId: "456",
       cwd: "/tmp",
       subscriptions: [],
       isActive: true,
       sessionId: "def-456",
-      systemPrompt: "Review code for issues",
+      prompt: "Review code for issues",
       model: "claude-opus-4-6",
       color: "red",
       extraArgs: ["--verbose"],
@@ -36,23 +38,24 @@ const baseConfig: TeamConfig = {
     {
       agentId: "checker@my-team",
       name: "checker",
+      agentType: "general-purpose",
       joinedAt: 1773387766070,
       processId: "789",
       cwd: "/tmp",
       subscriptions: [],
       isActive: false,
       sessionId: "ghi-789",
-      systemPrompt: "Check style",
+      prompt: "Check style",
     },
   ],
 };
 
 describe("teamToBlueprint", () => {
-  test("includes team-lead in agents with isLead: true", () => {
+  test("includes team-lead in agents with agentType: team-lead", () => {
     const bp = teamToBlueprint(baseConfig);
     const lead = bp.agents.find((a) => a.name === "team-lead");
     expect(lead).toBeDefined();
-    expect(lead!.isLead).toBe(true);
+    expect(lead!.agentType).toBe("team-lead");
   });
 
   test("maps agent fields correctly", () => {
@@ -62,7 +65,8 @@ describe("teamToBlueprint", () => {
     const reviewer = bp.agents.find((a) => a.name === "reviewer");
     expect(reviewer).toEqual({
       name: "reviewer",
-      systemPrompt: "Review code for issues",
+      agentType: "general-purpose",
+      prompt: "Review code for issues",
       model: "claude-opus-4-6",
       color: "red",
       extraArgs: ["--verbose"],
@@ -74,12 +78,12 @@ describe("teamToBlueprint", () => {
     const checker = bp.agents.find((a) => a.name === "checker");
     expect(checker).toEqual({
       name: "checker",
-      systemPrompt: "Check style",
+      agentType: "general-purpose",
+      prompt: "Check style",
     });
     expect(checker).not.toHaveProperty("model");
     expect(checker).not.toHaveProperty("color");
     expect(checker).not.toHaveProperty("extraArgs");
-    expect(checker).not.toHaveProperty("isLead");
   });
 
   test("includes team name and description", () => {

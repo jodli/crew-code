@@ -44,6 +44,7 @@ export async function executeCreate(
     name: plan.name,
     description: plan.description,
     createdAt: Date.now(),
+    leadAgentId: "",
     leadSessionId: plan.leadSessionId,
     members: [],
   };

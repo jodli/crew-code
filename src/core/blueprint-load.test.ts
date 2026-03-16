@@ -12,9 +12,9 @@ const sampleBlueprint: Blueprint = {
   name: "review-team",
   description: "Code review",
   agents: [
-    { name: "team-lead", isLead: true },
-    { name: "reviewer", systemPrompt: "Review code", model: "opus", color: "red" },
-    { name: "checker", systemPrompt: "Check style" },
+    { name: "team-lead", agentType: "team-lead" },
+    { name: "reviewer", prompt: "Review code", model: "opus", color: "red" },
+    { name: "checker", prompt: "Check style" },
   ],
 };
 
@@ -140,14 +140,14 @@ describe("executeLoad", () => {
     }
   });
 
-  test("creates inboxes with systemPrompt for each agent", async () => {
+  test("creates inboxes with prompt for each agent", async () => {
     const ctx = makeCtx(sampleBlueprint);
     const plan = await planLoad(ctx, { nameOrPath: "review-team" });
     if (!plan.ok) throw new Error("planLoad failed");
 
     await executeLoad(ctx, plan.value);
 
-    // Lead has no systemPrompt, so inbox is empty
+    // Lead has no prompt, so inbox is empty
     const leadInbox = ctx.inboxStore.inboxes.get("review-team/team-lead");
     expect(leadInbox).toHaveLength(0);
 
@@ -172,7 +172,7 @@ describe("executeLoad", () => {
     expect(team?.members.map((m) => m.name)).toEqual(["team-lead", "reviewer", "checker"]);
   });
 
-  test("persists systemPrompt in config members", async () => {
+  test("persists prompt in config members", async () => {
     const ctx = makeCtx(sampleBlueprint);
     const plan = await planLoad(ctx, { nameOrPath: "review-team" });
     if (!plan.ok) throw new Error("planLoad failed");
@@ -181,7 +181,7 @@ describe("executeLoad", () => {
 
     const team = ctx.configStore.teams.get("review-team");
     const reviewer = team?.members.find((m) => m.name === "reviewer");
-    expect(reviewer?.systemPrompt).toBe("Review code");
+    expect(reviewer?.prompt).toBe("Review code");
     expect(reviewer?.model).toBe("opus");
     expect(reviewer?.color).toBe("red");
   });

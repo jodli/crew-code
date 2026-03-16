@@ -14,6 +14,7 @@ export function buildClaudeArgs(opts: LaunchOptions, mode: LaunchMode = "new"): 
   if (opts.color) args.push("--agent-color", opts.color);
   if (opts.parentSessionId) args.push("--parent-session-id", opts.parentSessionId);
   if (opts.model) args.push("--model", opts.model);
+  if (opts.agentType) args.push("--agent-type", opts.agentType);
 
   if (opts.sessionId) {
     if (mode === "resume") {

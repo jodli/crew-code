@@ -14,12 +14,13 @@ import { ok, err } from "../types/result.ts";
 const baseConfig: TeamConfig = {
   name: "test-team",
   createdAt: 1773387766070,
+  leadAgentId: "team-lead@test-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@test-team",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 1773387766070,
       processId: "",
       cwd: "/tmp",
@@ -105,7 +106,7 @@ function makeCtx(overrides?: {
 describe("core/planSpawn", () => {
   test("returns team_not_found if team doesn't exist", async () => {
     const ctx = makeCtx({ configStore: makeConfigStore(null) });
-    const result = await planSpawn(ctx, { team: "no-team", systemPrompt: "work" });
+    const result = await planSpawn(ctx, { team: "no-team", prompt: "work" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -118,7 +119,7 @@ describe("core/planSpawn", () => {
     const result = await planSpawn(ctx, {
       team: "test-team",
       name: "team-lead",
-      systemPrompt: "work",
+      prompt: "work",
     });
 
     expect(result.ok).toBe(false);
@@ -129,7 +130,7 @@ describe("core/planSpawn", () => {
 
   test("auto-generates name if not provided", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", systemPrompt: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -146,6 +147,7 @@ describe("core/planSpawn", () => {
         {
           agentId: "agent-3@test-team",
           name: "agent-3",
+          agentType: "general-purpose",
           joinedAt: 1773387766070,
           processId: "",
           cwd: "/tmp",
@@ -154,7 +156,7 @@ describe("core/planSpawn", () => {
       ],
     };
     const ctx = makeCtx({ configStore: makeConfigStore(configWithAgent3) });
-    const result = await planSpawn(ctx, { team: "test-team", systemPrompt: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -164,7 +166,7 @@ describe("core/planSpawn", () => {
 
   test("generates sessionId as UUID", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", name: "scout", systemPrompt: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", name: "scout", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -175,7 +177,7 @@ describe("core/planSpawn", () => {
 
   test("includes parentSessionId from team config", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", name: "scout", systemPrompt: "work" });
+    const result = await planSpawn(ctx, { team: "test-team", name: "scout", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -208,7 +210,8 @@ describe("core/executeSpawn", () => {
     cwd: "/tmp",
     sessionId: "test-session-uuid",
     parentSessionId: "abc-123",
-    systemPrompt: "do stuff",
+    prompt: "do stuff",
+    agentType: "general-purpose",
   };
 
   test("adds member to config with isActive: false", async () => {
@@ -224,16 +227,16 @@ describe("core/executeSpawn", () => {
     expect(scout?.sessionId).toBe("test-session-uuid");
   });
 
-  test("persists systemPrompt in config member", async () => {
+  test("persists prompt in config member", async () => {
     const configStore = makeConfigStore();
     const ctx = makeCtx({ configStore });
     await executeSpawn(ctx, basePlan);
 
     const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
-    expect(scout?.systemPrompt).toBe("do stuff");
+    expect(scout?.prompt).toBe("do stuff");
   });
 
-  test("seeds inbox with systemPrompt message", async () => {
+  test("seeds inbox with prompt message", async () => {
     const inboxStore = makeInboxStore();
     const ctx = makeCtx({ inboxStore });
     await executeSpawn(ctx, basePlan);
@@ -246,10 +249,10 @@ describe("core/executeSpawn", () => {
     expect(inboxStore.created[0].messages![0].read).toBe(false);
   });
 
-  test("does not seed inbox when no systemPrompt", async () => {
+  test("does not seed inbox when no prompt", async () => {
     const inboxStore = makeInboxStore();
     const ctx = makeCtx({ inboxStore });
-    await executeSpawn(ctx, { ...basePlan, systemPrompt: undefined });
+    await executeSpawn(ctx, { ...basePlan, prompt: undefined });
 
     expect(inboxStore.created[0].messages).toHaveLength(0);
   });
@@ -319,11 +322,11 @@ describe("core/activateAgent", () => {
 
     await executeSpawn(ctx, {
       team: "test-team", agentName: "scout", agentId: "scout@test-team",
-      cwd: "/tmp", sessionId: "s1", parentSessionId: "abc-123",
+      cwd: "/tmp", sessionId: "s1", parentSessionId: "abc-123", agentType: "general-purpose",
     });
     await executeSpawn(ctx, {
       team: "test-team", agentName: "worker", agentId: "worker@test-team",
-      cwd: "/tmp", sessionId: "s2", parentSessionId: "abc-123",
+      cwd: "/tmp", sessionId: "s2", parentSessionId: "abc-123", agentType: "general-purpose",
     });
 
     await activateAgent(ctx, "test-team", "scout@test-team", "%42");

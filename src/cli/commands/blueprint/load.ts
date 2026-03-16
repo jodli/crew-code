@@ -48,8 +48,8 @@ export default defineCommand({
       console.error(`\nWould create team "${blueprint.name}" with:`);
       for (const agent of blueprint.agents) {
         const model = agent.model ? ` (${agent.model})` : "";
-        const lead = agent.isLead ? " (lead)" : "";
-        console.error(`  - ${agent.name}${model}${lead}`);
+        const type = agent.agentType ? ` [${agent.agentType}]` : "";
+        console.error(`  - ${agent.name}${model}${type}`);
       }
       return;
     }
@@ -61,6 +61,10 @@ export default defineCommand({
     }
 
     console.error(pc.bold(`Team "${result.value.teamName}" created from blueprint.`));
+    if (!result.value.hasLead) {
+      console.error(`\n  ${pc.yellow("Warning:")} No team-lead agent in blueprint. Spawn one for permission requests:`);
+      console.error(`  ${pc.cyan(`crew spawn --team ${result.value.teamName} --agent-type team-lead --name team-lead`)}`);
+    }
     console.error(`\nAttach to agents:`);
     for (const opts of result.value.launchOptions) {
       console.error(`  crew attach --team ${result.value.teamName} --name ${opts.agentName}`);

@@ -21,8 +21,8 @@ const sampleBlueprint: Blueprint = {
   name: "review-team",
   description: "Code review",
   agents: [
-    { name: "reviewer", systemPrompt: "Review code", model: "opus", color: "red" },
-    { name: "checker", systemPrompt: "Check style" },
+    { name: "reviewer", prompt: "Review code", model: "opus", color: "red" },
+    { name: "checker", prompt: "Check style" },
   ],
 };
 
@@ -46,7 +46,7 @@ describe("YamlBlueprintStore", () => {
       await store.save(sampleBlueprint);
       const content = await readFile(join(tempDir, "review-team.yaml"), "utf-8");
       expect(content).toContain("name: review-team");
-      expect(content).toContain("systemPrompt: Review code");
+      expect(content).toContain("prompt: Review code");
     });
   });
 

@@ -7,12 +7,13 @@ describe("config/schemas", () => {
       name: "reverse-eng",
       description: "Team purpose",
       createdAt: 1773387766070,
+      leadAgentId: "team-lead@reverse-eng",
       leadSessionId: "2dcc5c49-8e44-45f4-a1b4-c8c7829ce7d0",
       members: [
         {
           agentId: "team-lead@reverse-eng",
           name: "team-lead",
-          isLead: true,
+          agentType: "team-lead",
           model: "claude-opus-4-6",
           joinedAt: 1773387766070,
           processId: "",
@@ -22,6 +23,7 @@ describe("config/schemas", () => {
         {
           agentId: "scout@reverse-eng",
           name: "scout",
+          agentType: "general-purpose",
           model: "claude-opus-4-6",
           prompt: "Initial system prompt for the agent",
           color: "blue",
@@ -78,6 +80,7 @@ describe("config/schemas", () => {
       const minimal = {
         name: "test",
         createdAt: 1234,
+        leadAgentId: "",
         leadSessionId: "abc",
         members: [],
       };

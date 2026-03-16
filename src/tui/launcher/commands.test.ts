@@ -11,20 +11,20 @@ describe("buildSpawnCommand", () => {
   test("with all options", () => {
     expect(buildSpawnCommand("my-team", {
       name: "coder",
-      systemPrompt: "Implement auth",
+      prompt: "Implement auth",
       model: "opus",
     })).toEqual([
       "crew", "spawn", "--team", "my-team",
       "--name", "coder",
-      "--system-prompt", "Implement auth",
+      "--prompt", "Implement auth",
       "--model", "opus",
     ]);
   });
 
   test("skips empty strings", () => {
-    expect(buildSpawnCommand("t", { name: "", systemPrompt: "do stuff", model: "" })).toEqual([
+    expect(buildSpawnCommand("t", { name: "", prompt: "do stuff", model: "" })).toEqual([
       "crew", "spawn", "--team", "t",
-      "--system-prompt", "do stuff",
+      "--prompt", "do stuff",
     ]);
   });
 

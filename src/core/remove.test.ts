@@ -28,12 +28,13 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
 const baseConfig: TeamConfig = {
   name: "my-team",
   createdAt: 1773387766070,
+  leadAgentId: "team-lead@my-team",
   leadSessionId: "lead-session-123",
   members: [
     {
       agentId: "team-lead@my-team",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 1773387766070,
       processId: String(process.pid),
       cwd: "/tmp",
@@ -44,6 +45,7 @@ const baseConfig: TeamConfig = {
     {
       agentId: "worker@my-team",
       name: "worker",
+      agentType: "general-purpose",
       joinedAt: 1773387770000,
       processId: "99999999",
       cwd: "/tmp",

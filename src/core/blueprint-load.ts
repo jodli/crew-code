@@ -18,11 +18,13 @@ export interface LoadPlan {
   teamName: string;
   createPlan: CreatePlan;
   spawnPlans: SpawnPlan[];
+  hasLead: boolean;
 }
 
 export interface LoadOutput {
   teamName: string;
   launchOptions: LaunchOptions[];
+  hasLead: boolean;
 }
 
 export async function planLoad(
@@ -57,7 +59,10 @@ export async function planLoad(
     }
     seenNames.add(agent.name);
 
-    if (agent.isLead) {
+    const agentType = agent.agentType ?? "general-purpose";
+    const isLead = agentType === "team-lead";
+
+    if (isLead) {
       if (hasLead) return err({ kind: "lead_already_exists", team: blueprint.name });
       hasLead = true;
     }
@@ -66,18 +71,18 @@ export async function planLoad(
       team: blueprint.name,
       agentName: agent.name,
       agentId: `${agent.name}@${blueprint.name}`,
-      isLead: agent.isLead,
+      agentType,
       cwd,
-      sessionId: agent.isLead ? createPlan.leadSessionId : randomUUID(),
-      parentSessionId: agent.isLead ? undefined : createPlan.leadSessionId,
-      systemPrompt: agent.systemPrompt,
+      sessionId: isLead ? createPlan.leadSessionId : randomUUID(),
+      parentSessionId: isLead ? undefined : createPlan.leadSessionId,
+      prompt: agent.prompt,
       model: agent.model,
       color: agent.color,
       extraArgs: agent.extraArgs,
     });
   }
 
-  return ok({ blueprint, teamName: blueprint.name, createPlan, spawnPlans });
+  return ok({ blueprint, teamName: blueprint.name, createPlan, spawnPlans, hasLead });
 }
 
 export async function executeLoad(
@@ -95,5 +100,5 @@ export async function executeLoad(
     launchOptions.push(spawnResult.value.launchOptions);
   }
 
-  return ok({ teamName: plan.teamName, launchOptions });
+  return ok({ teamName: plan.teamName, launchOptions, hasLead: plan.hasLead });
 }

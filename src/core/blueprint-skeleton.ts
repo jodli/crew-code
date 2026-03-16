@@ -6,8 +6,12 @@ name: ${name}
 description: ""
 
 agents:
+  - name: team-lead
+    agentType: team-lead
+
   - name: agent-1
-    systemPrompt: |
+    agentType: general-purpose
+    prompt: |
       Describe this agent's role in the team.
       The agent will wait for instructions after receiving this prompt.
     # model: claude-sonnet-4-6
@@ -15,7 +19,8 @@ agents:
     # extraArgs: ["--verbose"]
 
   # - name: agent-2
-  #   systemPrompt: |
+  #   agentType: general-purpose
+  #   prompt: |
   #     Another agent's role description.
   #   model: claude-opus-4-6
   #   color: red

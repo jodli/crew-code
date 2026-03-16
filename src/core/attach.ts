@@ -30,7 +30,7 @@ export async function attachAgent(
   }
 
   const config = teamResult.value;
-  const agentName = input.name ?? config.members.find((m) => m.isLead)?.name ?? "team-lead";
+  const agentName = input.name ?? config.members.find((m) => m.agentType === "team-lead")?.name ?? "team-lead";
 
   const member = config.members.find((m) => m.name === agentName);
   if (!member) {
@@ -61,7 +61,7 @@ export async function attachAgent(
     cwd: member.cwd,
     model: member.model,
     color: member.color,
-    parentSessionId: member.isLead ? undefined : config.leadSessionId,
+    parentSessionId: member.agentType === "team-lead" ? undefined : config.leadSessionId,
     sessionId: member.sessionId,
     extraArgs: member.extraArgs,
   };

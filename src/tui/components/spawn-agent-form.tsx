@@ -4,7 +4,8 @@ import type { KeyEvent } from "@opentui/core";
 
 export interface SpawnAgentResult {
   name: string;
-  systemPrompt: string;
+  agentType: string;
+  prompt: string;
   model: string;
   cwd: string;
   extraArgs: string[];
@@ -17,6 +18,8 @@ interface SpawnAgentFormProps {
   onCancel: () => void;
 }
 
+const AGENT_TYPE_OPTIONS = ["general-purpose", "team-lead"] as const;
+
 const MODEL_OPTIONS = [
   "(default)",
   "claude-sonnet-4-6",
@@ -24,12 +27,13 @@ const MODEL_OPTIONS = [
   "claude-haiku-4-5-20251001",
 ] as const;
 
-type Field = "name" | "systemPrompt" | "model" | "cwd" | "args";
-const fields: Field[] = ["name", "systemPrompt", "model", "cwd", "args"];
+type Field = "name" | "agentType" | "prompt" | "model" | "cwd" | "args";
+const fields: Field[] = ["name", "agentType", "prompt", "model", "cwd", "args"];
 
 export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: SpawnAgentFormProps) {
   const [name, setName] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("");
+  const [agentTypeIndex, setAgentTypeIndex] = useState(0);
+  const [prompt, setPrompt] = useState("");
   const [modelIndex, setModelIndex] = useState(0);
   const [cwd, setCwd] = useState(defaultCwd);
   const [args, setArgs] = useState("");
@@ -43,8 +47,15 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
     }
     const selectedModel = modelIndex === 0 ? "" : MODEL_OPTIONS[modelIndex];
     const extraArgs = args.trim().split(/\s+/).filter(Boolean);
-    onSubmit({ name: name.trim(), systemPrompt: systemPrompt.trim(), model: selectedModel, cwd: cwd.trim(), extraArgs });
-  }, [name, systemPrompt, modelIndex, cwd, args, onSubmit]);
+    onSubmit({
+      name: name.trim(),
+      agentType: AGENT_TYPE_OPTIONS[agentTypeIndex],
+      prompt: prompt.trim(),
+      model: selectedModel,
+      cwd: cwd.trim(),
+      extraArgs,
+    });
+  }, [name, agentTypeIndex, prompt, modelIndex, cwd, args, onSubmit]);
 
   useKeyboard(
     useCallback((key: KeyEvent) => {
@@ -62,7 +73,17 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
         return;
       }
 
-      // Model field: left/right or h/l to cycle options, Enter to submit
+      // Cycling selectors: agentType and model
+      if (activeField === "agentType") {
+        if (key.name === "left" || key.name === "h") {
+          setAgentTypeIndex((i) => (i - 1 + AGENT_TYPE_OPTIONS.length) % AGENT_TYPE_OPTIONS.length);
+        } else if (key.name === "right" || key.name === "l") {
+          setAgentTypeIndex((i) => (i + 1) % AGENT_TYPE_OPTIONS.length);
+        } else if (key.name === "return") {
+          handleSubmit();
+        }
+      }
+
       if (activeField === "model") {
         if (key.name === "left" || key.name === "h") {
           setModelIndex((i) => (i - 1 + MODEL_OPTIONS.length) % MODEL_OPTIONS.length);
@@ -98,10 +119,17 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
     );
   };
 
-  const modelActive = activeField === "model";
-  const modelPrefix = modelActive ? "> " : "  ";
-  const modelValue = MODEL_OPTIONS[modelIndex];
-  const modelHint = modelActive ? "  <-/-> to change" : "";
+  const selectorRow = (field: Field, label: string, value: string) => {
+    const active = activeField === field;
+    const prefix = active ? "> " : "  ";
+    const hint = active ? "  <-/-> to change" : "";
+    return (
+      <text
+        content={`${prefix} ${label} ${value}${hint}`}
+        fg={active ? "#c0caf5" : "#a9b1d6"}
+      />
+    );
+  };
 
   return (
     <box
@@ -109,7 +137,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       top={3}
       left={4}
       width="60%"
-      height={error ? 18 : 16}
+      height={error ? 20 : 18}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
@@ -121,12 +149,11 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
     >
       {textInputRow("name", " Name:  ", "agent name", handleInput(setName))}
       <text content="" />
-      {textInputRow("systemPrompt", " Prompt: ", "system prompt", handleInput(setSystemPrompt))}
+      {selectorRow("agentType", "Type: ", AGENT_TYPE_OPTIONS[agentTypeIndex])}
       <text content="" />
-      <text
-        content={`${modelPrefix} Model: ${modelValue}${modelHint}`}
-        fg={modelActive ? "#c0caf5" : "#a9b1d6"}
-      />
+      {textInputRow("prompt", " Prompt: ", "system prompt", handleInput(setPrompt))}
+      <text content="" />
+      {selectorRow("model", "Model:", MODEL_OPTIONS[modelIndex])}
       <text content="" />
       {textInputRow("cwd", " CWD:   ", defaultCwd, handleInput(setCwd))}
       <text content="" />

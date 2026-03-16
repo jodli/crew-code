@@ -7,12 +7,13 @@ import { ok, err } from "../types/result.ts";
 const baseConfig: TeamConfig = {
   name: "t",
   createdAt: 0,
+  leadAgentId: "team-lead@t",
   leadSessionId: "x",
   members: [
     {
       agentId: "team-lead@t",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 0,
       processId: "",
       cwd: "/tmp",
@@ -21,6 +22,7 @@ const baseConfig: TeamConfig = {
     {
       agentId: "worker@t",
       name: "worker",
+      agentType: "general-purpose",
       joinedAt: 0,
       processId: "99999999",
       cwd: "/tmp",

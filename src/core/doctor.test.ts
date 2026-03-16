@@ -34,12 +34,13 @@ const healthyConfig: TeamConfig = {
   name: "my-team",
   description: "A test team",
   createdAt: 1773387766070,
+  leadAgentId: "team-lead@my-team",
   leadSessionId: "abc-123",
   members: [
     {
       agentId: "team-lead@my-team",
       name: "team-lead",
-      isLead: true,
+      agentType: "team-lead",
       joinedAt: 1773387766070,
       processId: String(process.pid), // current process — alive
       cwd: "/tmp",
@@ -49,6 +50,7 @@ const healthyConfig: TeamConfig = {
     {
       agentId: "scout@my-team",
       name: "scout",
+      agentType: "general-purpose",
       joinedAt: 1773387766070,
       processId: "",
       cwd: "/tmp",

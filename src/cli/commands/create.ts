@@ -41,6 +41,6 @@ export default defineCommand({
 
     console.error(`Team ${pc.bold(result.value.name)} created.`);
     console.error(`\n  Spawn a lead agent:`);
-    console.error(`  ${pc.cyan(`crew spawn --team ${args.name} --lead --name team-lead`)}\n`);
+    console.error(`  ${pc.cyan(`crew spawn --team ${args.name} --agent-type team-lead --name team-lead`)}\n`);
   },
 });

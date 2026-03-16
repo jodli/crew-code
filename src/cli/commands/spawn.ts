@@ -9,6 +9,8 @@ import { renderError } from "../errors.ts";
 import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
 import type { AppContext } from "../../types/context.ts";
 
+const ALLOWED_AGENT_TYPES = ["team-lead", "general-purpose"];
+
 export default defineCommand({
   meta: {
     name: "spawn",
@@ -20,7 +22,7 @@ export default defineCommand({
       description: "Team name to spawn into",
       required: true,
     },
-    "system-prompt": {
+    prompt: {
       type: "string",
       description: "System prompt defining the agent's role in the team",
       required: false,
@@ -40,13 +42,19 @@ export default defineCommand({
       description: "Agent color",
       required: false,
     },
-    lead: {
-      type: "boolean",
-      description: "Mark this agent as the team lead",
+    "agent-type": {
+      type: "string",
+      description: "Agent type (team-lead, general-purpose)",
       required: false,
     },
   },
   async run({ args, rawArgs }) {
+    const agentType = args["agent-type"] || "general-purpose";
+    if (!ALLOWED_AGENT_TYPES.includes(agentType)) {
+      console.error(`Invalid agent type "${agentType}". Allowed: ${ALLOWED_AGENT_TYPES.join(", ")}`);
+      process.exit(1);
+    }
+
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
@@ -54,9 +62,9 @@ export default defineCommand({
 
     const result = await spawnAgent(ctx, {
       team: args.team,
-      systemPrompt: args["system-prompt"],
+      prompt: args.prompt || undefined,
       name: args.name || undefined,
-      isLead: args.lead || undefined,
+      agentType,
       model: args.model || undefined,
       color: args.color || undefined,
       extraArgs: parsePassthroughArgs(rawArgs),

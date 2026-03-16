@@ -9,7 +9,7 @@ describe("BlueprintSchema", () => {
       agents: [
         {
           name: "reviewer",
-          systemPrompt: "Review code for issues",
+          prompt: "Review code for issues",
           model: "claude-opus-4-6",
           color: "red",
           extraArgs: ["--verbose"],
@@ -52,7 +52,7 @@ describe("BlueprintSchema", () => {
   test("rejects agent without name", () => {
     const result = BlueprintSchema.safeParse({
       name: "bad",
-      agents: [{ systemPrompt: "do stuff" }],
+      agents: [{ prompt: "do stuff" }],
     });
     expect(result.success).toBe(false);
   });

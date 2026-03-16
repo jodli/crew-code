@@ -6,9 +6,9 @@ import { ok, err } from "../types/result.ts";
 
 export interface SpawnInput {
   team: string;
-  systemPrompt?: string;
+  prompt?: string;
   name?: string;
-  isLead?: boolean;
+  agentType?: string;
   model?: string;
   color?: string;
   extraArgs?: string[];
@@ -18,13 +18,13 @@ export interface SpawnPlan {
   team: string;
   agentName: string;
   agentId: string;
-  isLead?: boolean;
+  agentType: string;
   cwd: string;
   sessionId: string;
   model?: string;
   color?: string;
   parentSessionId?: string;
-  systemPrompt?: string;
+  prompt?: string;
   extraArgs?: string[];
 }
 
@@ -59,6 +59,8 @@ export async function planSpawn(
   const config = teamResult.value;
   const agentName = input.name ?? nextAgentName(config.members);
   const agentId = `${agentName}@${input.team}`;
+  const agentType = input.agentType ?? "general-purpose";
+  const isLead = agentType === "team-lead";
 
   const existing = config.members.find((m) => m.name === agentName);
   if (existing) {
@@ -69,7 +71,7 @@ export async function planSpawn(
     });
   }
 
-  if (input.isLead && config.members.some((m) => m.isLead)) {
+  if (isLead && config.members.some((m) => m.agentType === "team-lead")) {
     return err({ kind: "lead_already_exists", team: input.team });
   }
 
@@ -77,13 +79,13 @@ export async function planSpawn(
     team: input.team,
     agentName,
     agentId,
-    isLead: input.isLead,
+    agentType,
     cwd: process.cwd(),
-    sessionId: input.isLead ? config.leadSessionId : randomUUID(),
+    sessionId: isLead ? config.leadSessionId : randomUUID(),
     model: input.model,
     color: input.color,
-    parentSessionId: input.isLead ? undefined : config.leadSessionId,
-    systemPrompt: input.systemPrompt,
+    parentSessionId: isLead ? undefined : config.leadSessionId,
+    prompt: input.prompt,
     extraArgs: input.extraArgs,
   });
 }
@@ -92,10 +94,12 @@ export async function executeSpawn(
   ctx: AppContext,
   plan: SpawnPlan,
 ): Promise<Result<SpawnOutput>> {
+  const isLead = plan.agentType === "team-lead";
+
   const newMember: AgentMember = {
     agentId: plan.agentId,
     name: plan.agentName,
-    isLead: plan.isLead,
+    agentType: plan.agentType,
     model: plan.model,
     color: plan.color,
     joinedAt: Date.now(),
@@ -104,21 +108,22 @@ export async function executeSpawn(
     subscriptions: [],
     isActive: false,
     sessionId: plan.sessionId,
-    systemPrompt: plan.systemPrompt,
+    prompt: plan.prompt,
     extraArgs: plan.extraArgs,
   };
 
   const addResult = await ctx.configStore.updateTeam(plan.team, (cfg) => ({
     ...cfg,
+    leadAgentId: isLead ? plan.agentId : cfg.leadAgentId,
     members: [...cfg.members, newMember],
   }));
   if (!addResult.ok) return addResult as Result<never>;
 
-  const initialMessages: InboxMessage[] = plan.systemPrompt
+  const initialMessages: InboxMessage[] = plan.prompt
     ? [
         {
           from: "team-lead",
-          text: plan.systemPrompt,
+          text: plan.prompt,
           timestamp: new Date().toISOString(),
           read: false,
         },
@@ -148,6 +153,7 @@ export async function executeSpawn(
     parentSessionId: plan.parentSessionId,
     model: plan.model,
     sessionId: plan.sessionId,
+    agentType: plan.agentType,
     extraArgs: plan.extraArgs,
   };
 

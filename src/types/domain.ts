@@ -1,9 +1,9 @@
 export interface AgentMember {
   agentId: string;
   name: string;
-  isLead?: boolean;
+  agentType: string;
   model?: string;
-  systemPrompt?: string;
+  prompt?: string;
   color?: string;
   planModeRequired?: boolean;
   joinedAt: number;
@@ -19,6 +19,7 @@ export interface TeamConfig {
   name: string;
   description?: string;
   createdAt: number;
+  leadAgentId: string;
   leadSessionId: string;
   members: AgentMember[];
 }
@@ -32,6 +33,7 @@ export interface LaunchOptions {
   parentSessionId?: string;
   model?: string;
   sessionId?: string;
+  agentType?: string;
   extraArgs?: string[];
 }
 
