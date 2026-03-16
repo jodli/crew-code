@@ -9,6 +9,7 @@ import doctor from "./cli/commands/doctor.ts";
 import inbox from "./cli/commands/inbox.ts";
 import remove from "./cli/commands/remove.ts";
 import tui from "./cli/commands/tui.ts";
+import blueprint from "./cli/commands/blueprint.ts";
 
 const main = defineCommand({
   meta: {
@@ -27,6 +28,7 @@ const main = defineCommand({
     inbox,
     remove,
     tui,
+    blueprint,
   },
 });
 

@@ -59,6 +59,14 @@ const messages: Record<string, (e: CrewError) => string> = {
     const { agent, team } = e as { agent: string; team: string };
     return `Agent "${agent}" in team "${team}" has a stale session (no conversation on disk). Run "crew doctor --team ${team}" to fix.`;
   },
+  blueprint_not_found: (e) =>
+    `Blueprint "${(e as { name: string }).name}" not found.`,
+  blueprint_invalid: (e) => {
+    const { name, detail } = e as { name: string; detail: string };
+    return `Blueprint "${name}" is invalid: ${detail}`;
+  },
+  blueprint_already_exists: (e) =>
+    `Blueprint "${(e as { name: string }).name}" already exists.`,
 };
 
 export function renderError(e: CrewError): string {
