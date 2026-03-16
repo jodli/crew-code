@@ -8,7 +8,8 @@ export type View =
   | { screen: "inbox" }
   | { screen: "send-message" }
   | { screen: "help" }
-  | { screen: "attach-form" };
+  | { screen: "attach-form" }
+  | { screen: "load-blueprint" };
 
 export type Panel = "teams" | "agents";
 
@@ -40,6 +41,7 @@ export type NavAction =
   | { type: "open_inbox" }
   | { type: "open_send_message" }
   | { type: "open_attach_form" }
+  | { type: "open_load_blueprint" }
   | { type: "toggle_help" }
   | { type: "close_overlay" }
   | { type: "quit" };
@@ -96,6 +98,9 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
 
     case "open_attach_form":
       return { ...state, view: { screen: "attach-form" } };
+
+    case "open_load_blueprint":
+      return { ...state, view: { screen: "load-blueprint" } };
 
     case "toggle_help":
       if (state.view.screen === "help") {

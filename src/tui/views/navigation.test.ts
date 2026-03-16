@@ -220,6 +220,21 @@ describe("navReducer", () => {
     });
   });
 
+  describe("load-blueprint overlay", () => {
+    test("open_load_blueprint switches to load-blueprint view", () => {
+      const s = navReducer(initialNavState, { type: "open_load_blueprint" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("load-blueprint");
+    });
+
+    test("close_overlay returns to dashboard from load-blueprint", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "load-blueprint" } };
+      const s = navReducer(state, { type: "close_overlay" });
+      if (s === "quit") return;
+      expect(s.view.screen).toBe("dashboard");
+    });
+  });
+
   test("quit returns 'quit'", () => {
     const s = navReducer(initialNavState, { type: "quit" });
     expect(s).toBe("quit");

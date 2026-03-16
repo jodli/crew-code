@@ -17,6 +17,7 @@ import { ErrorToast } from "./components/error-toast.tsx";
 import { InboxView } from "./components/inbox-view.tsx";
 import { SendMessageForm } from "./components/send-message-form.tsx";
 import { AttachForm } from "./components/attach-form.tsx";
+import { BlueprintLoadForm } from "./components/blueprint-load-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
 import { killAgent } from "../actions/kill-agent.ts";
@@ -26,6 +27,9 @@ import { sendMessage } from "../actions/send-message.ts";
 import { attachAgent } from "../actions/attach-agent.ts";
 import { planSpawn } from "../actions/spawn-agent.ts";
 import { planCreate } from "../actions/create-team.ts";
+import { planLoad, executeLoad } from "../core/blueprint-load.ts";
+import { YamlBlueprintStore } from "../adapters/yaml-blueprint-store.ts";
+import type { Blueprint } from "../config/blueprint-schema.ts";
 import type { CrewError } from "../types/errors.ts";
 
 function tuiErrorMessage(error: CrewError): string {
@@ -42,7 +46,8 @@ function tuiErrorMessage(error: CrewError): string {
 
 const configStore = new JsonFileConfigStore();
 const inboxStore = new JsonFileInboxStore();
-const ctx = { configStore, inboxStore };
+const blueprintStore = new YamlBlueprintStore();
+const ctx = { configStore, inboxStore, blueprintStore };
 
 interface AppProps {
   launcher: Launcher;
@@ -87,7 +92,8 @@ export function App({ launcher }: AppProps) {
     nav.view.screen === "spawn-agent" ||
     nav.view.screen === "send-message" ||
     nav.view.screen === "inbox" ||
-    nav.view.screen === "attach-form"
+    nav.view.screen === "attach-form" ||
+    nav.view.screen === "load-blueprint"
   );
 
   const handleKey = useCallback(
@@ -134,6 +140,8 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "focus_agents" });
         } else if (key.name === "h" && nav.panel === "agents") {
           dispatch({ type: "focus_teams" });
+        } else if (key.name === "b" && nav.panel === "teams") {
+          dispatch({ type: "open_load_blueprint" });
         } else if (key.name === "n" && nav.panel === "teams") {
           dispatch({ type: "open_create_team" });
         } else if (key.name === "s" && nav.panel === "agents" && selectedTeamName) {
@@ -265,6 +273,37 @@ export function App({ launcher }: AppProps) {
     [launcher, selectedTeamName, selectedAgent],
   );
 
+  const handleLoadBlueprint = useCallback(
+    async (blueprint: Blueprint) => {
+      const plan = await planLoad(ctx, { nameOrPath: blueprint.name });
+      if (!plan.ok) {
+        setError(tuiErrorMessage(plan.error));
+        dispatch({ type: "close_overlay" });
+        return;
+      }
+
+      const result = await executeLoad(ctx, plan.value);
+      if (!result.ok) {
+        setError(`Blueprint load failed: ${result.error.kind}`);
+        dispatch({ type: "close_overlay" });
+        return;
+      }
+
+      // Start all agents via launcher (team is already created, so attach all)
+      for (const opts of result.value.launchOptions) {
+        const cmd = buildAttachCommand(result.value.teamName, opts.agentName, opts.extraArgs);
+        try {
+          await launcher.openTerminal(cmd, opts.cwd, `crew:${opts.agentName}`);
+        } catch (e: any) {
+          setError(`Failed to launch ${opts.agentName}: ${e.message}`);
+          break;
+        }
+      }
+      dispatch({ type: "close_overlay" });
+    },
+    [launcher],
+  );
+
   const handleCancelOverlay = useCallback(() => {
     dispatch({ type: "close_overlay" });
   }, []);
@@ -376,6 +415,13 @@ export function App({ launcher }: AppProps) {
           agentName={selectedAgent.name}
           storedArgs={selectedAgent.extraArgs ?? []}
           onSubmit={handleAttach}
+          onCancel={handleCancelOverlay}
+        />
+      )}
+      {nav.view.screen === "load-blueprint" && (
+        <BlueprintLoadForm
+          blueprintStore={blueprintStore}
+          onSubmit={handleLoadBlueprint}
           onCancel={handleCancelOverlay}
         />
       )}
