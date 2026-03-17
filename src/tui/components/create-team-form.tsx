@@ -3,18 +3,16 @@ import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 
 interface CreateTeamFormProps {
-  defaultCwd: string;
-  onSubmit: (name: string, cwd: string, extraArgs: string[]) => void;
+  onSubmit: (name: string, description: string) => void;
   onCancel: () => void;
 }
 
-type Field = "name" | "cwd" | "args";
-const fields: Field[] = ["name", "cwd", "args"];
+type Field = "name" | "description";
+const fields: Field[] = ["name", "description"];
 
-export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFormProps) {
+export function CreateTeamForm({ onSubmit, onCancel }: CreateTeamFormProps) {
   const [name, setName] = useState("");
-  const [cwd, setCwd] = useState(defaultCwd);
-  const [args, setArgs] = useState("");
+  const [description, setDescription] = useState("");
   const [activeField, setActiveField] = useState<Field>("name");
   const [error, setError] = useState("");
 
@@ -23,13 +21,8 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
       setError("Name is required");
       return;
     }
-    if (!cwd.trim()) {
-      setError("CWD is required");
-      return;
-    }
-    const extraArgs = args.trim().split(/\s+/).filter(Boolean);
-    onSubmit(name.trim(), cwd.trim(), extraArgs);
-  }, [name, cwd, args, onSubmit]);
+    onSubmit(name.trim(), description.trim());
+  }, [name, description, onSubmit]);
 
   useKeyboard(
     useCallback((key: KeyEvent) => {
@@ -77,7 +70,7 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
       top={4}
       left={4}
       width="60%"
-      height={error ? 12 : 11}
+      height={error ? 10 : 9}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
@@ -87,11 +80,9 @@ export function CreateTeamForm({ defaultCwd, onSubmit, onCancel }: CreateTeamFor
       flexDirection="column"
       zIndex={10}
     >
-      {fieldRow("name", " Name: ", "team name", handleInput(setName))}
+      {fieldRow("name", " Name:        ", "team name", handleInput(setName))}
       <text content="" />
-      {fieldRow("cwd", " CWD:  ", defaultCwd, handleInput(setCwd))}
-      <text content="" />
-      {fieldRow("args", " Args: ", "e.g. --verbose --effort high", handleInput(setArgs))}
+      {fieldRow("description", " Description: ", "optional description", handleInput(setDescription))}
       <text content="" />
       {error ? (
         <>

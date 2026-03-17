@@ -22,8 +22,9 @@ import { BlueprintDeployForm } from "./components/blueprint-deploy-form.tsx";
 import { EditTeamForm } from "./components/edit-team-form.tsx";
 import { EditAgentForm } from "./components/edit-agent-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
-import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
+import { buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
 import { killAgent } from "../actions/kill-agent.ts";
+import { createTeam } from "../actions/create-team.ts";
 import { destroyTeam } from "../actions/destroy-team.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
 import { sendMessage } from "../actions/send-message.ts";
@@ -31,7 +32,6 @@ import { attachAgent } from "../actions/attach-agent.ts";
 import { updateTeam } from "../actions/update-team.ts";
 import { updateAgent } from "../actions/update-agent.ts";
 import { planSpawn } from "../actions/spawn-agent.ts";
-import { planCreate } from "../actions/create-team.ts";
 import { planLoad, executeLoad } from "../core/blueprint-load.ts";
 import { YamlBlueprintStore } from "../adapters/yaml-blueprint-store.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
@@ -182,21 +182,17 @@ export function App({ launcher }: AppProps) {
   useKeyboard(handleKey);
 
   const handleCreateTeam = useCallback(
-    async (name: string, cwd: string, extraArgs: string[]) => {
-      const validation = await planCreate(ctx, { name });
-      if (!validation.ok) {
-        setError(tuiErrorMessage(validation.error));
-        dispatch({ type: "close_overlay" });
-        return;
-      }
-      try {
-        await launcher.openTerminal(buildCreateCommand(name, extraArgs), cwd, `crew:${name}`);
-      } catch (e: any) {
-        setError(`Failed to create: ${e.message}`);
+    async (name: string, description: string) => {
+      const result = await createTeam(ctx, {
+        name,
+        description: description || undefined,
+      });
+      if (!result.ok) {
+        setError(tuiErrorMessage(result.error));
       }
       dispatch({ type: "close_overlay" });
     },
-    [launcher],
+    [],
   );
 
   const handleSpawnAgent = useCallback(
@@ -452,7 +448,6 @@ export function App({ launcher }: AppProps) {
       {nav.view.screen === "help" && <HelpOverlay />}
       {nav.view.screen === "create-team" && (
         <CreateTeamForm
-          defaultCwd={process.cwd()}
           onSubmit={handleCreateTeam}
           onCancel={handleCancelOverlay}
         />
