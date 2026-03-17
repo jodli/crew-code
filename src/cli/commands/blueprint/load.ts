@@ -18,6 +18,12 @@ export default defineCommand({
       description: "Blueprint name or file path",
       required: true,
     },
+    name: {
+      type: "string",
+      alias: "n",
+      description: "Override team name (default: blueprint name)",
+      required: false,
+    },
     "dry-run": {
       type: "boolean",
       description: "Preview what would be created without doing it",
@@ -32,7 +38,7 @@ export default defineCommand({
       blueprintStore: new YamlBlueprintStore(),
     };
 
-    const plan = await planLoad(ctx, { nameOrPath: args.blueprint });
+    const plan = await planLoad(ctx, { nameOrPath: args.blueprint, teamName: args.name });
     if (!plan.ok) {
       console.error(renderError(plan.error));
       process.exit(1);
@@ -45,7 +51,7 @@ export default defineCommand({
       if (blueprint.description) {
         console.error(`  ${blueprint.description}`);
       }
-      console.error(`\nWould create team "${blueprint.name}" with:`);
+      console.error(`\nWould create team "${plan.value.teamName}" with:`);
       for (const agent of blueprint.agents) {
         const model = agent.model ? ` (${agent.model})` : "";
         const type = agent.agentType ? ` [${agent.agentType}]` : "";
