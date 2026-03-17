@@ -9,6 +9,7 @@ import { executeSpawn, type SpawnPlan } from "./spawn.ts";
 
 export interface LoadInput {
   nameOrPath: string;
+  teamName?: string;
   cwd?: string;
   dryRun?: boolean;
 }
@@ -39,8 +40,10 @@ export async function planLoad(
   if (!bpResult.ok) return bpResult as Result<never>;
 
   const blueprint = bpResult.value;
+  const resolvedName = input.teamName ?? blueprint.name;
+
   const createResult = await planCreate(ctx, {
-    name: blueprint.name,
+    name: resolvedName,
     description: blueprint.description,
   });
   if (!createResult.ok) return createResult as Result<never>;
@@ -55,7 +58,7 @@ export async function planLoad(
 
   for (const agent of blueprint.agents) {
     if (seenNames.has(agent.name)) {
-      return err({ kind: "agent_already_exists", agent: agent.name, team: blueprint.name });
+      return err({ kind: "agent_already_exists", agent: agent.name, team: resolvedName });
     }
     seenNames.add(agent.name);
 
@@ -63,14 +66,14 @@ export async function planLoad(
     const isLead = agentType === "team-lead";
 
     if (isLead) {
-      if (hasLead) return err({ kind: "lead_already_exists", team: blueprint.name });
+      if (hasLead) return err({ kind: "lead_already_exists", team: resolvedName });
       hasLead = true;
     }
 
     spawnPlans.push({
-      team: blueprint.name,
+      team: resolvedName,
       agentName: agent.name,
-      agentId: `${agent.name}@${blueprint.name}`,
+      agentId: `${agent.name}@${resolvedName}`,
       agentType,
       cwd,
       sessionId: isLead ? createPlan.leadSessionId : randomUUID(),
@@ -82,7 +85,7 @@ export async function planLoad(
     });
   }
 
-  return ok({ blueprint, teamName: blueprint.name, createPlan, spawnPlans, hasLead });
+  return ok({ blueprint, teamName: resolvedName, createPlan, spawnPlans, hasLead });
 }
 
 export async function executeLoad(

@@ -186,3 +186,42 @@ describe("executeLoad", () => {
     expect(reviewer?.color).toBe("red");
   });
 });
+
+describe("planLoad with teamName override", () => {
+  test("uses teamName override for team creation", async () => {
+    const ctx = makeCtx(sampleBlueprint);
+    const result = await planLoad(ctx, { nameOrPath: "review-team", teamName: "custom-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.teamName).toBe("custom-team");
+      expect(result.value.createPlan.name).toBe("custom-team");
+      // blueprint identity is preserved
+      expect(result.value.blueprint.name).toBe("review-team");
+    }
+  });
+
+  test("agent IDs use the overridden team name", async () => {
+    const ctx = makeCtx(sampleBlueprint);
+    const result = await planLoad(ctx, { nameOrPath: "review-team", teamName: "custom-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      for (const sp of result.value.spawnPlans) {
+        expect(sp.agentId).toContain("@custom-team");
+        expect(sp.team).toBe("custom-team");
+      }
+    }
+  });
+
+  test("without teamName uses blueprint.name (existing behavior)", async () => {
+    const ctx = makeCtx(sampleBlueprint);
+    const result = await planLoad(ctx, { nameOrPath: "review-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.teamName).toBe("review-team");
+      expect(result.value.createPlan.name).toBe("review-team");
+    }
+  });
+});
