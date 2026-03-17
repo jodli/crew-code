@@ -12,10 +12,15 @@ export interface TeamSummary {
 export interface MemberDetail {
   name: string;
   agentId: string;
+  agentType: string;
   processId: string;
   sessionId?: string;
+  model?: string;
+  prompt?: string;
+  color?: string;
   cwd: string;
   unreadCount: number;
+  extraArgs?: string[];
 }
 
 export interface TeamDetail {
@@ -39,10 +44,15 @@ async function enrichMembers(
     enriched.push({
       name: member.name,
       agentId: member.agentId,
+      agentType: member.agentType,
       processId: member.processId,
       sessionId: member.sessionId,
+      model: member.model,
+      prompt: member.prompt,
+      color: member.color,
       cwd: member.cwd,
       unreadCount,
+      extraArgs: member.extraArgs,
     });
   }
   return enriched;

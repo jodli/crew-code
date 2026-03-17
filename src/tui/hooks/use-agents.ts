@@ -1,41 +1,36 @@
 import { useState, useEffect, useCallback } from "react";
-import type { ConfigStore } from "../../ports/config-store.ts";
-import type { InboxStore } from "../../ports/inbox-store.ts";
-import type { AgentMember } from "../../types/domain.ts";
+import type { AppContext } from "../../types/context.ts";
+import type { MemberDetail } from "../../core/status.ts";
+import { listAgents } from "../../actions/list-agents.ts";
 import { isProcessAlive } from "../../lib/process.ts";
 
 export interface AgentSummary {
   name: string;
   agentId: string;
+  agentType: string;
   status: "alive" | "dead";
   processId: string;
   sessionId?: string;
   model?: string;
+  prompt?: string;
+  color?: string;
   cwd: string;
   unreadCount: number;
   extraArgs?: string[];
 }
 
-function summarizeAgent(member: AgentMember, unreadCount: number): AgentSummary {
+function toAgentSummary(member: MemberDetail): AgentSummary {
   const pid = parseInt(member.processId, 10);
   const alive = pid > 0 && isProcessAlive(pid);
 
   return {
-    name: member.name,
-    agentId: member.agentId,
+    ...member,
     status: alive ? "alive" : "dead",
-    processId: member.processId,
-    sessionId: member.sessionId,
-    model: member.model,
-    cwd: member.cwd,
-    unreadCount,
-    extraArgs: member.extraArgs,
   };
 }
 
 export function useAgents(
-  configStore: ConfigStore,
-  inboxStore: InboxStore,
+  ctx: AppContext,
   teamName: string | null,
   pollIntervalMs = 2000,
 ) {
@@ -47,25 +42,14 @@ export function useAgents(
       return;
     }
 
-    const result = await configStore.getTeam(teamName);
+    const result = await listAgents(ctx, teamName);
     if (!result.ok) {
       setAgents([]);
       return;
     }
 
-    const summaries = await Promise.all(
-      result.value.members.map(async (member) => {
-        let unread = 0;
-        const inboxResult = await inboxStore.readMessages(teamName, member.name);
-        if (inboxResult.ok) {
-          unread = inboxResult.value.filter((m) => !m.read).length;
-        }
-        return summarizeAgent(member, unread);
-      }),
-    );
-
-    setAgents(summaries);
-  }, [configStore, inboxStore, teamName]);
+    setAgents(result.value.map(toAgentSummary));
+  }, [ctx, teamName]);
 
   useEffect(() => {
     refresh();

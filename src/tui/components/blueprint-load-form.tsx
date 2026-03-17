@@ -1,16 +1,18 @@
 import { useState, useCallback, useEffect } from "react";
 import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
-import type { BlueprintStore } from "../../ports/blueprint-store.ts";
+import type { AppContext } from "../../types/context.ts";
 import type { Blueprint } from "../../config/blueprint-schema.ts";
+import { listBlueprints } from "../../actions/list-blueprints.ts";
+import { getBlueprint } from "../../actions/get-blueprint.ts";
 
 interface BlueprintLoadFormProps {
-  blueprintStore: BlueprintStore;
+  ctx: AppContext;
   onSubmit: (blueprint: Blueprint) => void;
   onCancel: () => void;
 }
 
-export function BlueprintLoadForm({ blueprintStore, onSubmit, onCancel }: BlueprintLoadFormProps) {
+export function BlueprintLoadForm({ ctx, onSubmit, onCancel }: BlueprintLoadFormProps) {
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ export function BlueprintLoadForm({ blueprintStore, onSubmit, onCancel }: Bluepr
 
   useEffect(() => {
     (async () => {
-      const namesResult = await blueprintStore.list();
+      const namesResult = await listBlueprints(ctx);
       if (!namesResult.ok) {
         setError("Failed to list blueprints");
         setLoading(false);
@@ -27,13 +29,13 @@ export function BlueprintLoadForm({ blueprintStore, onSubmit, onCancel }: Bluepr
 
       const loaded: Blueprint[] = [];
       for (const name of namesResult.value) {
-        const bp = await blueprintStore.load(name);
+        const bp = await getBlueprint(ctx, name);
         if (bp.ok) loaded.push(bp.value);
       }
       setBlueprints(loaded);
       setLoading(false);
     })();
-  }, [blueprintStore]);
+  }, [ctx]);
 
   useKeyboard(
     useCallback((key: KeyEvent) => {

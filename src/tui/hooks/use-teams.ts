@@ -5,6 +5,7 @@ import { isProcessAlive } from "../../lib/process.ts";
 
 export interface TeamSummary {
   name: string;
+  description?: string;
   agentCount: number;
   aliveCount: number;
   createdAt: number;
@@ -19,6 +20,7 @@ function summarizeTeam(config: TeamConfig): TeamSummary {
 
   return {
     name: config.name,
+    description: config.description,
     agentCount: agents.length,
     aliveCount,
     createdAt: config.createdAt,
