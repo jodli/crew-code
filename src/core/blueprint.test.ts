@@ -4,10 +4,12 @@ import {
   getBlueprint,
   createBlueprint,
   updateBlueprint,
+  exportTeamAsBlueprint,
 } from "./blueprint.ts";
 import type { AppContext } from "../types/context.ts";
 import type { BlueprintStore } from "../ports/blueprint-store.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
+import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
 
 const sampleBlueprint: Blueprint = {
@@ -195,6 +197,90 @@ describe("updateBlueprint", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.kind).toBe("blueprint_invalid");
+    }
+  });
+});
+
+const sampleTeamConfig: TeamConfig = {
+  name: "my-team",
+  description: "A running team",
+  createdAt: 1773387766070,
+  leadAgentId: "lead@my-team",
+  leadSessionId: "abc-123",
+  members: [
+    {
+      agentId: "lead@my-team",
+      name: "lead",
+      agentType: "team-lead",
+      joinedAt: 1773387766070,
+      processId: "%0",
+      cwd: "/tmp",
+      subscriptions: [],
+      isActive: true,
+    },
+    {
+      agentId: "dev@my-team",
+      name: "dev",
+      agentType: "general-purpose",
+      model: "opus",
+      prompt: "Write code",
+      joinedAt: 1773387766070,
+      processId: "%1",
+      cwd: "/tmp",
+      subscriptions: [],
+      isActive: false,
+    },
+  ],
+};
+
+describe("exportTeamAsBlueprint", () => {
+  test("exports team as blueprint without saving", async () => {
+    const ctx = makeCtx();
+    ctx.configStore.getTeam = async (name: string) => {
+      if (name === "my-team") return ok(sampleTeamConfig);
+      return err({ kind: "team_not_found", team: name });
+    };
+
+    const result = await exportTeamAsBlueprint(ctx, { team: "my-team" });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.name).toBe("my-team");
+      expect(result.value.description).toBe("A running team");
+      expect(result.value.agents).toHaveLength(2);
+      expect(result.value.agents[1].model).toBe("opus");
+      expect(result.value.agents[1].prompt).toBe("Write code");
+    }
+  });
+
+  test("exports and saves when save is true", async () => {
+    const bpStore = makeBlueprintStore();
+    const ctx: AppContext = {
+      ...makeCtx(),
+      configStore: {
+        ...makeCtx().configStore,
+        getTeam: async (name: string) => {
+          if (name === "my-team") return ok(sampleTeamConfig);
+          return err({ kind: "team_not_found", team: name });
+        },
+      },
+      blueprintStore: bpStore,
+    };
+
+    const result = await exportTeamAsBlueprint(ctx, { team: "my-team", save: true });
+    expect(result.ok).toBe(true);
+
+    // Verify it was saved in the store
+    const loadResult = await bpStore.load("my-team");
+    expect(loadResult.ok).toBe(true);
+  });
+
+  test("returns team_not_found for missing team", async () => {
+    const ctx = makeCtx();
+    const result = await exportTeamAsBlueprint(ctx, { team: "missing" });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("team_not_found");
     }
   });
 });

@@ -1,6 +1,7 @@
 import type { AppContext } from "../types/context.ts";
 import type { Blueprint, BlueprintAgent } from "../config/blueprint-schema.ts";
 import { BlueprintSchema } from "../config/blueprint-schema.ts";
+import { teamToBlueprint } from "./blueprint-export.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 
@@ -82,4 +83,24 @@ export async function updateBlueprint(
   if (!saveResult.ok) return saveResult;
 
   return ok(parseResult.data);
+}
+
+export async function exportTeamAsBlueprint(
+  ctx: AppContext,
+  input: { team: string; save?: boolean },
+): Promise<Result<Blueprint>> {
+  const teamResult = await ctx.configStore.getTeam(input.team);
+  if (!teamResult.ok) return teamResult;
+
+  const blueprint = teamToBlueprint(teamResult.value);
+
+  if (input.save) {
+    const storeResult = requireBlueprintStore(ctx);
+    if (!storeResult.ok) return storeResult;
+
+    const saveResult = await storeResult.value.save(blueprint);
+    if (!saveResult.ok) return saveResult;
+  }
+
+  return ok(blueprint);
 }
