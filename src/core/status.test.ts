@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { listTeams, getTeamDetail } from "./status.ts";
+import { listTeams, getTeamDetail, listAgents } from "./status.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig, InboxMessage } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
@@ -155,6 +155,62 @@ describe("status core", () => {
       const ctx = makeCtx();
 
       const result = await getTeamDetail(ctx, "no-such-team");
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe("team_not_found");
+      }
+    });
+  });
+
+  describe("listAgents()", () => {
+    test("returns enriched members for valid team", async () => {
+      const messages: InboxMessage[] = [
+        {
+          from: "team-lead",
+          text: "Hello",
+          timestamp: "2026-01-01T00:00:00Z",
+          read: false,
+        },
+        {
+          from: "team-lead",
+          text: "Update",
+          timestamp: "2026-01-01T00:01:00Z",
+          read: true,
+        },
+      ];
+
+      const ctx = makeCtx({
+        configStore: {
+          ...makeCtx().configStore,
+          getTeam: async () => ok(sampleConfig),
+        },
+        inboxStore: {
+          ...makeCtx().inboxStore,
+          readMessages: async (_team: string, agent: string) => {
+            if (agent === "team-lead") return ok(messages);
+            return ok([]);
+          },
+        },
+      });
+
+      const result = await listAgents(ctx, "my-team");
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(2);
+
+        const lead = result.value.find((m) => m.name === "team-lead")!;
+        expect(lead.unreadCount).toBe(1);
+        expect(lead.agentId).toBe("team-lead@my-team");
+
+        const scout = result.value.find((m) => m.name === "scout")!;
+        expect(scout.unreadCount).toBe(0);
+      }
+    });
+
+    test("returns team_not_found for missing team", async () => {
+      const ctx = makeCtx();
+
+      const result = await listAgents(ctx, "no-such-team");
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.kind).toBe("team_not_found");

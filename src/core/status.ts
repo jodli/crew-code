@@ -1,4 +1,5 @@
 import type { AppContext } from "../types/context.ts";
+import type { AgentMember } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok } from "../types/result.ts";
 
@@ -21,6 +22,30 @@ export interface TeamDetail {
   name: string;
   description?: string;
   members: MemberDetail[];
+}
+
+async function enrichMembers(
+  ctx: AppContext,
+  team: string,
+  members: AgentMember[],
+): Promise<MemberDetail[]> {
+  const enriched: MemberDetail[] = [];
+  for (const member of members) {
+    const msgsResult = await ctx.inboxStore.readMessages(team, member.name);
+    const unreadCount = msgsResult.ok
+      ? msgsResult.value.filter((m) => !m.read).length
+      : 0;
+
+    enriched.push({
+      name: member.name,
+      agentId: member.agentId,
+      processId: member.processId,
+      sessionId: member.sessionId,
+      cwd: member.cwd,
+      unreadCount,
+    });
+  }
+  return enriched;
 }
 
 export async function listTeams(
@@ -53,27 +78,22 @@ export async function getTeamDetail(
   if (!teamResult.ok) return teamResult;
 
   const config = teamResult.value;
-  const members: MemberDetail[] = [];
-
-  for (const member of config.members) {
-    const msgsResult = await ctx.inboxStore.readMessages(team, member.name);
-    const unreadCount = msgsResult.ok
-      ? msgsResult.value.filter((m) => !m.read).length
-      : 0;
-
-    members.push({
-      name: member.name,
-      agentId: member.agentId,
-      processId: member.processId,
-      sessionId: member.sessionId,
-      cwd: member.cwd,
-      unreadCount,
-    });
-  }
+  const members = await enrichMembers(ctx, team, config.members);
 
   return ok({
     name: config.name,
     description: config.description,
     members,
   });
+}
+
+export async function listAgents(
+  ctx: AppContext,
+  team: string,
+): Promise<Result<MemberDetail[]>> {
+  const teamResult = await ctx.configStore.getTeam(team);
+  if (!teamResult.ok) return teamResult;
+
+  const members = await enrichMembers(ctx, team, teamResult.value.members);
+  return ok(members);
 }
