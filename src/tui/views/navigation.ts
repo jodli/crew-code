@@ -9,7 +9,10 @@ export type View =
   | { screen: "send-message" }
   | { screen: "help" }
   | { screen: "attach-form" }
-  | { screen: "load-blueprint" };
+  | { screen: "load-blueprint" }
+  | { screen: "deploy-blueprint" }
+  | { screen: "edit-team" }
+  | { screen: "edit-agent" };
 
 export type Panel = "teams" | "agents";
 
@@ -42,6 +45,9 @@ export type NavAction =
   | { type: "open_send_message" }
   | { type: "open_attach_form" }
   | { type: "open_load_blueprint" }
+  | { type: "open_deploy_blueprint" }
+  | { type: "open_edit_team" }
+  | { type: "open_edit_agent" }
   | { type: "toggle_help" }
   | { type: "close_overlay" }
   | { type: "quit" };
@@ -102,6 +108,15 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
     case "open_load_blueprint":
       return { ...state, view: { screen: "load-blueprint" } };
 
+    case "open_deploy_blueprint":
+      return { ...state, view: { screen: "deploy-blueprint" } };
+
+    case "open_edit_team":
+      return { ...state, view: { screen: "edit-team" } };
+
+    case "open_edit_agent":
+      return { ...state, view: { screen: "edit-agent" } };
+
     case "toggle_help":
       if (state.view.screen === "help") {
         return { ...state, view: { screen: "dashboard" } };
@@ -109,6 +124,9 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
       return { ...state, view: { screen: "help" } };
 
     case "close_overlay":
+      if (state.view.screen === "deploy-blueprint") {
+        return { ...state, view: { screen: "load-blueprint" } };
+      }
       if (state.view.screen !== "dashboard") {
         return { ...state, view: { screen: "dashboard" } };
       }

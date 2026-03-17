@@ -18,6 +18,9 @@ import { InboxView } from "./components/inbox-view.tsx";
 import { SendMessageForm } from "./components/send-message-form.tsx";
 import { AttachForm } from "./components/attach-form.tsx";
 import { BlueprintLoadForm } from "./components/blueprint-load-form.tsx";
+import { BlueprintDeployForm } from "./components/blueprint-deploy-form.tsx";
+import { EditTeamForm } from "./components/edit-team-form.tsx";
+import { EditAgentForm } from "./components/edit-agent-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildCreateCommand, buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
 import { killAgent } from "../actions/kill-agent.ts";
@@ -25,6 +28,8 @@ import { destroyTeam } from "../actions/destroy-team.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
 import { sendMessage } from "../actions/send-message.ts";
 import { attachAgent } from "../actions/attach-agent.ts";
+import { updateTeam } from "../actions/update-team.ts";
+import { updateAgent } from "../actions/update-agent.ts";
 import { planSpawn } from "../actions/spawn-agent.ts";
 import { planCreate } from "../actions/create-team.ts";
 import { planLoad, executeLoad } from "../core/blueprint-load.ts";
@@ -55,10 +60,11 @@ interface AppProps {
 
 export function App({ launcher }: AppProps) {
   const { width, height } = useTerminalDimensions();
-  const teams = useTeams(configStore);
+  const teams = useTeams(ctx.configStore);
   const [nav, dispatch] = useReducer(navReducer, initialNavState);
   const [exiting, setExiting] = useState(false);
   const [error, setError] = useState("");
+  const [selectedBlueprint, setSelectedBlueprint] = useState<Blueprint | null>(null);
 
   // Clamp teamIndex when teams list shrinks (e.g. after destroy)
   useEffect(() => {
@@ -72,7 +78,7 @@ export function App({ launcher }: AppProps) {
     ? teams[nav.teamIndex].name
     : null;
 
-  const agents = useAgents(configStore, inboxStore, selectedTeamName);
+  const agents = useAgents(ctx, selectedTeamName);
 
   // Clamp agentIndex when agents list shrinks
   useEffect(() => {
@@ -93,7 +99,10 @@ export function App({ launcher }: AppProps) {
     nav.view.screen === "send-message" ||
     nav.view.screen === "inbox" ||
     nav.view.screen === "attach-form" ||
-    nav.view.screen === "load-blueprint"
+    nav.view.screen === "load-blueprint" ||
+    nav.view.screen === "deploy-blueprint" ||
+    nav.view.screen === "edit-team" ||
+    nav.view.screen === "edit-agent"
   );
 
   const handleKey = useCallback(
@@ -154,6 +163,10 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_confirm_kill" });
         } else if (key.name === "r" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_confirm_remove" });
+        } else if (key.name === "e" && nav.panel === "teams" && selectedTeamName) {
+          dispatch({ type: "open_edit_team" });
+        } else if (key.name === "e" && nav.panel === "agents" && selectedAgent && selectedTeamName) {
+          dispatch({ type: "open_edit_agent" });
         } else if (key.name === "d" && nav.panel === "teams" && selectedTeamName) {
           dispatch({ type: "open_confirm_destroy" });
         } else if (key.name === "i" && nav.panel === "agents" && selectedAgent) {
@@ -273,12 +286,21 @@ export function App({ launcher }: AppProps) {
     [launcher, selectedTeamName, selectedAgent],
   );
 
-  const handleLoadBlueprint = useCallback(
-    async (blueprint: Blueprint) => {
-      const plan = await planLoad(ctx, { nameOrPath: blueprint.name });
+  const handleSelectBlueprint = useCallback(
+    (blueprint: Blueprint) => {
+      setSelectedBlueprint(blueprint);
+      dispatch({ type: "open_deploy_blueprint" });
+    },
+    [],
+  );
+
+  const handleDeployBlueprint = useCallback(
+    async (blueprint: Blueprint, teamName: string) => {
+      const plan = await planLoad(ctx, { nameOrPath: blueprint.name, teamName });
       if (!plan.ok) {
         setError(tuiErrorMessage(plan.error));
         dispatch({ type: "close_overlay" });
+        setSelectedBlueprint(null);
         return;
       }
 
@@ -286,10 +308,10 @@ export function App({ launcher }: AppProps) {
       if (!result.ok) {
         setError(`Blueprint load failed: ${result.error.kind}`);
         dispatch({ type: "close_overlay" });
+        setSelectedBlueprint(null);
         return;
       }
 
-      // Start all agents via launcher (team is already created, so attach all)
       for (const opts of result.value.launchOptions) {
         const cmd = buildAttachCommand(result.value.teamName, opts.agentName, opts.extraArgs);
         try {
@@ -300,8 +322,41 @@ export function App({ launcher }: AppProps) {
         }
       }
       dispatch({ type: "close_overlay" });
+      setSelectedBlueprint(null);
     },
     [launcher],
+  );
+
+  const handleBackFromDeploy = useCallback(() => {
+    dispatch({ type: "close_overlay" });
+  }, []);
+
+  const handleEditTeam = useCallback(
+    async (description: string) => {
+      if (!selectedTeamName) return;
+      const result = await updateTeam(ctx, { team: selectedTeamName, description });
+      if (!result.ok) {
+        setError(`Update failed: ${result.error.kind}`);
+      }
+      dispatch({ type: "close_overlay" });
+    },
+    [selectedTeamName],
+  );
+
+  const handleEditAgent = useCallback(
+    async (updates: { model?: string; prompt?: string; color?: string; extraArgs?: string[] }) => {
+      if (!selectedTeamName || !selectedAgent) return;
+      const result = await updateAgent(ctx, {
+        team: selectedTeamName,
+        name: selectedAgent.name,
+        ...updates,
+      });
+      if (!result.ok) {
+        setError(`Update failed: ${result.error.kind}`);
+      }
+      dispatch({ type: "close_overlay" });
+    },
+    [selectedTeamName, selectedAgent],
   );
 
   const handleCancelOverlay = useCallback(() => {
@@ -321,7 +376,7 @@ export function App({ launcher }: AppProps) {
     return (
       <box width={width} height={height} flexDirection="column">
         <InboxView
-          inboxStore={inboxStore}
+          inboxStore={ctx.inboxStore}
           teamName={selectedTeamName}
           agentName={selectedAgent.name}
           onClose={handleCancelOverlay}
@@ -420,8 +475,31 @@ export function App({ launcher }: AppProps) {
       )}
       {nav.view.screen === "load-blueprint" && (
         <BlueprintLoadForm
-          blueprintStore={blueprintStore}
-          onSubmit={handleLoadBlueprint}
+          ctx={ctx}
+          onSubmit={handleSelectBlueprint}
+          onCancel={handleCancelOverlay}
+        />
+      )}
+      {nav.view.screen === "deploy-blueprint" && selectedBlueprint && (
+        <BlueprintDeployForm
+          blueprint={selectedBlueprint}
+          onDeploy={handleDeployBlueprint}
+          onBack={handleBackFromDeploy}
+        />
+      )}
+      {nav.view.screen === "edit-team" && selectedTeamName && (
+        <EditTeamForm
+          teamName={selectedTeamName}
+          currentDescription={teams[nav.teamIndex]?.description ?? ""}
+          onSubmit={handleEditTeam}
+          onCancel={handleCancelOverlay}
+        />
+      )}
+      {nav.view.screen === "edit-agent" && selectedTeamName && selectedAgent && (
+        <EditAgentForm
+          teamName={selectedTeamName}
+          agent={selectedAgent}
+          onSubmit={handleEditAgent}
           onCancel={handleCancelOverlay}
         />
       )}
