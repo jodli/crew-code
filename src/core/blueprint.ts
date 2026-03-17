@@ -32,6 +32,7 @@ export async function getBlueprint(
 export async function createBlueprint(
   ctx: AppContext,
   blueprint: Blueprint,
+  opts?: { overwrite?: boolean },
 ): Promise<Result<string>> {
   const storeResult = requireBlueprintStore(ctx);
   if (!storeResult.ok) return storeResult;
@@ -43,7 +44,7 @@ export async function createBlueprint(
     return err({ kind: "blueprint_invalid", name: blueprint.name ?? "unknown", detail });
   }
 
-  if (await store.exists(parseResult.data.name)) {
+  if (!opts?.overwrite && await store.exists(parseResult.data.name)) {
     return err({ kind: "blueprint_already_exists", name: parseResult.data.name });
   }
 
@@ -87,20 +88,10 @@ export async function updateBlueprint(
 
 export async function exportTeamAsBlueprint(
   ctx: AppContext,
-  input: { team: string; save?: boolean },
+  input: { team: string },
 ): Promise<Result<Blueprint>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) return teamResult;
 
-  const blueprint = teamToBlueprint(teamResult.value);
-
-  if (input.save) {
-    const storeResult = requireBlueprintStore(ctx);
-    if (!storeResult.ok) return storeResult;
-
-    const saveResult = await storeResult.value.save(blueprint);
-    if (!saveResult.ok) return saveResult;
-  }
-
-  return ok(blueprint);
+  return ok(teamToBlueprint(teamResult.value));
 }

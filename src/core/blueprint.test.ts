@@ -142,6 +142,16 @@ describe("createBlueprint", () => {
       expect(result.error.kind).toBe("blueprint_invalid");
     }
   });
+
+  test("overwrites existing blueprint when overwrite is true", async () => {
+    const ctx = makeCtx([sampleBlueprint]);
+    const result = await createBlueprint(ctx, sampleBlueprint, { overwrite: true });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toContain("review-team");
+    }
+  });
 });
 
 describe("updateBlueprint", () => {
@@ -250,28 +260,6 @@ describe("exportTeamAsBlueprint", () => {
       expect(result.value.agents[1].model).toBe("opus");
       expect(result.value.agents[1].prompt).toBe("Write code");
     }
-  });
-
-  test("exports and saves when save is true", async () => {
-    const bpStore = makeBlueprintStore();
-    const ctx: AppContext = {
-      ...makeCtx(),
-      configStore: {
-        ...makeCtx().configStore,
-        getTeam: async (name: string) => {
-          if (name === "my-team") return ok(sampleTeamConfig);
-          return err({ kind: "team_not_found", team: name });
-        },
-      },
-      blueprintStore: bpStore,
-    };
-
-    const result = await exportTeamAsBlueprint(ctx, { team: "my-team", save: true });
-    expect(result.ok).toBe(true);
-
-    // Verify it was saved in the store
-    const loadResult = await bpStore.load("my-team");
-    expect(loadResult.ok).toBe(true);
   });
 
   test("returns team_not_found for missing team", async () => {
