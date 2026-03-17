@@ -3,10 +3,13 @@ import { writeFile, readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { parse } from "yaml";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
 import { YamlBlueprintStore } from "../../../adapters/yaml-blueprint-store.ts";
-import { BlueprintSchema } from "../../../config/blueprint-schema.ts";
+import { createBlueprint } from "../../../actions/create-blueprint.ts";
 import { generateSkeleton } from "../../../core/blueprint-skeleton.ts";
 import { renderError } from "../../errors.ts";
+import type { AppContext } from "../../../types/context.ts";
 
 export default defineCommand({
   meta: {
@@ -21,12 +24,11 @@ export default defineCommand({
     },
   },
   async run({ args }) {
-    const store = new YamlBlueprintStore();
-
-    if (await store.exists(args.name)) {
-      console.error(renderError({ kind: "blueprint_already_exists", name: args.name }));
-      process.exit(1);
-    }
+    const ctx: AppContext = {
+      configStore: new JsonFileConfigStore(),
+      inboxStore: new JsonFileInboxStore(),
+      blueprintStore: new YamlBlueprintStore(),
+    };
 
     const skeleton = generateSkeleton(args.name);
     const tempPath = join(tmpdir(), `crew-blueprint-${args.name}-${Date.now()}.yaml`);
@@ -50,19 +52,12 @@ export default defineCommand({
     await unlink(tempPath).catch(() => {});
 
     const data = parse(content);
-    const result = BlueprintSchema.safeParse(data);
-    if (!result.success) {
-      const detail = result.error.issues.map((i) => i.message).join(", ");
-      console.error(renderError({ kind: "blueprint_invalid", name: args.name, detail }));
+    const result = await createBlueprint(ctx, data);
+    if (!result.ok) {
+      console.error(renderError(result.error));
       process.exit(1);
     }
 
-    const saveResult = await store.save(result.data);
-    if (!saveResult.ok) {
-      console.error(renderError(saveResult.error));
-      process.exit(1);
-    }
-
-    console.error(`Blueprint "${result.data.name}" saved to ${saveResult.value}`);
+    console.error(`Blueprint "${args.name}" saved to ${result.value}`);
   },
 });

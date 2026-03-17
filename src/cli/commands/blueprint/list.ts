@@ -1,7 +1,12 @@
 import { defineCommand } from "citty";
 import Table from "cli-table3";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
 import { YamlBlueprintStore } from "../../../adapters/yaml-blueprint-store.ts";
+import { listBlueprints } from "../../../actions/list-blueprints.ts";
+import { getBlueprint } from "../../../actions/get-blueprint.ts";
 import { renderError } from "../../errors.ts";
+import type { AppContext } from "../../../types/context.ts";
 
 export default defineCommand({
   meta: {
@@ -9,9 +14,13 @@ export default defineCommand({
     description: "List available blueprints",
   },
   async run() {
-    const store = new YamlBlueprintStore();
+    const ctx: AppContext = {
+      configStore: new JsonFileConfigStore(),
+      inboxStore: new JsonFileInboxStore(),
+      blueprintStore: new YamlBlueprintStore(),
+    };
 
-    const namesResult = await store.list();
+    const namesResult = await listBlueprints(ctx);
     if (!namesResult.ok) {
       console.error(renderError(namesResult.error));
       process.exit(1);
@@ -28,7 +37,7 @@ export default defineCommand({
     });
 
     for (const name of namesResult.value) {
-      const bp = await store.load(name);
+      const bp = await getBlueprint(ctx, name);
       if (bp.ok) {
         table.push([
           bp.value.name,
