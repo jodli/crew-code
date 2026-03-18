@@ -13,11 +13,13 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
+    "@hono/zod-validator": "^0.7.6",
     "@opentui/core": "^0.1.87",
     "@opentui/react": "^0.1.87",
     "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
     "env-paths": "^3.0.0",
+    "hono": "^4.12.8",
     "ora": "^8.1.1",
     "picocolors": "^1.1.1",
     "proper-lockfile": "^4.1.2",

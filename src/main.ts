@@ -11,6 +11,7 @@ import remove from "./cli/commands/remove.ts";
 import tui from "./cli/commands/tui.ts";
 import blueprint from "./cli/commands/blueprint.ts";
 import update from "./cli/commands/update.ts";
+import serve from "./cli/commands/serve.ts";
 
 const main = defineCommand({
   meta: {
@@ -31,6 +32,7 @@ const main = defineCommand({
     tui,
     blueprint,
     update,
+    serve,
   },
 });
 
