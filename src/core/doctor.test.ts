@@ -153,6 +153,33 @@ describe("doctor core", () => {
       expect(schemaCheck!.status).toBe("error");
     });
 
+    test("detects non-schema config read failures", async () => {
+      const ctx = makeCtx({
+        configStore: {
+          ...makeCtx().configStore,
+          listTeams: async () => ok(["broken-team"]),
+          getTeam: async () =>
+            err({
+              kind: "file_read_failed",
+              path: "/home/.claude/teams/broken-team/config.json",
+              detail: "EACCES: permission denied",
+            }),
+        },
+      });
+
+      const results = await diagnose(ctx, {});
+      expect(results.ok).toBe(true);
+      if (!results.ok) return;
+
+      const check = results.value.find(
+        (r) => r.checkId === "config-schema" && r.team === "broken-team",
+      );
+      expect(check).toBeDefined();
+      expect(check!.status).toBe("error");
+      expect(check!.message).toContain("Cannot read config");
+      expect(check!.detail).toBe("file_read_failed");
+    });
+
     test("detects inbox file with invalid JSON", async () => {
       const ctx = makeCtx({
         configStore: {

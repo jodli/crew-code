@@ -84,6 +84,15 @@ describe("lib/json-io", () => {
       expect(JSON.parse(content)).toEqual({ name: "new", value: 1 });
     });
 
+    test("returns file_write_failed when directory does not exist", async () => {
+      const path = join(tmpDir, "no", "such", "dir", "out.json");
+      const result = await writeJson(path, { name: "test", value: 1 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe("file_write_failed");
+      }
+    });
+
     test("cleans up temp directory after write", async () => {
       const path = join(tmpDir, "out.json");
       await writeJson(path, { name: "test", value: 1 });
@@ -95,6 +104,15 @@ describe("lib/json-io", () => {
   });
 
   describe("withLock", () => {
+    test("returns lock_failed when file does not exist", async () => {
+      const lockPath = join(tmpDir, "nonexistent.json");
+      const result = await withLock(lockPath, async () => "should not run");
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe("lock_failed");
+      }
+    });
+
     test("prevents concurrent writes", async () => {
       const lockPath = join(tmpDir, "lock-target.json");
       await writeFile(lockPath, "{}");

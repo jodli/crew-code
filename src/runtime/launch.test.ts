@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildClaudeArgs } from "./claude-args.ts";
+import { selectLaunchMode } from "./launch.ts";
 import type { AgentLaunchInfo } from "../types/domain.ts";
 
 const base: AgentLaunchInfo = {
@@ -10,29 +10,31 @@ const base: AgentLaunchInfo = {
   sessionId: "abc-def-123",
 };
 
-describe("runtime/launch mode detection", () => {
-  // launchAgent itself calls Bun.spawn("claude") so we can't run it in tests.
-  // Instead we verify the mode-selection logic that launchAgent uses:
-  // - session file exists → "resume" → --resume flag
-  // - no session file → "new" → --session-id flag
-
-  test("new mode uses --session-id (no prior session)", () => {
-    const args = buildClaudeArgs(base, "new");
-    expect(args).toContain("--session-id");
-    expect(args).toContain("abc-def-123");
-    expect(args).not.toContain("--resume");
+describe("runtime/selectLaunchMode", () => {
+  test("returns 'new' when session file does not exist", () => {
+    const mode = selectLaunchMode(base, () => false);
+    expect(mode).toBe("new");
   });
 
-  test("resume mode uses --resume (session file exists)", () => {
-    const args = buildClaudeArgs(base, "resume");
-    expect(args).toContain("--resume");
-    expect(args).toContain("abc-def-123");
-    expect(args).not.toContain("--session-id");
+  test("returns 'resume' when session file exists", () => {
+    const mode = selectLaunchMode(base, () => true);
+    expect(mode).toBe("resume");
   });
 
-  test("no session flags when sessionId is undefined", () => {
-    const args = buildClaudeArgs({ ...base, sessionId: undefined }, "new");
-    expect(args).not.toContain("--session-id");
-    expect(args).not.toContain("--resume");
+  test("returns 'new' when sessionId is undefined", () => {
+    const mode = selectLaunchMode(
+      { ...base, sessionId: undefined },
+      () => true,
+    );
+    expect(mode).toBe("new");
+  });
+
+  test("passes cwd and sessionId to checkSession", () => {
+    let calledWith: [string, string] | null = null;
+    selectLaunchMode(base, (cwd, sessionId) => {
+      calledWith = [cwd, sessionId];
+      return false;
+    });
+    expect(calledWith).toEqual(["/home/user/repos", "abc-def-123"]);
   });
 });
