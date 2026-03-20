@@ -37,6 +37,19 @@ export interface LaunchOptions {
   extraArgs?: string[];
 }
 
+export interface AgentLaunchInfo {
+  agentId: string;
+  agentName: string;
+  teamName: string;
+  cwd: string;
+  color?: string;
+  parentSessionId?: string;
+  model?: string;
+  sessionId?: string;
+  agentType?: string;
+  extraArgs?: string[];
+}
+
 export interface InboxMessage {
   from: string;
   text: string;

@@ -31,3 +31,11 @@ export function blueprintsDir(): string {
 export function blueprintPath(name: string): string {
   return join(blueprintsDir(), `${name}.yaml`);
 }
+
+export function processRegistryDir(teamName: string): string {
+  return join(paths.data, teamName);
+}
+
+export function processRegistryPath(teamName: string): string {
+  return join(paths.data, teamName, "processes.json");
+}
