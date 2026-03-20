@@ -1,8 +1,8 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
 import { attachAgent } from "../../actions/attach-agent.ts";
-import { launchClaude } from "../../lib/exec-claude.ts";
-import { activateAgent } from "../../core/spawn.ts";
+import { launchAgent } from "../../runtime/launch.ts";
+import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
@@ -27,9 +27,11 @@ export default defineCommand({
     },
   },
   async run({ args, rawArgs }) {
+    const processRegistry = new FileProcessRegistry();
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
+      processRegistry,
     };
 
     const result = await attachAgent(ctx, {
@@ -57,8 +59,8 @@ export default defineCommand({
         ),
       }));
     }
-    const { pid, exited } = launchClaude(result.value.launchOptions, { mode: "resume" });
-    await activateAgent(ctx, args.team, result.value.agentId, String(pid));
+    const { pid, exited } = launchAgent(result.value.launchOptions);
+    await processRegistry.activate(args.team, result.value.agentId, pid);
     const code = await exited;
     process.exit(code);
   },

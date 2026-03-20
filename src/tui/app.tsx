@@ -23,7 +23,7 @@ import { EditTeamForm } from "./components/edit-team-form.tsx";
 import { EditAgentForm } from "./components/edit-agent-form.tsx";
 import type { Launcher } from "./launcher/port.ts";
 import { buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
-import { killAgent } from "../actions/kill-agent.ts";
+import { killAgentByPid } from "../actions/kill-agent.ts";
 import { createTeam } from "../actions/create-team.ts";
 import { destroyTeam } from "../actions/destroy-team.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
@@ -222,7 +222,7 @@ export function App({ launcher }: AppProps) {
     if (nav === "quit") return;
     const agent = agents[nav.agentIndex];
     if (agent) {
-      killAgent(agent.processId);
+      killAgentByPid(agent.processId);
     }
     dispatch({ type: "close_overlay" });
   }, [nav, agents]);

@@ -95,12 +95,10 @@ function makeCtx(overrides?: {
   };
 }
 
-const sessionExists = () => true;
-
 describe("core/attach", () => {
   test("returns launchOptions for existing team-lead", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, { team: "test-team", checkSession: sessionExists });
+    const result = await attachAgent(ctx, { team: "test-team" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -117,7 +115,7 @@ describe("core/attach", () => {
 
   test("defaults name to team-lead when not provided", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, { team: "test-team", checkSession: sessionExists });
+    const result = await attachAgent(ctx, { team: "test-team" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -130,7 +128,6 @@ describe("core/attach", () => {
     const result = await attachAgent(ctx, {
       team: "test-team",
       name: "scout",
-      checkSession: sessionExists,
     });
 
     expect(result.ok).toBe(true);
@@ -147,7 +144,7 @@ describe("core/attach", () => {
 
   test("does NOT set parentSessionId for team-lead", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, { team: "test-team", checkSession: sessionExists });
+    const result = await attachAgent(ctx, { team: "test-team" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -203,16 +200,4 @@ describe("core/attach", () => {
     }
   });
 
-  test("fails with stale_session when session file does not exist on disk", async () => {
-    const ctx = makeCtx();
-    const result = await attachAgent(ctx, {
-      team: "test-team",
-      checkSession: () => false,
-    });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.kind).toBe("stale_session");
-    }
-  });
 });

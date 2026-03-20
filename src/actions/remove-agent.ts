@@ -6,8 +6,8 @@ export async function removeAgent(
   ctx: AppContext,
   input: { team: string; name: string },
 ): Promise<Result<void>> {
-  const plan = await planRemove(ctx, input);
+  const plan = await planRemove(ctx, input, ctx.processRegistry);
   if (!plan.ok) return plan;
 
-  return executeRemove(ctx, plan.value);
+  return executeRemove(ctx, plan.value, ctx.processRegistry);
 }

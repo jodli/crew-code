@@ -3,6 +3,7 @@ import pc from "picocolors";
 import { confirm } from "@clack/prompts";
 import { planDestroy } from "../../core/destroy.ts";
 import { destroyTeam } from "../../actions/destroy-team.ts";
+import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
@@ -26,12 +27,14 @@ export default defineCommand({
     },
   },
   async run({ args }) {
+    const processRegistry = new FileProcessRegistry();
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
+      processRegistry,
     };
 
-    const planResult = await planDestroy(ctx, { team: args.team });
+    const planResult = await planDestroy(ctx, { team: args.team }, processRegistry);
     if (!planResult.ok) {
       console.error(renderError(planResult.error));
       process.exit(1);
