@@ -2,47 +2,62 @@ import { describe, expect, test } from "bun:test";
 import {
   planDestroy,
   executeDestroy,
-  type DestroyInput,
   type DestroyPlan,
 } from "./destroy.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
+import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
 import { ok, err } from "../types/result.ts";
 
-function makeSampleConfig(processIds: { lead: string; scout: string }): TeamConfig {
-  return {
-    name: "my-team",
-    description: "A test team",
-    createdAt: 1773387766070,
-    leadAgentId: "team-lead@my-team",
-    leadSessionId: "abc-123",
-    members: [
-      {
-        agentId: "team-lead@my-team",
-        name: "team-lead",
-        agentType: "team-lead",
-        joinedAt: 1773387766070,
-        processId: processIds.lead,
-        cwd: "/tmp",
-        subscriptions: [],
-        isActive: true,
-      },
-      {
-        agentId: "scout@my-team",
-        name: "scout",
-        agentType: "general-purpose",
-        joinedAt: 1773387766070,
-        processId: processIds.scout,
-        cwd: "/tmp",
-        subscriptions: [],
-        isActive: true,
-      },
-    ],
-  };
-}
+const sampleConfig: TeamConfig = {
+  name: "my-team",
+  description: "A test team",
+  createdAt: 1773387766070,
+  leadAgentId: "team-lead@my-team",
+  leadSessionId: "abc-123",
+  members: [
+    {
+      agentId: "team-lead@my-team",
+      name: "team-lead",
+      agentType: "team-lead",
+      joinedAt: 1773387766070,
+      cwd: "/tmp",
+      subscriptions: [],
+    },
+    {
+      agentId: "scout@my-team",
+      name: "scout",
+      agentType: "general-purpose",
+      joinedAt: 1773387766070,
+      cwd: "/tmp",
+      subscriptions: [],
+    },
+  ],
+};
 
 let deletedInboxes: { team: string; agent: string }[] = [];
 let deletedTeams: string[] = [];
+
+function makeMockRegistry(entries: RegistryEntry[] = []): ProcessRegistry & { killed: string[]; cleaned: string[] } {
+  const killed: string[] = [];
+  const cleaned: string[] = [];
+  return {
+    killed,
+    cleaned,
+    async activate() { return ok(undefined); },
+    async deactivate() { return ok(undefined); },
+    async isAlive(_team, agentId) { return entries.some((e) => e.agentId === agentId); },
+    async kill(_team, agentId) {
+      killed.push(agentId);
+      return ok(true);
+    },
+    async listActive() { return ok([...entries]); },
+    async cleanup(team) {
+      cleaned.push(team);
+      return ok(undefined);
+    },
+  };
+}
 
 function makeCtx(config: TeamConfig): AppContext {
   return {
@@ -84,8 +99,7 @@ describe("core/destroy", () => {
   describe("planDestroy()", () => {
     test("returns error if team doesn't exist", async () => {
       resetTracking();
-      const config = makeSampleConfig({ lead: "", scout: "" });
-      const ctx = makeCtx(config);
+      const ctx = makeCtx(sampleConfig);
       const result = await planDestroy(ctx, { team: "no-such-team" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -93,80 +107,71 @@ describe("core/destroy", () => {
       }
     });
 
-    test("detects alive processes as active agents", async () => {
+    test("detects alive agents via registry", async () => {
       resetTracking();
-      // Spawn real processes to detect
-      const proc1 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
-      const proc2 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
+      const registry = makeMockRegistry([
+        { agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now() },
+        { agentId: "scout@my-team", pid: 222, activatedAt: Date.now() },
+      ]);
+      const ctx = makeCtx(sampleConfig);
 
-      const config = makeSampleConfig({
-        lead: String(proc1.pid),
-        scout: String(proc2.pid),
-      });
-      const ctx = makeCtx(config);
-
-      const result = await planDestroy(ctx, { team: "my-team" });
+      const result = await planDestroy(ctx, { team: "my-team" }, registry);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value.activeAgents).toHaveLength(2);
         expect(result.value.inboxes).toHaveLength(2);
       }
-
-      proc1.kill();
-      proc2.kill();
     });
 
-    test("only includes alive agents in activeAgents", async () => {
+    test("only includes alive agents from registry", async () => {
       resetTracking();
-      const proc = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
+      const registry = makeMockRegistry([
+        { agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now() },
+      ]);
+      const ctx = makeCtx(sampleConfig);
 
-      const config = makeSampleConfig({
-        lead: String(proc.pid),
-        scout: "99999999", // dead PID
-      });
-      const ctx = makeCtx(config);
-
-      const result = await planDestroy(ctx, { team: "my-team" });
+      const result = await planDestroy(ctx, { team: "my-team" }, registry);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value.activeAgents).toHaveLength(1);
         expect(result.value.activeAgents[0].name).toBe("team-lead");
       }
+    });
 
-      proc.kill();
+    test("returns no active agents when no registry provided", async () => {
+      resetTracking();
+      const ctx = makeCtx(sampleConfig);
+
+      const result = await planDestroy(ctx, { team: "my-team" });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.activeAgents).toHaveLength(0);
+      }
     });
   });
 
   describe("executeDestroy()", () => {
-    test("kills all active agents via PID", async () => {
+    test("kills agents via registry", async () => {
       resetTracking();
-      const proc1 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
-      const proc2 = Bun.spawn(["sleep", "60"], { stdout: "ignore", stderr: "ignore" });
-
-      const config = makeSampleConfig({ lead: "", scout: "" });
-      const ctx = makeCtx(config);
+      const registry = makeMockRegistry();
+      const ctx = makeCtx(sampleConfig);
       const plan: DestroyPlan = {
         team: "my-team",
         activeAgents: [
-          { name: "team-lead", processId: String(proc1.pid) },
-          { name: "scout", processId: String(proc2.pid) },
+          { name: "team-lead", agentId: "team-lead@my-team", pid: 111 },
+          { name: "scout", agentId: "scout@my-team", pid: 222 },
         ],
         inboxes: ["team-lead", "scout"],
       };
 
-      const result = await executeDestroy(ctx, plan);
+      const result = await executeDestroy(ctx, plan, registry);
       expect(result.ok).toBe(true);
-
-      // Processes should be dead now
-      await Bun.sleep(100);
-      try { process.kill(proc1.pid, 0); expect(true).toBe(false); } catch { /* expected */ }
-      try { process.kill(proc2.pid, 0); expect(true).toBe(false); } catch { /* expected */ }
+      expect(registry.killed).toEqual(["team-lead@my-team", "scout@my-team"]);
     });
 
     test("deletes all inbox files", async () => {
       resetTracking();
-      const config = makeSampleConfig({ lead: "", scout: "" });
-      const ctx = makeCtx(config);
+      const ctx = makeCtx(sampleConfig);
       const plan: DestroyPlan = {
         team: "my-team",
         activeAgents: [],
@@ -176,16 +181,12 @@ describe("core/destroy", () => {
       const result = await executeDestroy(ctx, plan);
       expect(result.ok).toBe(true);
       expect(deletedInboxes).toHaveLength(2);
-      expect(deletedInboxes.map((d) => d.agent).sort()).toEqual([
-        "scout",
-        "team-lead",
-      ]);
+      expect(deletedInboxes.map((d) => d.agent).sort()).toEqual(["scout", "team-lead"]);
     });
 
     test("deletes team config", async () => {
       resetTracking();
-      const config = makeSampleConfig({ lead: "", scout: "" });
-      const ctx = makeCtx(config);
+      const ctx = makeCtx(sampleConfig);
       const plan: DestroyPlan = {
         team: "my-team",
         activeAgents: [],
@@ -197,27 +198,27 @@ describe("core/destroy", () => {
       expect(deletedTeams).toEqual(["my-team"]);
     });
 
-    test("handles already-dead agents gracefully", async () => {
+    test("cleans up process registry", async () => {
       resetTracking();
-      const config = makeSampleConfig({ lead: "", scout: "" });
-      const ctx = makeCtx(config);
+      const registry = makeMockRegistry();
+      const ctx = makeCtx(sampleConfig);
       const plan: DestroyPlan = {
         team: "my-team",
-        activeAgents: [{ name: "team-lead", processId: "99999999" }],
+        activeAgents: [],
         inboxes: [],
       };
 
-      const result = await executeDestroy(ctx, plan);
+      const result = await executeDestroy(ctx, plan, registry);
       expect(result.ok).toBe(true);
+      expect(registry.cleaned).toEqual(["my-team"]);
     });
   });
 
   test("planDestroy maps config_not_found to team_not_found", async () => {
-    const config = makeSampleConfig({ lead: "", scout: "" });
     const ctx: AppContext = {
-      ...makeCtx(config),
+      ...makeCtx(sampleConfig),
       configStore: {
-        ...makeCtx(config).configStore,
+        ...makeCtx(sampleConfig).configStore,
         getTeam: async () =>
           err({ kind: "config_not_found", path: "/fake/path" }),
       },

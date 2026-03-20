@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { buildClaudeArgs } from "../lib/claude-args.ts";
-import type { TeamConfig, LaunchOptions } from "../types/domain.ts";
+import { buildClaudeArgs } from "../runtime/claude-args.ts";
+import type { TeamConfig, AgentLaunchInfo } from "../types/domain.ts";
 
 /**
  * These tests ensure our config.json structure matches what Claude Code's
@@ -22,7 +22,7 @@ describe("protocol conformance", () => {
         name: "team-lead",
         agentType: "team-lead",
         joinedAt: Date.now(),
-        processId: "",
+
         cwd: "/tmp",
         subscriptions: [],
       },
@@ -32,7 +32,7 @@ describe("protocol conformance", () => {
         agentType: "general-purpose",
         prompt: "Do work",
         joinedAt: Date.now(),
-        processId: "",
+
         cwd: "/tmp",
         subscriptions: [],
       },
@@ -76,7 +76,7 @@ describe("protocol conformance", () => {
   });
 
   test("CLI args include --agent-type for worker", () => {
-    const opts: LaunchOptions = {
+    const opts: AgentLaunchInfo = {
       agentId: "worker@test-team",
       agentName: "worker",
       teamName: "test-team",
@@ -91,7 +91,7 @@ describe("protocol conformance", () => {
   });
 
   test("CLI args include --agent-type for lead", () => {
-    const opts: LaunchOptions = {
+    const opts: AgentLaunchInfo = {
       agentId: "team-lead@test-team",
       agentName: "team-lead",
       teamName: "test-team",
@@ -105,7 +105,7 @@ describe("protocol conformance", () => {
   });
 
   test("CLI args do NOT include --parent-session-id for lead", () => {
-    const opts: LaunchOptions = {
+    const opts: AgentLaunchInfo = {
       agentId: "team-lead@test-team",
       agentName: "team-lead",
       teamName: "test-team",

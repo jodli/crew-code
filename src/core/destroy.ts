@@ -2,7 +2,6 @@ import type { AppContext } from "../types/context.ts";
 import type { ProcessRegistry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
-import { isProcessAlive, killProcess } from "../lib/process.ts";
 
 export interface DestroyInput {
   team: string;
@@ -10,7 +9,7 @@ export interface DestroyInput {
 
 export interface DestroyPlan {
   team: string;
-  activeAgents: { name: string; processId: string }[];
+  activeAgents: { name: string; agentId: string; pid: number }[];
   inboxes: string[];
 }
 
@@ -28,9 +27,7 @@ export async function planDestroy(
   }
 
   const config = teamResult.value;
-
-  // Check which agents are still alive
-  const activeAgents: { name: string; processId: string }[] = [];
+  const activeAgents: { name: string; agentId: string; pid: number }[] = [];
 
   if (registry) {
     const activeResult = await registry.listActive(input.team);
@@ -38,21 +35,12 @@ export async function planDestroy(
       for (const entry of activeResult.value) {
         const member = config.members.find((m) => m.agentId === entry.agentId);
         if (member) {
-          activeAgents.push({ name: member.name, processId: String(entry.pid) });
+          activeAgents.push({ name: member.name, agentId: entry.agentId, pid: entry.pid });
         }
-      }
-    }
-  } else {
-    // Fallback: check PIDs from config
-    for (const member of config.members) {
-      const pid = parseInt(member.processId, 10);
-      if (member.processId && isProcessAlive(pid)) {
-        activeAgents.push({ name: member.name, processId: member.processId });
       }
     }
   }
 
-  // List inboxes
   const inboxResult = await ctx.inboxStore.listInboxes(input.team);
   const inboxes = inboxResult.ok ? inboxResult.value : [];
 
@@ -67,13 +55,7 @@ export async function executeDestroy(
   // 1. Kill active agents
   if (registry) {
     for (const agent of plan.activeAgents) {
-      // Find agentId from name — best effort, registry.kill needs agentId
-      // For now, kill by PID directly as fallback since plan stores processId
-      killProcess(parseInt(agent.processId, 10));
-    }
-  } else {
-    for (const agent of plan.activeAgents) {
-      killProcess(parseInt(agent.processId, 10));
+      await registry.kill(plan.team, agent.agentId);
     }
   }
 

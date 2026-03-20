@@ -2,7 +2,19 @@ import { describe, expect, test } from "bun:test";
 import { planRemove, executeRemove } from "./remove.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
+import type { ProcessRegistry } from "../ports/process-registry.ts";
 import { ok, err } from "../types/result.ts";
+
+function makeMockRegistry(aliveAgentIds: string[] = []): ProcessRegistry {
+  return {
+    async activate() { return ok(undefined); },
+    async deactivate() { return ok(undefined); },
+    async isAlive(_team, agentId) { return aliveAgentIds.includes(agentId); },
+    async kill() { return ok(true); },
+    async listActive() { return ok([]); },
+    async cleanup() { return ok(undefined); },
+  };
+}
 
 function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
   return {
@@ -36,10 +48,8 @@ const baseConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      processId: String(process.pid),
       cwd: "/tmp",
       subscriptions: [],
-      isActive: true,
       sessionId: "lead-session-123",
     },
     {
@@ -47,10 +57,8 @@ const baseConfig: TeamConfig = {
       name: "worker",
       agentType: "general-purpose",
       joinedAt: 1773387770000,
-      processId: "99999999",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: false,
       sessionId: "worker-session-456",
     },
   ],
@@ -104,7 +112,7 @@ describe("core/remove", () => {
       }
     });
 
-    test("returns plan with isAlive: false when process is dead", async () => {
+    test("returns plan with isAlive: false when no registry provided", async () => {
       const ctx = makeCtx({
         configStore: {
           ...makeCtx().configStore,
@@ -124,19 +132,12 @@ describe("core/remove", () => {
       }
     });
 
-    test("returns plan with isAlive: true when process is alive", async () => {
-      const aliveConfig: TeamConfig = {
-        ...baseConfig,
-        members: [
-          baseConfig.members[0],
-          { ...baseConfig.members[1], processId: String(process.pid) },
-        ],
-      };
-
+    test("returns plan with isAlive: true when agent is alive in registry", async () => {
+      const registry = makeMockRegistry(["worker@my-team"]);
       const ctx = makeCtx({
         configStore: {
           ...makeCtx().configStore,
-          getTeam: async () => ok(aliveConfig),
+          getTeam: async () => ok(baseConfig),
         },
         inboxStore: {
           ...makeCtx().inboxStore,
@@ -144,7 +145,7 @@ describe("core/remove", () => {
         },
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "worker" });
+      const result = await planRemove(ctx, { team: "my-team", name: "worker" }, registry);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -211,7 +212,6 @@ describe("core/remove", () => {
         expect(result.value.team).toBe("my-team");
         expect(result.value.name).toBe("worker");
         expect(result.value.agentId).toBe("worker@my-team");
-        expect(result.value.processId).toBe("99999999");
       }
     });
   });
@@ -233,7 +233,6 @@ describe("core/remove", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        processId: "99999999",
         isAlive: false,
         hasInbox: false,
       });
@@ -260,7 +259,6 @@ describe("core/remove", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        processId: "99999999",
         isAlive: false,
         hasInbox: true,
       });
@@ -284,7 +282,6 @@ describe("core/remove", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        processId: "99999999",
         isAlive: false,
         hasInbox: false,
       });
@@ -298,7 +295,6 @@ describe("core/remove", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        processId: "99999999",
         isAlive: false,
         hasInbox: false,
       });

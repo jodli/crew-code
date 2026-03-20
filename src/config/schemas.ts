@@ -9,10 +9,8 @@ export const AgentMemberSchema = z.object({
   color: z.string().optional(),
   planModeRequired: z.boolean().optional(),
   joinedAt: z.number(),
-  processId: z.string(),
   cwd: z.string(),
   subscriptions: z.array(z.string()),
-  isActive: z.boolean().optional(),
   sessionId: z.string().optional(),
   extraArgs: z.array(z.string()).optional(),
 });

@@ -16,7 +16,6 @@ describe("config/schemas", () => {
           agentType: "team-lead",
           model: "claude-opus-4-6",
           joinedAt: 1773387766070,
-          processId: "",
           cwd: "/home/user/repos",
           subscriptions: [],
         },
@@ -29,10 +28,8 @@ describe("config/schemas", () => {
           color: "blue",
           planModeRequired: false,
           joinedAt: 1773387801382,
-          processId: "%1",
           cwd: "/home/user/repos",
           subscriptions: [],
-          isActive: true,
         },
       ],
     };
@@ -43,7 +40,7 @@ describe("config/schemas", () => {
       if (result.success) {
         expect(result.data.name).toBe("reverse-eng");
         expect(result.data.members).toHaveLength(2);
-        expect(result.data.members[1].isActive).toBe(true);
+        expect(result.data.members[1].color).toBe("blue");
       }
     });
 

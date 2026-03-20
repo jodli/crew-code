@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import {
   planSpawn,
   executeSpawn,
-  activateAgent,
   type SpawnPlan,
 } from "./spawn.ts";
 import type { AppContext } from "../types/context.ts";
@@ -22,7 +21,7 @@ const baseConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      processId: "",
+
       cwd: "/tmp",
       subscriptions: [],
     },
@@ -149,7 +148,7 @@ describe("core/planSpawn", () => {
           name: "agent-3",
           agentType: "general-purpose",
           joinedAt: 1773387766070,
-          processId: "",
+    
           cwd: "/tmp",
           subscriptions: [],
         },
@@ -214,7 +213,7 @@ describe("core/executeSpawn", () => {
     agentType: "general-purpose",
   };
 
-  test("adds member to config with isActive: false", async () => {
+  test("adds member to config", async () => {
     const configStore = makeConfigStore();
     const ctx = makeCtx({ configStore });
     const result = await executeSpawn(ctx, basePlan);
@@ -222,9 +221,8 @@ describe("core/executeSpawn", () => {
     expect(result.ok).toBe(true);
     expect(configStore.lastUpdated?.members).toHaveLength(2);
     const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
-    expect(scout?.isActive).toBe(false);
-    expect(scout?.processId).toBe("");
     expect(scout?.sessionId).toBe("test-session-uuid");
+    expect(scout?.agentType).toBe("general-purpose");
   });
 
   test("persists prompt in config member", async () => {
@@ -293,50 +291,3 @@ describe("core/executeSpawn", () => {
   });
 });
 
-describe("core/activateAgent", () => {
-  test("updates member's processId and isActive in config", async () => {
-    const configStore = makeConfigStore();
-    const ctx = makeCtx({ configStore });
-
-    // First add an agent via executeSpawn
-    await executeSpawn(ctx, {
-      team: "test-team",
-      agentName: "scout",
-      agentId: "scout@test-team",
-      cwd: "/tmp",
-      sessionId: "s1",
-      parentSessionId: "abc-123",
-    });
-
-    const result = await activateAgent(ctx, "test-team", "scout@test-team", "%42");
-    expect(result.ok).toBe(true);
-
-    const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
-    expect(scout?.processId).toBe("%42");
-    expect(scout?.isActive).toBe(true);
-  });
-
-  test("only updates the specified agent, leaves others unchanged", async () => {
-    const configStore = makeConfigStore();
-    const ctx = makeCtx({ configStore });
-
-    await executeSpawn(ctx, {
-      team: "test-team", agentName: "scout", agentId: "scout@test-team",
-      cwd: "/tmp", sessionId: "s1", parentSessionId: "abc-123", agentType: "general-purpose",
-    });
-    await executeSpawn(ctx, {
-      team: "test-team", agentName: "worker", agentId: "worker@test-team",
-      cwd: "/tmp", sessionId: "s2", parentSessionId: "abc-123", agentType: "general-purpose",
-    });
-
-    await activateAgent(ctx, "test-team", "scout@test-team", "%42");
-
-    const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
-    const worker = configStore.lastUpdated?.members.find((m) => m.name === "worker");
-
-    expect(scout?.processId).toBe("%42");
-    expect(scout?.isActive).toBe(true);
-    expect(worker?.processId).toBe("");
-    expect(worker?.isActive).toBe(false);
-  });
-});

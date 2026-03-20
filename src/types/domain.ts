@@ -7,10 +7,8 @@ export interface AgentMember {
   color?: string;
   planModeRequired?: boolean;
   joinedAt: number;
-  processId: string;
   cwd: string;
   subscriptions: string[];
-  isActive?: boolean;
   sessionId?: string;
   extraArgs?: string[];
 }
@@ -22,19 +20,6 @@ export interface TeamConfig {
   leadAgentId: string;
   leadSessionId: string;
   members: AgentMember[];
-}
-
-export interface LaunchOptions {
-  agentId: string;
-  agentName: string;
-  teamName: string;
-  cwd: string;
-  color?: string;
-  parentSessionId?: string;
-  model?: string;
-  sessionId?: string;
-  agentType?: string;
-  extraArgs?: string[];
 }
 
 export interface AgentLaunchInfo {

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { AppContext } from "../types/context.ts";
-import type { AgentMember, InboxMessage, LaunchOptions } from "../types/domain.ts";
+import type { AgentMember, InboxMessage, AgentLaunchInfo } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 
@@ -32,7 +32,7 @@ export interface SpawnOutput {
   agentId: string;
   name: string;
   team: string;
-  launchOptions: LaunchOptions;
+  launchOptions: AgentLaunchInfo;
 }
 
 function nextAgentName(members: AgentMember[]): string {
@@ -103,10 +103,8 @@ export async function executeSpawn(
     model: plan.model,
     color: plan.color,
     joinedAt: Date.now(),
-    processId: "",
     cwd: plan.cwd,
     subscriptions: [],
-    isActive: false,
     sessionId: plan.sessionId,
     prompt: plan.prompt,
     extraArgs: plan.extraArgs,
@@ -144,7 +142,7 @@ export async function executeSpawn(
     return inboxResult as Result<never>;
   }
 
-  const launchOptions: LaunchOptions = {
+  const launchOptions: AgentLaunchInfo = {
     agentId: plan.agentId,
     agentName: plan.agentName,
     teamName: plan.team,
@@ -158,18 +156,4 @@ export async function executeSpawn(
   };
 
   return ok({ agentId: plan.agentId, name: plan.agentName, team: plan.team, launchOptions });
-}
-
-export async function activateAgent(
-  ctx: AppContext,
-  team: string,
-  agentId: string,
-  processId: string,
-): Promise<Result<void>> {
-  return ctx.configStore.updateTeam(team, (cfg) => ({
-    ...cfg,
-    members: cfg.members.map((m) =>
-      m.agentId === agentId ? { ...m, processId, isActive: true } : m,
-    ),
-  })) as Promise<Result<void>>;
 }

@@ -2,7 +2,6 @@ import type { AppContext } from "../types/context.ts";
 import type { ProcessRegistry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
-import { isProcessAlive, killProcess } from "../lib/process.ts";
 
 export interface RemoveInput {
   team: string;
@@ -13,7 +12,6 @@ export interface RemovePlan {
   team: string;
   name: string;
   agentId: string;
-  processId: string;
   isAlive: boolean;
   hasInbox: boolean;
 }
@@ -38,13 +36,9 @@ export async function planRemove(
     return err({ kind: "agent_not_found", agent: input.name, team: input.team });
   }
 
-  let isAlive: boolean;
-  if (registry) {
-    isAlive = await registry.isAlive(input.team, member.agentId);
-  } else {
-    const pid = parseInt(member.processId, 10);
-    isAlive = member.processId ? isProcessAlive(pid) : false;
-  }
+  const isAlive = registry
+    ? await registry.isAlive(input.team, member.agentId)
+    : false;
 
   const inboxResult = await ctx.inboxStore.listInboxes(input.team);
   const inboxes = inboxResult.ok ? inboxResult.value : [];
@@ -54,7 +48,6 @@ export async function planRemove(
     team: input.team,
     name: input.name,
     agentId: member.agentId,
-    processId: member.processId,
     isAlive,
     hasInbox,
   });
@@ -65,12 +58,8 @@ export async function executeRemove(
   plan: RemovePlan,
   registry?: ProcessRegistry,
 ): Promise<Result<void>> {
-  if (plan.isAlive) {
-    if (registry) {
-      await registry.kill(plan.team, plan.agentId);
-    } else {
-      killProcess(parseInt(plan.processId, 10));
-    }
+  if (plan.isAlive && registry) {
+    await registry.kill(plan.team, plan.agentId);
   }
 
   if (plan.hasInbox) {

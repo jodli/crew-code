@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { killAgent, killAgentByPid } from "./kill-agent.ts";
+import { killAgent } from "./kill-agent.ts";
 import type { ProcessRegistry } from "../ports/process-registry.ts";
 import { ok } from "../types/result.ts";
 
@@ -34,19 +34,5 @@ describe("actions/killAgent", () => {
     if (result.ok) {
       expect(result.value).toBe(false);
     }
-  });
-});
-
-describe("actions/killAgentByPid (deprecated)", () => {
-  test("does nothing when processId is empty", () => {
-    killAgentByPid("");
-  });
-
-  test("does nothing when processId is not a valid number", () => {
-    killAgentByPid("abc");
-  });
-
-  test("does nothing when processId is 0", () => {
-    killAgentByPid("0");
   });
 });

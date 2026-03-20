@@ -1,6 +1,6 @@
 import type { AgentLaunchInfo } from "../types/domain.ts";
 import { buildClaudeArgs, CLAUDE_TEAMS_ENV_VAR } from "./claude-args.ts";
-import { sessionExistsOnDisk } from "../lib/claude-session.ts";
+import { sessionExistsOnDisk } from "./claude-session.ts";
 
 export interface LaunchResult {
   pid: number;

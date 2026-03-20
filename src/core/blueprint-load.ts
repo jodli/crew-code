@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AppContext } from "../types/context.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
-import type { LaunchOptions } from "../types/domain.ts";
+import type { AgentLaunchInfo } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 import { planCreate, executeCreate, type CreatePlan } from "./create.ts";
@@ -24,7 +24,7 @@ export interface LoadPlan {
 
 export interface LoadOutput {
   teamName: string;
-  launchOptions: LaunchOptions[];
+  launchOptions: AgentLaunchInfo[];
   hasLead: boolean;
 }
 
@@ -95,7 +95,7 @@ export async function executeLoad(
   const createResult = await executeCreate(ctx, plan.createPlan);
   if (!createResult.ok) return createResult as Result<never>;
 
-  const launchOptions: LaunchOptions[] = [];
+  const launchOptions: AgentLaunchInfo[] = [];
 
   for (const spawnPlan of plan.spawnPlans) {
     const spawnResult = await executeSpawn(ctx, spawnPlan);
