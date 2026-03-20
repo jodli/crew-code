@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ConfigStore } from "../../ports/config-store.ts";
+import type { ProcessRegistry } from "../../ports/process-registry.ts";
 import type { TeamConfig } from "../../types/domain.ts";
-import { isProcessAlive } from "../../lib/process.ts";
 
 export interface TeamSummary {
   name: string;
@@ -11,17 +11,18 @@ export interface TeamSummary {
   createdAt: number;
 }
 
-function summarizeTeam(config: TeamConfig): TeamSummary {
-  const agents = config.members;
-  const aliveCount = agents.filter((m) => {
-    const pid = parseInt(m.processId, 10);
-    return pid > 0 && isProcessAlive(pid);
-  }).length;
+function summarizeTeam(
+  config: TeamConfig,
+  liveAgentIds: Set<string>,
+): TeamSummary {
+  const aliveCount = config.members.filter((m) =>
+    liveAgentIds.has(m.agentId),
+  ).length;
 
   return {
     name: config.name,
     description: config.description,
-    agentCount: agents.length,
+    agentCount: config.members.length,
     aliveCount,
     createdAt: config.createdAt,
   };
@@ -30,6 +31,7 @@ function summarizeTeam(config: TeamConfig): TeamSummary {
 export function useTeams(
   configStore: ConfigStore,
   pollIntervalMs = 2000,
+  processRegistry?: ProcessRegistry,
 ) {
   const [teams, setTeams] = useState<TeamSummary[]>([]);
 
@@ -41,12 +43,23 @@ export function useTeams(
       namesResult.value.map((n) => configStore.getTeam(n)),
     );
 
-    setTeams(
-      configs
-        .filter((r) => r.ok)
-        .map((r) => summarizeTeam(r.value)),
-    );
-  }, [configStore]);
+    const validConfigs = configs.filter((r) => r.ok).map((r) => r.value);
+
+    // Collect live agent IDs from registry for all teams
+    const liveAgentIds = new Set<string>();
+    if (processRegistry) {
+      for (const config of validConfigs) {
+        const activeResult = await processRegistry.listActive(config.name);
+        if (activeResult.ok) {
+          for (const entry of activeResult.value) {
+            liveAgentIds.add(entry.agentId);
+          }
+        }
+      }
+    }
+
+    setTeams(validConfigs.map((c) => summarizeTeam(c, liveAgentIds)));
+  }, [configStore, processRegistry]);
 
   useEffect(() => {
     refresh();

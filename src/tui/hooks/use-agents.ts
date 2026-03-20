@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import type { AppContext } from "../../types/context.ts";
 import type { MemberDetail } from "../../core/status.ts";
 import { listAgents } from "../../actions/list-agents.ts";
-import { isProcessAlive } from "../../lib/process.ts";
 
 export interface AgentSummary {
   name: string;
@@ -19,13 +18,13 @@ export interface AgentSummary {
   extraArgs?: string[];
 }
 
-function toAgentSummary(member: MemberDetail): AgentSummary {
-  const pid = parseInt(member.processId, 10);
-  const alive = pid > 0 && isProcessAlive(pid);
-
+export function toAgentSummary(
+  member: MemberDetail,
+  liveAgentIds: Set<string>,
+): AgentSummary {
   return {
     ...member,
-    status: alive ? "alive" : "dead",
+    status: liveAgentIds.has(member.agentId) ? "alive" : "dead",
   };
 }
 
@@ -48,7 +47,16 @@ export function useAgents(
       return;
     }
 
-    setAgents(result.value.map(toAgentSummary));
+    // Get live agent IDs from registry if available
+    let liveAgentIds = new Set<string>();
+    if (ctx.processRegistry) {
+      const activeResult = await ctx.processRegistry.listActive(teamName);
+      if (activeResult.ok) {
+        liveAgentIds = new Set(activeResult.value.map((e) => e.agentId));
+      }
+    }
+
+    setAgents(result.value.map((m) => toAgentSummary(m, liveAgentIds)));
   }, [ctx, teamName]);
 
   useEffect(() => {

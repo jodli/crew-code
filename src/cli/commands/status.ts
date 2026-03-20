@@ -2,10 +2,10 @@ import { defineCommand } from "citty";
 import pc from "picocolors";
 import Table from "cli-table3";
 import { listTeams, getTeamDetail } from "../../core/status.ts";
+import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { renderError } from "../errors.ts";
-import { isProcessAlive } from "../../lib/process.ts";
 import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
@@ -21,9 +21,11 @@ export default defineCommand({
     },
   },
   async run({ args }) {
+    const processRegistry = new FileProcessRegistry();
     const ctx: AppContext = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
+      processRegistry,
     };
 
     if (args.team) {
@@ -31,6 +33,15 @@ export default defineCommand({
       if (!result.ok) {
         console.error(renderError(result.error));
         process.exit(1);
+      }
+
+      // Get live agent IDs from registry
+      const liveAgentIds = new Set<string>();
+      const activeResult = await processRegistry.listActive(args.team);
+      if (activeResult.ok) {
+        for (const entry of activeResult.value) {
+          liveAgentIds.add(entry.agentId);
+        }
       }
 
       const detail = result.value;
@@ -45,8 +56,7 @@ export default defineCommand({
 
       const home = process.env.HOME ?? "";
       for (const m of detail.members) {
-        const pid = parseInt(m.processId, 10);
-        const alive = m.processId && isProcessAlive(pid);
+        const alive = liveAgentIds.has(m.agentId);
         const status = alive ? pc.green("live") : pc.dim("gone");
         table.push([
           m.name,

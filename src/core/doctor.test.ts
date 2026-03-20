@@ -3,10 +3,10 @@ import {
   diagnose,
   applyFixes,
   type DiagnosticResult,
-  type DiagnoseInput,
 } from "./doctor.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
+import type { ProcessRegistry } from "../ports/process-registry.ts";
 import { ok, err } from "../types/result.ts";
 
 function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
@@ -30,6 +30,17 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
   };
 }
 
+function makeMockRegistry(activeEntries: { agentId: string; pid: number }[] = []): ProcessRegistry {
+  return {
+    async activate() { return ok(undefined); },
+    async deactivate() { return ok(undefined); },
+    async isAlive(_team, agentId) { return activeEntries.some((e) => e.agentId === agentId); },
+    async kill() { return ok(true); },
+    async listActive() { return ok(activeEntries.map((e) => ({ ...e, activatedAt: Date.now() }))); },
+    async cleanup() { return ok(undefined); },
+  };
+}
+
 const healthyConfig: TeamConfig = {
   name: "my-team",
   description: "A test team",
@@ -42,10 +53,9 @@ const healthyConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      processId: String(process.pid), // current process — alive
+      processId: "",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: true,
     },
     {
       agentId: "scout@my-team",
@@ -55,7 +65,6 @@ const healthyConfig: TeamConfig = {
       processId: "",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: false,
     },
   ],
 };
@@ -82,43 +91,6 @@ describe("doctor core", () => {
 
       const failures = results.value.filter((r) => r.status !== "ok");
       expect(failures).toHaveLength(0);
-    });
-
-    test("detects stale isActive (process is gone)", async () => {
-      const staleConfig: TeamConfig = {
-        ...healthyConfig,
-        members: [
-          {
-            ...healthyConfig.members[0],
-            isActive: true,
-            processId: "99999999", // non-existent PID
-          },
-        ],
-      };
-
-      const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
-          listTeams: async () => ok(["my-team"]),
-          getTeam: async () => ok(staleConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
-          listInboxes: async () => ok(["team-lead"]),
-          readMessages: async () => ok([]),
-        },
-      });
-
-      const results = await diagnose(ctx, {});
-      expect(results.ok).toBe(true);
-      if (!results.ok) return;
-
-      const staleCheck = results.value.find(
-        (r) => r.checkId === "stale-active" && r.team === "my-team",
-      );
-      expect(staleCheck).toBeDefined();
-      expect(staleCheck!.status).toBe("warn");
-      expect(staleCheck!.fixable).toBe(true);
     });
 
     test("detects orphaned inbox files", async () => {
@@ -215,44 +187,11 @@ describe("doctor core", () => {
       expect(jsonCheck!.status).toBe("error");
     });
 
-    test("detects stale session when sessionId exists but file not on disk", async () => {
-      const configWithSession: TeamConfig = {
-        ...healthyConfig,
-        members: [
-          healthyConfig.members[0],
-          {
-            ...healthyConfig.members[1],
-            sessionId: "dead-session-uuid",
-          },
-        ],
-      };
+    test("reports process-registry health when registry is available", async () => {
+      const registry = makeMockRegistry([
+        { agentId: "team-lead@my-team", pid: process.pid },
+      ]);
 
-      const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
-          listTeams: async () => ok(["my-team"]),
-          getTeam: async () => ok(configWithSession),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
-          listInboxes: async () => ok(["team-lead", "scout"]),
-          readMessages: async () => ok([]),
-        },
-      });
-
-      const results = await diagnose(ctx, { checkSession: () => false });
-      expect(results.ok).toBe(true);
-      if (!results.ok) return;
-
-      const staleCheck = results.value.find(
-        (r) => r.checkId === "stale-session" && r.detail === "scout",
-      );
-      expect(staleCheck).toBeDefined();
-      expect(staleCheck!.status).toBe("warn");
-      expect(staleCheck!.fixable).toBe(true);
-    });
-
-    test("does not flag session as stale when no sessionId is set", async () => {
       const ctx = makeCtx({
         configStore: {
           ...makeCtx().configStore,
@@ -264,54 +203,19 @@ describe("doctor core", () => {
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
         },
+        processRegistry: registry,
       });
 
-      const results = await diagnose(ctx, { checkSession: () => false });
+      const results = await diagnose(ctx, {});
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
-      const staleCheck = results.value.find(
-        (r) => r.checkId === "stale-session",
+      const registryCheck = results.value.find(
+        (r) => r.checkId === "process-registry",
       );
-      // scout has no sessionId in healthyConfig, so no stale-session check
-      expect(staleCheck).toBeUndefined();
-    });
-
-    test("flags team-lead session as stale just like other agents", async () => {
-      const configWithLeadSession: TeamConfig = {
-        ...healthyConfig,
-        members: [
-          {
-            ...healthyConfig.members[0],
-            sessionId: "lead-session-uuid",
-          },
-          healthyConfig.members[1],
-        ],
-      };
-
-      const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
-          listTeams: async () => ok(["my-team"]),
-          getTeam: async () => ok(configWithLeadSession),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
-          listInboxes: async () => ok(["team-lead", "scout"]),
-          readMessages: async () => ok([]),
-        },
-      });
-
-      const results = await diagnose(ctx, { checkSession: () => false });
-      expect(results.ok).toBe(true);
-      if (!results.ok) return;
-
-      const staleCheck = results.value.find(
-        (r) => r.checkId === "stale-session" && r.detail === "team-lead",
-      );
-      expect(staleCheck).toBeDefined();
-      expect(staleCheck!.status).toBe("warn");
-      expect(staleCheck!.fixable).toBe(true);
+      expect(registryCheck).toBeDefined();
+      expect(registryCheck!.status).toBe("ok");
+      expect(registryCheck!.message).toContain("1 active");
     });
 
     test("scopes to specific team with --team", async () => {
@@ -343,47 +247,6 @@ describe("doctor core", () => {
   });
 
   describe("applyFixes()", () => {
-    test("fixes stale isActive by calling updateTeam", async () => {
-      let updateCalled = false;
-      const staleConfig: TeamConfig = {
-        ...healthyConfig,
-        members: [
-          {
-            ...healthyConfig.members[0],
-            isActive: true,
-            processId: "99999999",
-          },
-        ],
-      };
-
-      const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
-          listTeams: async () => ok(["my-team"]),
-          getTeam: async () => ok(staleConfig),
-          updateTeam: async (_name, updater) => {
-            updateCalled = true;
-            const updated = updater(staleConfig);
-            expect(updated.members[0].isActive).toBe(false);
-            return ok(updated);
-          },
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
-          listInboxes: async () => ok(["team-lead"]),
-          readMessages: async () => ok([]),
-        },
-      });
-
-      const diagResult = await diagnose(ctx, {});
-      expect(diagResult.ok).toBe(true);
-      if (!diagResult.ok) return;
-
-      const fixResults = await applyFixes(ctx, diagResult.value);
-      expect(fixResults.ok).toBe(true);
-      expect(updateCalled).toBe(true);
-    });
-
     test("fixes orphaned inbox by calling deleteInbox", async () => {
       let deleteCalled = false;
       const configWithOneMember: TeamConfig = {
@@ -415,48 +278,6 @@ describe("doctor core", () => {
       const fixResults = await applyFixes(ctx, diagResult.value);
       expect(fixResults.ok).toBe(true);
       expect(deleteCalled).toBe(true);
-    });
-
-    test("fixes stale session by removing agent from config", async () => {
-      let updatedConfig: TeamConfig | null = null;
-      const configWithStale: TeamConfig = {
-        ...healthyConfig,
-        members: [
-          healthyConfig.members[0],
-          {
-            ...healthyConfig.members[1],
-            sessionId: "dead-session-uuid",
-          },
-        ],
-      };
-
-      const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
-          listTeams: async () => ok(["my-team"]),
-          getTeam: async () => ok(configWithStale),
-          updateTeam: async (_name, updater) => {
-            updatedConfig = updater(configWithStale);
-            return ok(updatedConfig);
-          },
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
-          listInboxes: async () => ok(["team-lead", "scout"]),
-          readMessages: async () => ok([]),
-          deleteInbox: async () => ok(undefined),
-        },
-      });
-
-      const diagResult = await diagnose(ctx, { checkSession: () => false });
-      expect(diagResult.ok).toBe(true);
-      if (!diagResult.ok) return;
-
-      const fixResults = await applyFixes(ctx, diagResult.value);
-      expect(fixResults.ok).toBe(true);
-      expect(updatedConfig).not.toBeNull();
-      expect(updatedConfig!.members).toHaveLength(1);
-      expect(updatedConfig!.members[0].name).toBe("team-lead");
     });
 
     test("returns empty fix results when nothing is fixable", async () => {

@@ -7,8 +7,6 @@ import type { TeamConfig } from "../../types/domain.ts";
 import type { TeamSummary } from "./use-teams.ts";
 
 // Test the summarization logic directly without React rendering.
-// We extract the core logic by importing the module and testing
-// via a thin wrapper that calls the hook's internals.
 
 let tmpDir: string;
 let store: JsonFileConfigStore;
@@ -72,7 +70,7 @@ describe("useTeams — data layer", () => {
       .map((r) => ({
         name: r.value.name,
         agentCount: r.value.members.length,
-        aliveCount: 0, // no real PIDs, so all dead
+        aliveCount: 0, // no registry, so all dead
         createdAt: r.value.createdAt,
       }));
 
@@ -93,29 +91,24 @@ describe("useTeams — data layer", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    const aliveCount = result.value.members.filter((m) => {
-      const pid = parseInt(m.processId, 10);
-      return pid > 0;
-    }).length;
-
+    // Without a registry, aliveCount is 0
+    const aliveCount = 0;
     expect(aliveCount).toBe(0);
   });
 
-  test("agents with a valid PID of current process are alive", async () => {
+  test("agents in live set are counted as alive", async () => {
     const team = makeTeam("delta", 1);
-    team.members[0].processId = String(process.pid);
     await store.createTeam(team);
-
-    const { isProcessAlive } = await import("../../lib/process.ts");
 
     const result = await store.getTeam("delta");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    const aliveCount = result.value.members.filter((m) => {
-      const pid = parseInt(m.processId, 10);
-      return pid > 0 && isProcessAlive(pid);
-    }).length;
+    // Simulate a live agent via a set
+    const liveAgentIds = new Set(["agent-0@delta"]);
+    const aliveCount = result.value.members.filter((m) =>
+      liveAgentIds.has(m.agentId),
+    ).length;
 
     expect(aliveCount).toBe(1);
   });

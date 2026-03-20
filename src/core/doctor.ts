@@ -1,9 +1,6 @@
 import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
 import { ok } from "../types/result.ts";
-import { isProcessAlive } from "../lib/process.ts";
-import { sessionExistsOnDisk } from "../lib/claude-session.ts";
-import { executeRemove, type RemovePlan } from "./remove.ts";
 
 export type DiagnosticStatus = "ok" | "warn" | "error";
 
@@ -19,7 +16,6 @@ export interface DiagnosticResult {
 
 export interface DiagnoseInput {
   team?: string;
-  checkSession?: (cwd: string, sessionId: string) => boolean;
 }
 
 export interface FixResult {
@@ -107,70 +103,17 @@ export async function diagnose(
     const config = teamResult.value;
     const memberNames = new Set(config.members.map((m) => m.name));
 
-    // Check: stale isActive (process is gone but isActive is true)
-    for (const member of config.members) {
-      if (member.isActive) {
-        const pid = parseInt(member.processId, 10);
-        const alive = isProcessAlive(pid);
-        if (!alive) {
-          results.push({
-            checkId: "stale-active",
-            status: "warn",
-            message: `Agent "${member.name}" in team "${teamName}" is marked active but process ${member.processId} is gone`,
-            detail: member.name,
-            team: teamName,
-            fixable: true,
-            fix: async (fixCtx: AppContext) => {
-              const agentName = member.name;
-              const updateResult = await fixCtx.configStore.updateTeam(
-                teamName,
-                (cfg) => ({
-                  ...cfg,
-                  members: cfg.members.map((m) =>
-                    m.name === agentName ? { ...m, isActive: false } : m,
-                  ),
-                }),
-              );
-              if (!updateResult.ok) return updateResult;
-              return ok(`Set ${agentName} isActive to false in team "${teamName}"`);
-            },
-          });
-        }
-      }
-    }
-
-    // Check: stale session (sessionId stored but no file on disk)
-    const checkSession = input.checkSession ?? sessionExistsOnDisk;
-    for (const member of config.members) {
-      if (member.sessionId) {
-        if (!checkSession(member.cwd, member.sessionId)) {
-          const agentName = member.name;
-          const agentId = member.agentId;
-          const processId = member.processId;
-          results.push({
-            checkId: "stale-session",
-            status: "warn",
-            message: `Agent "${agentName}" in team "${teamName}" has a stale session (no conversation on disk)`,
-            detail: agentName,
-            team: teamName,
-            fixable: true,
-            fix: async (fixCtx: AppContext) => {
-              const inboxList = await fixCtx.inboxStore.listInboxes(teamName);
-              const hasInbox = inboxList.ok ? inboxList.value.includes(agentName) : false;
-              const plan: RemovePlan = {
-                team: teamName,
-                name: agentName,
-                agentId,
-                processId,
-                isAlive: false,
-                hasInbox,
-              };
-              const removeResult = await executeRemove(fixCtx, plan);
-              if (!removeResult.ok) return removeResult;
-              return ok(`Removed agent "${agentName}" from team "${teamName}"`);
-            },
-          });
-        }
+    // Check: process registry health (triggers self-healing)
+    if (ctx.processRegistry) {
+      const activeResult = await ctx.processRegistry.listActive(teamName);
+      if (activeResult.ok) {
+        results.push({
+          checkId: "process-registry",
+          status: "ok",
+          message: `Process registry for team "${teamName}" is healthy (${activeResult.value.length} active)`,
+          team: teamName,
+          fixable: false,
+        });
       }
     }
 

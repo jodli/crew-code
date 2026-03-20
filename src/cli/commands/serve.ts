@@ -21,12 +21,14 @@ export default defineCommand({
     const { JsonFileConfigStore } = await import("../../adapters/json-file-config-store.ts");
     const { JsonFileInboxStore } = await import("../../adapters/json-file-inbox-store.ts");
     const { YamlBlueprintStore } = await import("../../adapters/yaml-blueprint-store.ts");
+    const { FileProcessRegistry } = await import("../../adapters/file-process-registry.ts");
     const { createApp } = await import("../../api/server.ts");
 
     const ctx = {
       configStore: new JsonFileConfigStore(),
       inboxStore: new JsonFileInboxStore(),
       blueprintStore: new YamlBlueprintStore(),
+      processRegistry: new FileProcessRegistry(),
     };
 
     const app = createApp(ctx);

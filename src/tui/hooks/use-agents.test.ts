@@ -1,16 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { MemberDetail } from "../../core/status.ts";
-import type { AgentSummary } from "./use-agents.ts";
-import { isProcessAlive } from "../../lib/process.ts";
-
-function toAgentSummary(member: MemberDetail): AgentSummary {
-  const pid = parseInt(member.processId, 10);
-  const alive = pid > 0 && isProcessAlive(pid);
-  return {
-    ...member,
-    status: alive ? "alive" : "dead",
-  };
-}
+import { toAgentSummary, type AgentSummary } from "./use-agents.ts";
 
 function makeMember(overrides: Partial<MemberDetail> & { name: string }): MemberDetail {
   return {
@@ -24,24 +14,26 @@ function makeMember(overrides: Partial<MemberDetail> & { name: string }): Member
 }
 
 describe("useAgents — data layer", () => {
-  test("returns dead status when no PIDs", () => {
+  test("returns dead status when agent is not in live set", () => {
     const members: MemberDetail[] = [
       makeMember({ name: "team-lead", processId: "" }),
       makeMember({ name: "coder", processId: "0" }),
     ];
 
-    const agents = members.map(toAgentSummary);
+    const liveAgentIds = new Set<string>();
+    const agents = members.map((m) => toAgentSummary(m, liveAgentIds));
     expect(agents).toHaveLength(2);
     expect(agents[0].status).toBe("dead");
     expect(agents[1].status).toBe("dead");
   });
 
-  test("returns alive status for running process", () => {
+  test("returns alive status when agent is in live set", () => {
     const members: MemberDetail[] = [
-      makeMember({ name: "team-lead", processId: String(process.pid), sessionId: "sess-123" }),
+      makeMember({ name: "team-lead", agentId: "team-lead@test", processId: String(process.pid), sessionId: "sess-123" }),
     ];
 
-    const agents = members.map(toAgentSummary);
+    const liveAgentIds = new Set(["team-lead@test"]);
+    const agents = members.map((m) => toAgentSummary(m, liveAgentIds));
     expect(agents).toHaveLength(1);
     expect(agents[0].status).toBe("alive");
     expect(agents[0].sessionId).toBe("sess-123");
@@ -61,7 +53,7 @@ describe("useAgents — data layer", () => {
       extraArgs: ["--verbose"],
     });
 
-    const agent = toAgentSummary(member);
+    const agent = toAgentSummary(member, new Set<string>());
     expect(agent).toEqual({
       name: "writer",
       agentId: "writer@gamma",

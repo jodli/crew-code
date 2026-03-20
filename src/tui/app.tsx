@@ -3,6 +3,7 @@ import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 import { JsonFileConfigStore } from "../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../adapters/json-file-inbox-store.ts";
+import { FileProcessRegistry } from "../adapters/file-process-registry.ts";
 import { useTeams } from "./hooks/use-teams.ts";
 import { useAgents } from "./hooks/use-agents.ts";
 import { navReducer, initialNavState } from "./views/navigation.ts";
@@ -52,7 +53,8 @@ function tuiErrorMessage(error: CrewError): string {
 const configStore = new JsonFileConfigStore();
 const inboxStore = new JsonFileInboxStore();
 const blueprintStore = new YamlBlueprintStore();
-const ctx = { configStore, inboxStore, blueprintStore };
+const processRegistry = new FileProcessRegistry();
+const ctx = { configStore, inboxStore, blueprintStore, processRegistry };
 
 interface AppProps {
   launcher: Launcher;
@@ -60,7 +62,7 @@ interface AppProps {
 
 export function App({ launcher }: AppProps) {
   const { width, height } = useTerminalDimensions();
-  const teams = useTeams(ctx.configStore);
+  const teams = useTeams(ctx.configStore, 2000, ctx.processRegistry);
   const [nav, dispatch] = useReducer(navReducer, initialNavState);
   const [exiting, setExiting] = useState(false);
   const [error, setError] = useState("");
