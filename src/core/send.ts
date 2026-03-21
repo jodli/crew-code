@@ -1,6 +1,7 @@
 import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
+import { CREW_SENDER } from "../types/constants.ts";
 
 export interface SendInput {
   team: string;
@@ -28,7 +29,7 @@ export async function sendMessage(
   }
 
   const result = await ctx.inboxStore.appendMessage(input.team, input.agent, {
-    from: input.from ?? "external",
+    from: input.from ?? CREW_SENDER,
     text: input.message,
     timestamp: new Date().toISOString(),
     read: false,

@@ -1,0 +1,85 @@
+import { watch, existsSync } from "node:fs";
+import { dirname, basename } from "node:path";
+
+const HEARTBEAT_INTERVAL_MS = 5000;
+
+export function watchFile(
+  filePath: string,
+  callback: () => void,
+): () => void {
+  const dir = dirname(filePath);
+  const file = basename(filePath);
+  let lastMtime = getFileMtime(filePath);
+
+  const watcher = watch(dir, (event, filename) => {
+    if (filename === file) {
+      const mtime = getFileMtime(filePath);
+      if (mtime !== lastMtime) {
+        lastMtime = mtime;
+        callback();
+      }
+    }
+  });
+
+  // Heartbeat poll as fallback for Bun/Linux fs.watch bugs
+  const interval = setInterval(() => {
+    const mtime = getFileMtime(filePath);
+    if (mtime !== lastMtime) {
+      lastMtime = mtime;
+      callback();
+    }
+  }, HEARTBEAT_INTERVAL_MS);
+
+  return () => {
+    watcher.close();
+    clearInterval(interval);
+  };
+}
+
+export function watchDir(
+  dirPath: string,
+  callback: (filename: string) => void,
+): () => void {
+  const mtimes = new Map<string, number>();
+
+  const watcher = watch(dirPath, (event, filename) => {
+    if (filename) {
+      const mtime = getFileMtime(`${dirPath}/${filename}`);
+      if (mtime !== (mtimes.get(filename) ?? 0)) {
+        mtimes.set(filename, mtime);
+        callback(filename);
+      }
+    }
+  });
+
+  // Heartbeat poll as fallback
+  const interval = setInterval(() => {
+    try {
+      const entries = Bun.spawnSync(["ls", dirPath]).stdout.toString().trim().split("\n").filter(Boolean);
+      for (const entry of entries) {
+        const mtime = getFileMtime(`${dirPath}/${entry}`);
+        if (mtime !== (mtimes.get(entry) ?? 0)) {
+          mtimes.set(entry, mtime);
+          callback(entry);
+        }
+      }
+    } catch {
+      // dir may not exist yet
+    }
+  }, HEARTBEAT_INTERVAL_MS);
+
+  return () => {
+    watcher.close();
+    clearInterval(interval);
+  };
+}
+
+function getFileMtime(path: string): number {
+  try {
+    if (!existsSync(path)) return 0;
+    const stat = Bun.file(path);
+    return stat.lastModified;
+  } catch {
+    return 0;
+  }
+}

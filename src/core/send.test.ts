@@ -83,7 +83,7 @@ describe("core/send", () => {
     expect(appendedMessages[0].message.text).toBe("Hello scout!");
   });
 
-  test("sets timestamp, read: false, and from defaults to 'external'", async () => {
+  test("sets timestamp, read: false, and from defaults to 'crew'", async () => {
     appendedMessages = [];
     const before = new Date().toISOString();
     const ctx = makeCtx();
@@ -97,7 +97,7 @@ describe("core/send", () => {
     const after = new Date().toISOString();
     const msg = appendedMessages[0].message;
     expect(msg.read).toBe(false);
-    expect(msg.from).toBe("external");
+    expect(msg.from).toBe("crew");
     expect(msg.timestamp >= before).toBe(true);
     expect(msg.timestamp <= after).toBe(true);
   });

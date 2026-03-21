@@ -29,7 +29,7 @@ export default defineCommand({
     },
     from: {
       type: "string",
-      description: "Sender name (defaults to 'external')",
+      description: "Sender name (defaults to 'crew')",
       required: false,
     },
   },

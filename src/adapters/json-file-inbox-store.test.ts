@@ -255,4 +255,29 @@ describe("JsonFileInboxStore", () => {
       }
     });
   });
+
+  describe("markAllRead()", () => {
+    test("sets all messages to read: true", async () => {
+      const inboxesDir = join(tmpDir, "test-team", "inboxes");
+      await mkdir(inboxesDir, { recursive: true });
+      const messages: InboxMessage[] = [
+        { from: "peter", text: "Hello", timestamp: "2026-01-01T00:00:00Z", read: false },
+        { from: "team-lead", text: "Hi", timestamp: "2026-01-01T00:01:00Z", read: false },
+        { from: "peter", text: "Done", timestamp: "2026-01-01T00:02:00Z", read: true },
+      ];
+      await writeFile(join(inboxesDir, "crew.json"), JSON.stringify(messages, null, 2));
+
+      const result = await store.markAllRead("test-team", "crew");
+      expect(result.ok).toBe(true);
+
+      const content = JSON.parse(await readFile(join(inboxesDir, "crew.json"), "utf-8"));
+      expect(content).toHaveLength(3);
+      expect(content.every((m: InboxMessage) => m.read === true)).toBe(true);
+    });
+
+    test("returns ok for non-existent inbox (noop)", async () => {
+      const result = await store.markAllRead("test-team", "no-such-agent");
+      expect(result.ok).toBe(true);
+    });
+  });
 });

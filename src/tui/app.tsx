@@ -4,6 +4,7 @@ import type { KeyEvent } from "@opentui/core";
 import { JsonFileConfigStore } from "../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../adapters/json-file-inbox-store.ts";
 import { FileProcessRegistry } from "../adapters/file-process-registry.ts";
+import { CREW_SENDER } from "../types/constants.ts";
 import { useTeams } from "./hooks/use-teams.ts";
 import { useAgents } from "./hooks/use-agents.ts";
 import { navReducer, initialNavState } from "./views/navigation.ts";
@@ -254,7 +255,7 @@ export function App({ launcher }: AppProps) {
         team: selectedTeamName,
         agent: selectedAgent.name,
         message,
-        from: "tui",
+        from: CREW_SENDER,
       });
       if (!result.ok) {
         setError(`Send failed: ${result.error.kind}`);

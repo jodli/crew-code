@@ -115,6 +115,46 @@ export class JsonFileInboxStore implements InboxStore {
     }
   }
 
+  async markAllRead(team: string, agent: string): Promise<Result<void>> {
+    const path = this.deps.inboxPath(team, agent);
+    if (!existsSync(path)) {
+      return ok(undefined);
+    }
+
+    const { lock } = await import("proper-lockfile");
+    let release: (() => Promise<void>) | undefined;
+    try {
+      release = await lock(path, {
+        retries: { retries: 10, minTimeout: 50, maxTimeout: 500 } as unknown as number,
+        stale: 10000,
+      });
+    } catch (e: unknown) {
+      return err({
+        kind: "lock_failed",
+        path,
+        detail: String(e),
+      });
+    }
+
+    try {
+      const raw = await readFile(path, "utf-8");
+      const messages: InboxMessage[] = JSON.parse(raw);
+      const updated = messages.map((m) => ({ ...m, read: true }));
+      await writeFile(path, JSON.stringify(updated, null, 2) + "\n", "utf-8");
+      return ok(undefined);
+    } catch (e: unknown) {
+      return err({
+        kind: "file_write_failed",
+        path,
+        detail: String(e),
+      });
+    } finally {
+      if (release) {
+        await release().catch(() => {});
+      }
+    }
+  }
+
   async listInboxes(team: string): Promise<Result<string[]>> {
     const dir = this.deps.inboxesDir(team);
     if (!existsSync(dir)) {

@@ -19,4 +19,5 @@ export interface InboxStore {
   ): Promise<Result<void>>;
   listInboxes(team: string): Promise<Result<string[]>>;
   deleteInbox(team: string, agent: string): Promise<Result<void>>;
+  markAllRead(team: string, agent: string): Promise<Result<void>>;
 }
