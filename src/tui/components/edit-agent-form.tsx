@@ -20,7 +20,7 @@ const MODEL_OPTIONS = [
 type Field = "model" | "prompt" | "color" | "args";
 const fields: Field[] = ["model", "prompt", "color", "args"];
 
-export function EditAgentForm({ teamName, agent, onSubmit, onCancel }: EditAgentFormProps) {
+export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }: EditAgentFormProps) {
   const initialModelIndex = agent.model
     ? MODEL_OPTIONS.indexOf(agent.model as typeof MODEL_OPTIONS[number])
     : 0;

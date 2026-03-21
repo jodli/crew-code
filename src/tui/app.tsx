@@ -38,16 +38,13 @@ import { planLoad, executeLoad } from "../core/blueprint-load.ts";
 import { YamlBlueprintStore } from "../adapters/yaml-blueprint-store.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
 import type { CrewError } from "../types/errors.ts";
+import { renderError } from "../cli/errors.ts";
 
 function tuiErrorMessage(error: CrewError): string {
   switch (error.kind) {
-    case "stale_session": return `Agent "${(error as any).agent}" has a stale session. Press 'r' to remove.`;
-    case "team_not_found": return `Team "${(error as any).team}" no longer exists.`;
-    case "agent_not_found": return `Agent "${(error as any).agent}" not found in team.`;
-    case "agent_already_exists": return `Agent name "${(error as any).agent}" already exists.`;
-    case "team_already_exists": return `Team "${(error as any).team}" already exists.`;
-    case "no_session_id": return `Agent "${(error as any).agent}" has no session ID.`;
-    default: return error.kind;
+    case "stale_session": return `Agent "${error.agent}" has a stale session. Press 'r' to remove.`;
+    case "no_session_id": return `Agent "${error.agent}" has no session ID.`;
+    default: return renderError(error);
   }
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildTerminalCommand, type TerminalEmulator } from "./terminal.ts";
+import { buildTerminalCommand } from "./terminal.ts";
 
 describe("buildTerminalCommand", () => {
   const command = ["crew", "create", "--name", "my-team"];

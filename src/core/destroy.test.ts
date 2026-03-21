@@ -62,18 +62,18 @@ function makeMockRegistry(entries: RegistryEntry[] = []): ProcessRegistry & { ki
 function makeCtx(config: TeamConfig): AppContext {
   return {
     configStore: {
-      getTeam: async (name: string) => {
-        if (name === "my-team") return ok(structuredClone(config));
-        return err({ kind: "team_not_found", team: name });
+      getTeam: async (n: string) => {
+        if (n === "my-team") return ok(structuredClone(config));
+        return err({ kind: "team_not_found", team: n });
       },
-      updateTeam: async (name: string, updater: (c: TeamConfig) => TeamConfig) => {
+      updateTeam: async (_n: string, updater: (c: TeamConfig) => TeamConfig) => {
         return ok(updater(structuredClone(config)));
       },
-      teamExists: async (name: string) => name === "my-team",
+      teamExists: async (n: string) => n === "my-team",
       createTeam: async () => ok(undefined),
       listTeams: async () => ok(["my-team"]),
-      deleteTeam: async (name: string) => {
-        deletedTeams.push(name);
+      deleteTeam: async (n: string) => {
+        deletedTeams.push(n);
         return ok(undefined);
       },
     },

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "bun:test";
 
 describe("CLI entry point", () => {
   // Skipped: Bun.spawn stdout pipe is broken inside bun test runner.

@@ -1,6 +1,5 @@
 import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
-import { dirname } from "node:path";
 import { z } from "zod";
 import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";

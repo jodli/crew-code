@@ -11,7 +11,7 @@ export function watchFile(
   const file = basename(filePath);
   let lastMtime = getFileMtime(filePath);
 
-  const watcher = watch(dir, (event, filename) => {
+  const watcher = watch(dir, (_event, filename) => {
     if (filename === file) {
       const mtime = getFileMtime(filePath);
       if (mtime !== lastMtime) {
@@ -42,7 +42,7 @@ export function watchDir(
 ): () => void {
   const mtimes = new Map<string, number>();
 
-  const watcher = watch(dirPath, (event, filename) => {
+  const watcher = watch(dirPath, (_event, filename) => {
     if (filename) {
       const mtime = getFileMtime(`${dirPath}/${filename}`);
       if (mtime !== (mtimes.get(filename) ?? 0)) {

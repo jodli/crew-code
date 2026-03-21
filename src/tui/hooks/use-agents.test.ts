@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { MemberDetail } from "../../core/status.ts";
-import { toAgentSummary, type AgentSummary } from "./use-agents.ts";
+import { toAgentSummary } from "./use-agents.ts";
 
 function makeMember(overrides: Partial<MemberDetail> & { name: string }): MemberDetail {
   return {

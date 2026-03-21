@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import {
   diagnose,
   applyFixes,
-  type DiagnosticResult,
 } from "./doctor.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";

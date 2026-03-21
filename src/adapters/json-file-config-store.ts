@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { readdir, mkdir, rm, writeFile } from "node:fs/promises";
-import { dirname, basename, join } from "node:path";
+import { dirname, join } from "node:path";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";

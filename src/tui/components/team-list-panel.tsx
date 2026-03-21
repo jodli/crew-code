@@ -52,7 +52,7 @@ export function TeamListPanel({ teams, selectedIndex, focused }: TeamListPanelPr
           <text
             key={team.name}
             content={label}
-            fg={isSelected ? "#c0caf5" : "#a9b1d6"}
+            fg={isSelected ? "#c0caf5" : aliveColor}
           />
         );
       })}

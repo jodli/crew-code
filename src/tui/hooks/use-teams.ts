@@ -4,7 +4,6 @@ import type { ProcessRegistry } from "../../ports/process-registry.ts";
 import type { TeamConfig } from "../../types/domain.ts";
 import { watchDir, debounce } from "../../lib/file-watcher.ts";
 import { claudeTeamsDir } from "../../config/paths.ts";
-import { processRegistryDir } from "../../config/paths.ts";
 
 export interface TeamSummary {
   name: string;
