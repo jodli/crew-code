@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { ConfigStore } from "../../ports/config-store.ts";
 import type { ProcessRegistry } from "../../ports/process-registry.ts";
 import type { TeamConfig } from "../../types/domain.ts";
+import { watchDir, debounce } from "../../lib/file-watcher.ts";
+import { claudeTeamsDir } from "../../config/paths.ts";
+import { processRegistryDir } from "../../config/paths.ts";
 
 export interface TeamSummary {
   name: string;
@@ -30,7 +33,6 @@ function summarizeTeam(
 
 export function useTeams(
   configStore: ConfigStore,
-  pollIntervalMs = 2000,
   processRegistry?: ProcessRegistry,
 ) {
   const [teams, setTeams] = useState<TeamSummary[]>([]);
@@ -61,11 +63,16 @@ export function useTeams(
     setTeams(validConfigs.map((c) => summarizeTeam(c, liveAgentIds)));
   }, [configStore, processRegistry]);
 
+  const debouncedRefresh = useMemo(() => debounce(refresh, 200), [refresh]);
+
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, pollIntervalMs);
-    return () => clearInterval(interval);
-  }, [refresh, pollIntervalMs]);
+    const cleanups: (() => void)[] = [];
+    try {
+      cleanups.push(watchDir(claudeTeamsDir(), () => debouncedRefresh()));
+    } catch { /* dir may not exist */ }
+    return () => cleanups.forEach((c) => c());
+  }, [refresh, debouncedRefresh]);
 
   return teams;
 }

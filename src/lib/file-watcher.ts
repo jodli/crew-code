@@ -1,5 +1,5 @@
-import { watch, existsSync } from "node:fs";
-import { dirname, basename } from "node:path";
+import { watch, existsSync, readdirSync } from "node:fs";
+import { dirname, basename, join } from "node:path";
 
 const HEARTBEAT_INTERVAL_MS = 5000;
 
@@ -55,9 +55,9 @@ export function watchDir(
   // Heartbeat poll as fallback
   const interval = setInterval(() => {
     try {
-      const entries = Bun.spawnSync(["ls", dirPath]).stdout.toString().trim().split("\n").filter(Boolean);
+      const entries = readdirSync(dirPath);
       for (const entry of entries) {
-        const mtime = getFileMtime(`${dirPath}/${entry}`);
+        const mtime = getFileMtime(join(dirPath, entry));
         if (mtime !== (mtimes.get(entry) ?? 0)) {
           mtimes.set(entry, mtime);
           callback(entry);
@@ -71,6 +71,14 @@ export function watchDir(
   return () => {
     watcher.close();
     clearInterval(interval);
+  };
+}
+
+export function debounce(fn: () => void, ms: number): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(fn, ms);
   };
 }
 

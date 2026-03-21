@@ -2,7 +2,7 @@ import { describe, expect, test, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { watchFile, watchDir } from "./file-watcher.ts";
+import { watchFile, watchDir, debounce } from "./file-watcher.ts";
 
 let tmpDir: string;
 
@@ -88,4 +88,34 @@ describe("watchDir", () => {
       cleanup();
     }
   }, 10000);
+});
+
+describe("debounce", () => {
+  test("coalesces rapid calls into one", async () => {
+    let callCount = 0;
+    const fn = debounce(() => { callCount++; }, 100);
+
+    fn();
+    fn();
+    fn();
+
+    await Bun.sleep(50);
+    expect(callCount).toBe(0);
+
+    await Bun.sleep(150);
+    expect(callCount).toBe(1);
+  });
+
+  test("fires again after debounce window", async () => {
+    let callCount = 0;
+    const fn = debounce(() => { callCount++; }, 50);
+
+    fn();
+    await Bun.sleep(100);
+    expect(callCount).toBe(1);
+
+    fn();
+    await Bun.sleep(100);
+    expect(callCount).toBe(2);
+  });
 });

@@ -63,7 +63,7 @@ interface AppProps {
 
 export function App({ launcher }: AppProps) {
   const { width, height } = useTerminalDimensions();
-  const teams = useTeams(ctx.configStore, 2000, ctx.processRegistry);
+  const teams = useTeams(ctx.configStore, ctx.processRegistry);
   const [nav, dispatch] = useReducer(navReducer, initialNavState);
   const [exiting, setExiting] = useState(false);
   const [error, setError] = useState("");

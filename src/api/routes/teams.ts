@@ -9,6 +9,9 @@ import { getTeamDetail } from "../../actions/get-team-detail.ts";
 import { createTeam } from "../../actions/create-team.ts";
 import { updateTeam } from "../../actions/update-team.ts";
 import { destroyTeam } from "../../actions/destroy-team.ts";
+import { watchFile, watchDir, debounce } from "../../lib/file-watcher.ts";
+import { claudeTeamConfigPath, claudeInboxesDir } from "../../config/paths.ts";
+import { processRegistryPath } from "../../config/paths.ts";
 
 const CreateTeamBody = z.object({
   name: z.string(),
@@ -68,18 +71,43 @@ export function teamRoutes() {
     let lastJson = "";
 
     return streamSSE(c, async (stream) => {
+      const pushUpdate = async () => {
+        try {
+          const result = await getTeamDetail(ctx, name);
+          if (!result.ok) return;
+          const json = JSON.stringify(result.value);
+          if (json !== lastJson) {
+            lastJson = json;
+            await stream.writeSSE({ event: "team-update", data: json });
+          }
+        } catch {
+          // transient errors
+        }
+      };
+
+      // Send initial snapshot
+      await pushUpdate();
+
+      // Watch for changes
+      const debouncedPush = debounce(pushUpdate, 200);
+      const cleanups: (() => void)[] = [];
+      try {
+        cleanups.push(watchFile(claudeTeamConfigPath(name), () => debouncedPush()));
+      } catch { /* file may not exist */ }
+      try {
+        cleanups.push(watchDir(claudeInboxesDir(name), () => debouncedPush()));
+      } catch { /* dir may not exist */ }
+      try {
+        cleanups.push(watchFile(processRegistryPath(name), () => debouncedPush()));
+      } catch { /* file may not exist */ }
+
+      stream.onAbort(() => {
+        cleanups.forEach((c) => c());
+      });
+
+      // Keep stream alive
       while (true) {
-        const result = await getTeamDetail(ctx, name);
-        if (!result.ok) {
-          await stream.writeSSE({ event: "error", data: JSON.stringify({ kind: result.error.kind }) });
-          break;
-        }
-        const json = JSON.stringify(result.value);
-        if (json !== lastJson) {
-          lastJson = json;
-          await stream.writeSSE({ event: "team-update", data: json });
-        }
-        await stream.sleep(2000);
+        await stream.sleep(1000);
       }
     });
   });

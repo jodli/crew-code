@@ -3,6 +3,8 @@ import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 import type { InboxStore } from "../../ports/inbox-store.ts";
 import type { InboxMessage } from "../../types/domain.ts";
+import { watchFile } from "../../lib/file-watcher.ts";
+import { claudeInboxPath } from "../../config/paths.ts";
 
 interface InboxViewProps {
   inboxStore: InboxStore;
@@ -39,8 +41,11 @@ export function InboxView({ inboxStore, teamName, agentName, onClose, onSend }: 
       }
     };
     load();
-    const interval = setInterval(load, 2000);
-    return () => clearInterval(interval);
+    let cleanup: (() => void) | undefined;
+    try {
+      cleanup = watchFile(claudeInboxPath(teamName, agentName), load);
+    } catch { /* file may not exist */ }
+    return () => cleanup?.();
   }, [inboxStore, teamName, agentName]);
 
   const handleKey = useCallback(

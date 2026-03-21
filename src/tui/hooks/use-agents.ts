@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { AppContext } from "../../types/context.ts";
 import type { MemberDetail } from "../../core/status.ts";
 import { listAgents } from "../../actions/list-agents.ts";
+import { watchFile, watchDir, debounce } from "../../lib/file-watcher.ts";
+import { claudeTeamConfigPath, claudeInboxesDir } from "../../config/paths.ts";
+import { processRegistryPath } from "../../config/paths.ts";
 
 export interface AgentSummary {
   name: string;
@@ -31,7 +34,6 @@ export function toAgentSummary(
 export function useAgents(
   ctx: AppContext,
   teamName: string | null,
-  pollIntervalMs = 2000,
 ) {
   const [agents, setAgents] = useState<AgentSummary[]>([]);
 
@@ -59,11 +61,25 @@ export function useAgents(
     setAgents(result.value.map((m) => toAgentSummary(m, liveAgentIds)));
   }, [ctx, teamName]);
 
+  const debouncedRefresh = useMemo(() => debounce(refresh, 200), [refresh]);
+
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, pollIntervalMs);
-    return () => clearInterval(interval);
-  }, [refresh, pollIntervalMs]);
+    if (!teamName) return;
+
+    const cleanups: (() => void)[] = [];
+    try {
+      cleanups.push(watchFile(claudeTeamConfigPath(teamName), () => debouncedRefresh()));
+    } catch { /* file may not exist */ }
+    try {
+      cleanups.push(watchDir(claudeInboxesDir(teamName), () => debouncedRefresh()));
+    } catch { /* dir may not exist */ }
+    try {
+      cleanups.push(watchFile(processRegistryPath(teamName), () => debouncedRefresh()));
+    } catch { /* file may not exist */ }
+
+    return () => cleanups.forEach((c) => c());
+  }, [refresh, debouncedRefresh, teamName]);
 
   return agents;
 }
