@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, watch } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { debug } from "./logger.ts";
 
 const HEARTBEAT_INTERVAL_MS = 5000;
 
@@ -57,8 +58,8 @@ export function watchDir(dirPath: string, callback: (filename: string) => void):
           callback(entry);
         }
       }
-    } catch {
-      // dir may not exist yet
+    } catch (e: unknown) {
+      debug("watcher", `poll failed for ${dirPath}`, { error: String(e) });
     }
   }, HEARTBEAT_INTERVAL_MS);
 
@@ -76,12 +77,13 @@ export function debounce(fn: () => void, ms: number): () => void {
   };
 }
 
-function getFileMtime(path: string): number {
+function getFileMtime(filePath: string): number {
   try {
-    if (!existsSync(path)) return 0;
-    const stat = Bun.file(path);
+    if (!existsSync(filePath)) return 0;
+    const stat = Bun.file(filePath);
     return stat.lastModified;
-  } catch {
+  } catch (e: unknown) {
+    debug("watcher", `getFileMtime failed for ${filePath}`, { error: String(e) });
     return 0;
   }
 }

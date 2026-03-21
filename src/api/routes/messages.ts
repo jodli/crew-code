@@ -7,6 +7,7 @@ import { getInbox } from "../../actions/get-inbox.ts";
 import { sendMessage } from "../../actions/send-message.ts";
 import { claudeInboxPath } from "../../config/paths.ts";
 import { watchFile } from "../../lib/file-watcher.ts";
+import { debug } from "../../lib/logger.ts";
 import { CREW_SENDER } from "../../types/constants.ts";
 import { errorResponse } from "../errors.ts";
 import type { Env } from "../server.ts";
@@ -95,8 +96,8 @@ export function messageRoutes() {
             data: JSON.stringify(newMessages),
             id: String(Date.now()),
           });
-        } catch {
-          // transient errors
+        } catch (e: unknown) {
+          debug("sse", "message stream error", { error: String(e) });
         }
       });
 

@@ -6,7 +6,7 @@ import {
   processRegistryPath as defaultRegistryPath,
 } from "../config/paths.ts";
 import { readJson, withLock, writeJson } from "../lib/json-io.ts";
-import { debug } from "../lib/logger.ts";
+import { debug, warn } from "../lib/logger.ts";
 import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
@@ -160,7 +160,10 @@ export class FileProcessRegistry implements ProcessRegistry {
     if (!existsSync(path)) return [];
 
     const result = await readJson(path, RegistrySchema);
-    if (!result.ok) return [];
+    if (!result.ok) {
+      warn("registry", "failed to read entries", { team: teamName, error: result.error.kind });
+      return [];
+    }
     return result.value;
   }
 

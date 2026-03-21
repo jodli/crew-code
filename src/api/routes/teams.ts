@@ -9,6 +9,7 @@ import { listTeams } from "../../actions/list-teams.ts";
 import { updateTeam } from "../../actions/update-team.ts";
 import { claudeInboxesDir, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
 import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
+import { debug } from "../../lib/logger.ts";
 import { errorResponse } from "../errors.ts";
 import type { Env } from "../server.ts";
 
@@ -79,8 +80,8 @@ export function teamRoutes() {
             lastJson = json;
             await stream.writeSSE({ event: "team-update", data: json });
           }
-        } catch {
-          // transient errors
+        } catch (e: unknown) {
+          debug("sse", `team stream error for ${name}`, { error: String(e) });
         }
       };
 

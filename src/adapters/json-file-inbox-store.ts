@@ -44,7 +44,12 @@ export class JsonFileInboxStore implements InboxStore {
 
     const lockResult = await withLock(path, async () => {
       const raw = await readFile(path, "utf-8");
-      const existing: InboxMessage[] = JSON.parse(raw);
+      let existing: InboxMessage[];
+      try {
+        existing = JSON.parse(raw);
+      } catch {
+        existing = [];
+      }
       existing.push(message);
       const writeResult = await writeJson(path, existing);
       if (!writeResult.ok) return writeResult;
@@ -88,7 +93,12 @@ export class JsonFileInboxStore implements InboxStore {
 
     const lockResult = await withLock(path, async () => {
       const raw = await readFile(path, "utf-8");
-      const messages: InboxMessage[] = JSON.parse(raw);
+      let messages: InboxMessage[];
+      try {
+        messages = JSON.parse(raw);
+      } catch {
+        return ok(undefined);
+      }
       const updated = messages.map((m) => ({ ...m, read: true }));
       const writeResult = await writeJson(path, updated);
       if (!writeResult.ok) return writeResult;
