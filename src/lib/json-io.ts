@@ -73,7 +73,10 @@ export async function withLock<T>(
   const { lock } = await import("proper-lockfile");
   let release: (() => Promise<void>) | undefined;
   try {
-    release = await lock(lockPath, { retries: 3, stale: 10000 });
+    release = await lock(lockPath, {
+      retries: { retries: 10, minTimeout: 50, maxTimeout: 500 } as unknown as number,
+      stale: 10000,
+    });
   } catch (e: unknown) {
     return err({
       kind: "lock_failed",

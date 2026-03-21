@@ -74,9 +74,10 @@ export class FileProcessRegistry implements ProcessRegistry {
       });
     }
 
+    // Ensure file exists so proper-lockfile can lock it
     if (!existsSync(path)) {
-      const entry: RegistryEntry = { agentId, pid, activatedAt: Date.now() };
-      return writeJson(path, [entry]);
+      const initResult = await writeJson(path, []);
+      if (!initResult.ok) return initResult;
     }
 
     const lockResult = await withLock(path, async () => {
@@ -172,7 +173,13 @@ export class FileProcessRegistry implements ProcessRegistry {
     const alive = entries.filter((e) => isProcessAlive(e.pid));
 
     if (alive.length !== entries.length) {
-      await writeJson(path, alive);
+      const lockResult = await withLock(path, async () => {
+        const writeResult = await writeJson(path, alive);
+        if (!writeResult.ok) return writeResult;
+        return ok(undefined);
+      });
+      // Best-effort heal: ignore lock/write failures
+      void lockResult;
     }
 
     return alive;

@@ -48,43 +48,22 @@ export class JsonFileInboxStore implements InboxStore {
     await mkdir(dir, { recursive: true });
     const path = this.deps.inboxPath(team, agent);
 
-    // Ensure data file exists
+    // Ensure data file exists so proper-lockfile can lock it
     if (!existsSync(path)) {
       await writeFile(path, "[]\n", "utf-8");
     }
 
-    const { lock } = await import("proper-lockfile");
-    let release: (() => Promise<void>) | undefined;
-    try {
-      release = await lock(path, {
-        retries: { retries: 10, minTimeout: 50, maxTimeout: 500 } as unknown as number,
-        stale: 10000,
-      });
-    } catch (e: unknown) {
-      return err({
-        kind: "lock_failed",
-        path,
-        detail: String(e),
-      });
-    }
-
-    try {
+    const lockResult = await withLock(path, async () => {
       const raw = await readFile(path, "utf-8");
       const existing: InboxMessage[] = JSON.parse(raw);
       existing.push(message);
-      await writeFile(path, JSON.stringify(existing, null, 2) + "\n", "utf-8");
+      const writeResult = await writeJson(path, existing);
+      if (!writeResult.ok) return writeResult;
       return ok(undefined);
-    } catch (e: unknown) {
-      return err({
-        kind: "file_write_failed",
-        path,
-        detail: String(e),
-      });
-    } finally {
-      if (release) {
-        await release().catch(() => {});
-      }
-    }
+    });
+
+    if (!lockResult.ok) return lockResult;
+    return lockResult.value;
   }
 
   async readMessages(
@@ -121,38 +100,17 @@ export class JsonFileInboxStore implements InboxStore {
       return ok(undefined);
     }
 
-    const { lock } = await import("proper-lockfile");
-    let release: (() => Promise<void>) | undefined;
-    try {
-      release = await lock(path, {
-        retries: { retries: 10, minTimeout: 50, maxTimeout: 500 } as unknown as number,
-        stale: 10000,
-      });
-    } catch (e: unknown) {
-      return err({
-        kind: "lock_failed",
-        path,
-        detail: String(e),
-      });
-    }
-
-    try {
+    const lockResult = await withLock(path, async () => {
       const raw = await readFile(path, "utf-8");
       const messages: InboxMessage[] = JSON.parse(raw);
       const updated = messages.map((m) => ({ ...m, read: true }));
-      await writeFile(path, JSON.stringify(updated, null, 2) + "\n", "utf-8");
+      const writeResult = await writeJson(path, updated);
+      if (!writeResult.ok) return writeResult;
       return ok(undefined);
-    } catch (e: unknown) {
-      return err({
-        kind: "file_write_failed",
-        path,
-        detail: String(e),
-      });
-    } finally {
-      if (release) {
-        await release().catch(() => {});
-      }
-    }
+    });
+
+    if (!lockResult.ok) return lockResult;
+    return lockResult.value;
   }
 
   async listInboxes(team: string): Promise<Result<string[]>> {

@@ -47,11 +47,15 @@ export class YamlBlueprintStore implements BlueprintStore {
   }
 
   async save(blueprint: Blueprint): Promise<Result<string>> {
-    await mkdir(this.dir, { recursive: true });
     const filePath = join(this.dir, `${blueprint.name}.yaml`);
-    const content = stringify(blueprint);
-    await writeFile(filePath, content, "utf-8");
-    return ok(filePath);
+    try {
+      await mkdir(this.dir, { recursive: true });
+      const content = stringify(blueprint);
+      await writeFile(filePath, content, "utf-8");
+      return ok(filePath);
+    } catch (e: unknown) {
+      return err({ kind: "file_write_failed", path: filePath, detail: String(e) });
+    }
   }
 
   async list(): Promise<Result<string[]>> {

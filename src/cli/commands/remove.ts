@@ -54,7 +54,7 @@ export default defineCommand({
     if (!args.force) {
       console.log(`\nAbout to remove agent ${pc.bold(plan.name)} from team ${pc.bold(plan.team)}:`);
       if (plan.isAlive) {
-        console.log(`  Kill process ${plan.processId} (active)`);
+        console.log("  Kill running process (active)");
       }
       if (plan.hasInbox) {
         console.log("  Delete inbox");

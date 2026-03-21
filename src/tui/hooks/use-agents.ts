@@ -11,7 +11,7 @@ export interface AgentSummary {
   agentId: string;
   agentType: string;
   status: "alive" | "dead";
-  processId: string;
+  processId?: number;
   sessionId?: string;
   model?: string;
   prompt?: string;

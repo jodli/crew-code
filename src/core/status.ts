@@ -13,7 +13,7 @@ export interface MemberDetail {
   name: string;
   agentId: string;
   agentType: string;
-  processId: string;
+  processId?: number;
   sessionId?: string;
   model?: string;
   prompt?: string;
@@ -34,6 +34,16 @@ async function enrichMembers(
   team: string,
   members: AgentMember[],
 ): Promise<MemberDetail[]> {
+  const activeResult = ctx.processRegistry
+    ? await ctx.processRegistry.listActive(team)
+    : undefined;
+  const pidByAgentId = new Map<string, number>();
+  if (activeResult?.ok) {
+    for (const entry of activeResult.value) {
+      pidByAgentId.set(entry.agentId, entry.pid);
+    }
+  }
+
   const enriched: MemberDetail[] = [];
   for (const member of members) {
     const msgsResult = await ctx.inboxStore.readMessages(team, member.name);
@@ -45,7 +55,7 @@ async function enrichMembers(
       name: member.name,
       agentId: member.agentId,
       agentType: member.agentType,
-      processId: member.processId,
+      processId: pidByAgentId.get(member.agentId),
       sessionId: member.sessionId,
       model: member.model,
       prompt: member.prompt,
