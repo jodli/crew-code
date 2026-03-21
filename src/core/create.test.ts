@@ -2,55 +2,25 @@ import { describe, expect, test } from "bun:test";
 import { planCreate, executeCreate, type CreatePlan } from "./create.ts";
 import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
-import type { InboxStore } from "../ports/inbox-store.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
+import { makeConfigStore as makeBaseConfigStore, makeInboxStore } from "../test/helpers.ts";
 
 let createdConfig: TeamConfig | undefined;
 
-function makeConfigStore(opts?: {
-  exists: boolean;
-}): ConfigStore {
+function makeConfigStore(opts?: { exists: boolean }): ConfigStore {
   const exists = opts?.exists ?? false;
-  return {
-    async getTeam() {
-      return err({ kind: "config_not_found", path: "/fake" });
-    },
-    async updateTeam() {
-      return err({ kind: "config_not_found", path: "/fake" });
-    },
-    async teamExists() {
-      return exists;
-    },
-    async createTeam(config: TeamConfig) {
-      if (exists) {
-        return err({ kind: "team_already_exists", team: config.name });
-      }
+  return makeBaseConfigStore({
+    teamExists: async () => exists,
+    createTeam: async (config: TeamConfig) => {
+      if (exists) return err({ kind: "team_already_exists", team: config.name });
       createdConfig = config;
       return ok(undefined);
     },
-    async listTeams() {
-      return ok([]);
-    },
-    async deleteTeam() {
-      return ok(undefined);
-    },
-  };
+  });
 }
 
-function makeInboxStore(): InboxStore {
-  return {
-    async createInbox() { return ok(undefined); },
-    async readMessages() { return ok([]); },
-    async appendMessage() { return ok(undefined); },
-    async listInboxes() { return ok([]); },
-    async deleteInbox() { return ok(undefined); },
-  };
-}
-
-function makeCtx(overrides?: {
-  configStore?: ConfigStore;
-}): AppContext {
+function makeCtx(overrides?: { configStore?: ConfigStore }): AppContext {
   return {
     configStore: overrides?.configStore ?? makeConfigStore(),
     inboxStore: makeInboxStore(),

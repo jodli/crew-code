@@ -1,30 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { listTeams, getTeamDetail, listAgents } from "./status.ts";
-import type { AppContext } from "../types/context.ts";
 import type { TeamConfig, InboxMessage } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
-import type { Result } from "../types/result.ts";
-
-function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
-  return {
-    configStore: {
-      getTeam: async () => err({ kind: "team_not_found", team: "" }),
-      updateTeam: async () => err({ kind: "team_not_found", team: "" }),
-      teamExists: async () => false,
-      createTeam: async () => ok(undefined),
-      listTeams: async () => ok([]),
-      deleteTeam: async () => ok(undefined),
-    },
-    inboxStore: {
-      createInbox: async () => ok(undefined),
-      readMessages: async () => ok([]),
-      appendMessage: async () => ok(undefined),
-      listInboxes: async () => ok([]),
-      deleteInbox: async () => ok(undefined),
-    },
-    ...overrides,
-  };
-}
+import { makeCtx, makeConfigStore, makeInboxStore } from "../test/helpers.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",
@@ -57,14 +35,13 @@ describe("status core", () => {
   describe("listTeams()", () => {
     test("returns summaries for all teams", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["my-team"]),
           getTeam: async (name: string) => {
             if (name === "my-team") return ok(sampleConfig);
             return err({ kind: "team_not_found", team: name });
           },
-        },
+        }),
       });
 
       const result = await listTeams(ctx);
@@ -112,17 +89,15 @@ describe("status core", () => {
       ];
 
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(sampleConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           readMessages: async (_team: string, agent: string) => {
             if (agent === "team-lead") return ok(messages);
             return ok([]);
           },
-        },
+        }),
       });
 
       const result = await getTeamDetail(ctx, "my-team");
@@ -176,17 +151,15 @@ describe("status core", () => {
       ];
 
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(sampleConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           readMessages: async (_team: string, agent: string) => {
             if (agent === "team-lead") return ok(messages);
             return ok([]);
           },
-        },
+        }),
       });
 
       const result = await listAgents(ctx, "my-team");

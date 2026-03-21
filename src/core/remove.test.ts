@@ -2,37 +2,22 @@ import { describe, expect, test } from "bun:test";
 import { planRemove, executeRemove } from "./remove.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
-import type { ProcessRegistry } from "../ports/process-registry.ts";
 import { ok, err } from "../types/result.ts";
+import { makeConfigStore, makeInboxStore, makeProcessRegistry } from "../test/helpers.ts";
 
-function makeMockRegistry(aliveAgentIds: string[] = []): ProcessRegistry {
-  return {
-    async activate() { return ok(undefined); },
-    async deactivate() { return ok(undefined); },
-    async isAlive(_team, agentId) { return aliveAgentIds.includes(agentId); },
-    async kill() { return ok(true); },
-    async listActive() { return ok([]); },
-    async cleanup() { return ok(undefined); },
-  };
+function makeMockRegistry(aliveAgentIds: string[] = []) {
+  return makeProcessRegistry({
+    isAlive: async (_team, agentId) => aliveAgentIds.includes(agentId),
+  });
 }
 
 function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
   return {
-    configStore: {
+    configStore: makeConfigStore({
       getTeam: async () => err({ kind: "config_not_found", path: "/fake" }),
       updateTeam: async (_name, updater) => ok(updater(baseConfig)),
-      teamExists: async () => false,
-      createTeam: async () => ok(undefined),
-      listTeams: async () => ok([]),
-      deleteTeam: async () => ok(undefined),
-    },
-    inboxStore: {
-      createInbox: async () => ok(undefined),
-      readMessages: async () => ok([]),
-      appendMessage: async () => ok(undefined),
-      listInboxes: async () => ok([]),
-      deleteInbox: async () => ok(undefined),
-    },
+    }),
+    inboxStore: makeInboxStore(),
     ...overrides,
   };
 }
@@ -78,10 +63,9 @@ describe("core/remove", () => {
 
     test("returns agent_not_found for missing agent name", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
-        },
+        }),
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "ghost" });
@@ -94,14 +78,12 @@ describe("core/remove", () => {
 
     test("allows removing the lead agent", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead"]),
-        },
+        }),
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "team-lead" });
@@ -114,14 +96,12 @@ describe("core/remove", () => {
 
     test("returns plan with isAlive: false when no registry provided", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["worker"]),
-        },
+        }),
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "worker" });
@@ -135,14 +115,12 @@ describe("core/remove", () => {
     test("returns plan with isAlive: true when agent is alive in registry", async () => {
       const registry = makeMockRegistry(["worker@my-team"]);
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["worker"]),
-        },
+        }),
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "worker" }, registry);
@@ -155,14 +133,12 @@ describe("core/remove", () => {
 
     test("returns plan with hasInbox: true when inbox exists", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "worker"]),
-        },
+        }),
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "worker" });
@@ -175,14 +151,12 @@ describe("core/remove", () => {
 
     test("returns plan with hasInbox: false when no inbox exists", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead"]),
-        },
+        }),
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "worker" });
@@ -195,14 +169,12 @@ describe("core/remove", () => {
 
     test("plan contains correct agent details", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["worker"]),
-        },
+        }),
       });
 
       const result = await planRemove(ctx, { team: "my-team", name: "worker" });
@@ -220,13 +192,12 @@ describe("core/remove", () => {
     test("removes member from config", async () => {
       let updatedConfig: TeamConfig | null = null;
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           updateTeam: async (_name, updater) => {
             updatedConfig = updater(baseConfig);
             return ok(updatedConfig);
           },
-        },
+        }),
       });
 
       const result = await executeRemove(ctx, {
@@ -246,13 +217,12 @@ describe("core/remove", () => {
     test("calls deleteInbox when hasInbox is true", async () => {
       let deleteCalled = false;
       const ctx = makeCtx({
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        inboxStore: makeInboxStore({
           deleteInbox: async (_team: string, agent: string) => {
             if (agent === "worker") deleteCalled = true;
             return ok(undefined);
           },
-        },
+        }),
       });
 
       await executeRemove(ctx, {
@@ -269,13 +239,12 @@ describe("core/remove", () => {
     test("does not call deleteInbox when hasInbox is false", async () => {
       let deleteCalled = false;
       const ctx = makeCtx({
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        inboxStore: makeInboxStore({
           deleteInbox: async () => {
             deleteCalled = true;
             return ok(undefined);
           },
-        },
+        }),
       });
 
       await executeRemove(ctx, {

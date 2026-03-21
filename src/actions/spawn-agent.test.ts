@@ -3,6 +3,7 @@ import { planSpawn, spawnAgent } from "./spawn-agent.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
+import { makeConfigStore, makeInboxStore } from "../test/helpers.ts";
 
 const baseConfig: TeamConfig = {
   name: "t",
@@ -15,7 +16,6 @@ const baseConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 0,
-      processId: "",
       cwd: "/tmp",
       subscriptions: [],
     },
@@ -24,21 +24,10 @@ const baseConfig: TeamConfig = {
 
 function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
   return {
-    configStore: {
-      getTeam: async () => err({ kind: "config_not_found", path: "/fake" }),
+    configStore: makeConfigStore({
       updateTeam: async (_n, u) => ok(u(baseConfig)),
-      teamExists: async () => false,
-      createTeam: async () => ok(undefined),
-      listTeams: async () => ok([]),
-      deleteTeam: async () => ok(undefined),
-    },
-    inboxStore: {
-      createInbox: async () => ok(undefined),
-      readMessages: async () => ok([]),
-      appendMessage: async () => ok(undefined),
-      listInboxes: async () => ok([]),
-      deleteInbox: async () => ok(undefined),
-    },
+    }),
+    inboxStore: makeInboxStore(),
     ...overrides,
   };
 }
@@ -60,10 +49,10 @@ describe("actions/spawn-agent", () => {
 
   test("spawnAgent returns ok on success", async () => {
     const ctx = makeCtx({
-      configStore: {
-        ...makeCtx().configStore,
+      configStore: makeConfigStore({
         getTeam: async () => ok(baseConfig),
-      },
+        updateTeam: async (_n, u) => ok(u(baseConfig)),
+      }),
     });
 
     const result = await spawnAgent(ctx, { team: "t", name: "worker" });

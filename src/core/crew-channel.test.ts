@@ -4,6 +4,7 @@ import type { AppContext } from "../types/context.ts";
 import type { InboxMessage } from "../types/domain.ts";
 import { CREW_SENDER } from "../types/constants.ts";
 import { ok, err } from "../types/result.ts";
+import { makeInboxStore } from "../test/helpers.ts";
 
 const sampleMessages: InboxMessage[] = [
   {
@@ -90,10 +91,9 @@ describe("core/crew-channel", () => {
 
   test("returns empty messages when no crew inbox exists", async () => {
     const ctx = makeCtx({
-      inboxStore: {
-        ...makeCtx().inboxStore,
+      inboxStore: makeInboxStore({
         readMessages: async () => ok([]),
-      },
+      }),
     });
     const result = await getCrewMessages(ctx, "my-team");
 
@@ -108,13 +108,12 @@ describe("core/crew-channel", () => {
   test("reads from CREW_SENDER inbox slot", async () => {
     let capturedAgent = "";
     const ctx = makeCtx({
-      inboxStore: {
-        ...makeCtx().inboxStore,
+      inboxStore: makeInboxStore({
         readMessages: async (_team: string, agent: string) => {
           capturedAgent = agent;
           return ok([]);
         },
-      },
+      }),
     });
 
     await getCrewMessages(ctx, "my-team");
@@ -137,15 +136,14 @@ describe("core/crew-channel", () => {
     let capturedTeam = "";
     let capturedAgent = "";
     const ctx = makeCtx({
-      inboxStore: {
-        ...makeCtx().inboxStore,
+      inboxStore: makeInboxStore({
         markAllRead: async (team: string, agent: string) => {
           markAllReadCalled = true;
           capturedTeam = team;
           capturedAgent = agent;
           return ok(undefined);
         },
-      },
+      }),
     });
 
     const result = await markCrewMessagesRead(ctx, "my-team");

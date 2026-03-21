@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { attachAgent } from "./attach.ts";
 import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
-import type { InboxStore } from "../ports/inbox-store.ts";
-import type { TeamConfig, InboxMessage } from "../types/domain.ts";
+import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
+import { makeConfigStore as makeBaseConfigStore, makeInboxStore } from "../test/helpers.ts";
 
 const baseConfig: TeamConfig = {
   name: "test-team",
@@ -38,52 +38,17 @@ const baseConfig: TeamConfig = {
   ],
 };
 
-function makeConfigStore(
-  config: TeamConfig | null = baseConfig,
-): ConfigStore {
-  return {
-    async getTeam(name: string) {
+function makeConfigStore(config: TeamConfig | null = baseConfig): ConfigStore {
+  return makeBaseConfigStore({
+    getTeam: async (name: string) => {
       if (!config || config.name !== name) {
         return err({ kind: "config_not_found", path: `/fake/${name}` });
       }
       return ok({ ...config, members: [...config.members] });
     },
-    async updateTeam() {
-      return ok(baseConfig);
-    },
-    async teamExists(name) {
-      return config !== null && config.name === name;
-    },
-    async createTeam() {
-      return ok(undefined);
-    },
-    async listTeams() {
-      return ok([]);
-    },
-    async deleteTeam() {
-      return ok(undefined);
-    },
-  };
-}
-
-function makeInboxStore(): InboxStore {
-  return {
-    async createInbox() {
-      return ok(undefined);
-    },
-    async readMessages() {
-      return ok([] as InboxMessage[]);
-    },
-    async appendMessage() {
-      return ok(undefined);
-    },
-    async listInboxes() {
-      return ok([] as string[]);
-    },
-    async deleteInbox() {
-      return ok(undefined);
-    },
-  };
+    updateTeam: async () => ok(baseConfig),
+    teamExists: async (name) => config !== null && config.name === name,
+  });
 }
 
 function makeCtx(overrides?: {

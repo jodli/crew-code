@@ -3,6 +3,7 @@ import { sendMessage, type SendInput } from "./send.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig, InboxMessage } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
+import { makeConfigStore } from "../test/helpers.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",
@@ -146,11 +147,10 @@ describe("core/send", () => {
 
   test("maps config_not_found to team_not_found", async () => {
     const ctx = makeCtx({
-      configStore: {
-        ...makeCtx().configStore,
+      configStore: makeConfigStore({
         getTeam: async () =>
           err({ kind: "config_not_found", path: "/fake/path" }),
-      },
+      }),
     });
     const result = await sendMessage(ctx, {
       team: "no-team",

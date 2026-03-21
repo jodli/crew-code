@@ -1,28 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { destroyTeam } from "./destroy-team.ts";
-import type { AppContext } from "../types/context.ts";
 import { ok, err } from "../types/result.ts";
-
-function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
-  return {
-    configStore: {
-      getTeam: async () => err({ kind: "config_not_found", path: "/fake" }),
-      updateTeam: async (_n, u) => ok(u({} as any)),
-      teamExists: async () => false,
-      createTeam: async () => ok(undefined),
-      listTeams: async () => ok([]),
-      deleteTeam: async () => ok(undefined),
-    },
-    inboxStore: {
-      createInbox: async () => ok(undefined),
-      readMessages: async () => ok([]),
-      appendMessage: async () => ok(undefined),
-      listInboxes: async () => ok([]),
-      deleteInbox: async () => ok(undefined),
-    },
-    ...overrides,
-  };
-}
+import { makeCtx, makeConfigStore } from "../test/helpers.ts";
 
 describe("actions/destroy-team", () => {
   test("propagates plan error (team_not_found)", async () => {
@@ -37,8 +16,7 @@ describe("actions/destroy-team", () => {
 
   test("propagates execute error", async () => {
     const ctx = makeCtx({
-      configStore: {
-        ...makeCtx().configStore,
+      configStore: makeConfigStore({
         getTeam: async () =>
           ok({
             name: "t",
@@ -48,7 +26,7 @@ describe("actions/destroy-team", () => {
           }),
         deleteTeam: async () =>
           err({ kind: "file_write_failed", path: "/fake", detail: "boom" }),
-      },
+      }),
     });
 
     const result = await destroyTeam(ctx, { team: "t" });
@@ -57,8 +35,7 @@ describe("actions/destroy-team", () => {
 
   test("returns ok with plan on success", async () => {
     const ctx = makeCtx({
-      configStore: {
-        ...makeCtx().configStore,
+      configStore: makeConfigStore({
         getTeam: async () =>
           ok({
             name: "t",
@@ -66,7 +43,7 @@ describe("actions/destroy-team", () => {
             leadSessionId: "x",
             members: [],
           }),
-      },
+      }),
     });
 
     const result = await destroyTeam(ctx, { team: "t" });

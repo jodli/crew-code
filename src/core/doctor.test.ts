@@ -4,41 +4,15 @@ import {
   applyFixes,
   type DiagnosticResult,
 } from "./doctor.ts";
-import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
-import type { ProcessRegistry } from "../ports/process-registry.ts";
 import { ok, err } from "../types/result.ts";
+import { makeCtx, makeConfigStore, makeInboxStore, makeProcessRegistry } from "../test/helpers.ts";
 
-function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
-  return {
-    configStore: {
-      getTeam: async () => err({ kind: "team_not_found", team: "" }),
-      updateTeam: async () => err({ kind: "team_not_found", team: "" }),
-      teamExists: async () => false,
-      createTeam: async () => ok(undefined),
-      listTeams: async () => ok([]),
-      deleteTeam: async () => ok(undefined),
-    },
-    inboxStore: {
-      createInbox: async () => ok(undefined),
-      readMessages: async () => ok([]),
-      appendMessage: async () => ok(undefined),
-      listInboxes: async () => ok([]),
-      deleteInbox: async () => ok(undefined),
-    },
-    ...overrides,
-  };
-}
-
-function makeMockRegistry(activeEntries: { agentId: string; pid: number }[] = []): ProcessRegistry {
-  return {
-    async activate() { return ok(undefined); },
-    async deactivate() { return ok(undefined); },
-    async isAlive(_team, agentId) { return activeEntries.some((e) => e.agentId === agentId); },
-    async kill() { return ok(true); },
-    async listActive() { return ok(activeEntries.map((e) => ({ ...e, activatedAt: Date.now() }))); },
-    async cleanup() { return ok(undefined); },
-  };
+function makeMockRegistry(activeEntries: { agentId: string; pid: number }[] = []) {
+  return makeProcessRegistry({
+    isAlive: async (_team, agentId) => activeEntries.some((e) => e.agentId === agentId),
+    listActive: async () => ok(activeEntries.map((e) => ({ ...e, activatedAt: Date.now() }))),
+  });
 }
 
 const healthyConfig: TeamConfig = {
@@ -73,16 +47,14 @@ describe("doctor core", () => {
   describe("diagnose()", () => {
     test("returns clean bill of health when everything is fine", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["my-team"]),
           getTeam: async () => ok(healthyConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
-        },
+        }),
       });
 
       const results = await diagnose(ctx, {});
@@ -100,16 +72,14 @@ describe("doctor core", () => {
       };
 
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["my-team"]),
           getTeam: async () => ok(configWithOneMember),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "ghost-agent"]),
           readMessages: async () => ok([]),
-        },
+        }),
       });
 
       const results = await diagnose(ctx, {});
@@ -126,8 +96,7 @@ describe("doctor core", () => {
 
     test("detects config schema validation errors", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["bad-team"]),
           getTeam: async () =>
             err({
@@ -135,11 +104,10 @@ describe("doctor core", () => {
               path: "/home/.claude/teams/bad-team/config.json",
               detail: "missing required field: name",
             }),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok([]),
-        },
+        }),
       });
 
       const results = await diagnose(ctx, {});
@@ -155,8 +123,7 @@ describe("doctor core", () => {
 
     test("detects non-schema config read failures", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["broken-team"]),
           getTeam: async () =>
             err({
@@ -164,7 +131,7 @@ describe("doctor core", () => {
               path: "/home/.claude/teams/broken-team/config.json",
               detail: "EACCES: permission denied",
             }),
-        },
+        }),
       });
 
       const results = await diagnose(ctx, {});
@@ -182,13 +149,11 @@ describe("doctor core", () => {
 
     test("detects inbox file with invalid JSON", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["my-team"]),
           getTeam: async () => ok(healthyConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async (_team: string, agent: string) => {
             if (agent === "scout") {
@@ -200,7 +165,7 @@ describe("doctor core", () => {
             }
             return ok([]);
           },
-        },
+        }),
       });
 
       const results = await diagnose(ctx, {});
@@ -220,16 +185,14 @@ describe("doctor core", () => {
       ]);
 
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["my-team"]),
           getTeam: async () => ok(healthyConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
-        },
+        }),
         processRegistry: registry,
       });
 
@@ -247,8 +210,7 @@ describe("doctor core", () => {
 
     test("scopes to specific team with --team", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["team-a", "team-b"]),
           getTeam: async (name: string) => {
             if (name === "team-a") {
@@ -256,12 +218,11 @@ describe("doctor core", () => {
             }
             return ok({ ...healthyConfig, name: "team-b" });
           },
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
-        },
+        }),
       });
 
       const results = await diagnose(ctx, { team: "team-a" });
@@ -282,20 +243,18 @@ describe("doctor core", () => {
       };
 
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["my-team"]),
           getTeam: async () => ok(configWithOneMember),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "ghost-agent"]),
           readMessages: async () => ok([]),
           deleteInbox: async (_team: string, agent: string) => {
             if (agent === "ghost-agent") deleteCalled = true;
             return ok(undefined);
           },
-        },
+        }),
       });
 
       const diagResult = await diagnose(ctx, {});
@@ -309,16 +268,14 @@ describe("doctor core", () => {
 
     test("returns empty fix results when nothing is fixable", async () => {
       const ctx = makeCtx({
-        configStore: {
-          ...makeCtx().configStore,
+        configStore: makeConfigStore({
           listTeams: async () => ok(["my-team"]),
           getTeam: async () => ok(healthyConfig),
-        },
-        inboxStore: {
-          ...makeCtx().inboxStore,
+        }),
+        inboxStore: makeInboxStore({
           listInboxes: async () => ok(["team-lead", "scout"]),
           readMessages: async () => ok([]),
-        },
+        }),
       });
 
       const diagResult = await diagnose(ctx, {});

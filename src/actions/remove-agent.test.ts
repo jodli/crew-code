@@ -3,6 +3,7 @@ import { removeAgent } from "./remove-agent.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok, err } from "../types/result.ts";
+import { makeConfigStore, makeInboxStore } from "../test/helpers.ts";
 
 const baseConfig: TeamConfig = {
   name: "t",
@@ -15,7 +16,6 @@ const baseConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 0,
-      processId: "",
       cwd: "/tmp",
       subscriptions: [],
     },
@@ -24,7 +24,6 @@ const baseConfig: TeamConfig = {
       name: "worker",
       agentType: "general-purpose",
       joinedAt: 0,
-      processId: "99999999",
       cwd: "/tmp",
       subscriptions: [],
     },
@@ -33,21 +32,10 @@ const baseConfig: TeamConfig = {
 
 function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
   return {
-    configStore: {
-      getTeam: async () => err({ kind: "config_not_found", path: "/fake" }),
+    configStore: makeConfigStore({
       updateTeam: async (_n, u) => ok(u(baseConfig)),
-      teamExists: async () => false,
-      createTeam: async () => ok(undefined),
-      listTeams: async () => ok([]),
-      deleteTeam: async () => ok(undefined),
-    },
-    inboxStore: {
-      createInbox: async () => ok(undefined),
-      readMessages: async () => ok([]),
-      appendMessage: async () => ok(undefined),
-      listInboxes: async () => ok([]),
-      deleteInbox: async () => ok(undefined),
-    },
+    }),
+    inboxStore: makeInboxStore(),
     ...overrides,
   };
 }
@@ -55,10 +43,9 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
 describe("actions/remove-agent", () => {
   test("propagates plan error (agent_not_found)", async () => {
     const ctx = makeCtx({
-      configStore: {
-        ...makeCtx().configStore,
+      configStore: makeConfigStore({
         getTeam: async () => ok(baseConfig),
-      },
+      }),
     });
 
     const result = await removeAgent(ctx, { team: "t", name: "ghost" });
@@ -70,10 +57,10 @@ describe("actions/remove-agent", () => {
 
   test("returns ok on success", async () => {
     const ctx = makeCtx({
-      configStore: {
-        ...makeCtx().configStore,
+      configStore: makeConfigStore({
         getTeam: async () => ok(baseConfig),
-      },
+        updateTeam: async (_n, u) => ok(u(baseConfig)),
+      }),
     });
 
     const result = await removeAgent(ctx, { team: "t", name: "worker" });
