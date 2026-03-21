@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "bun run src/main.ts",
-    "build": "bun build --compile src/main.ts --outfile ~/.local/bin/crew",
+    "build": "bun build --compile src/main.ts --outfile dist/crew",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

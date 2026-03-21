@@ -1,4 +1,5 @@
 import { defineCommand, runMain } from "citty";
+import pkg from "../package.json";
 import attach from "./cli/commands/attach.ts";
 import create from "./cli/commands/create.ts";
 import spawn from "./cli/commands/spawn.ts";
@@ -18,7 +19,7 @@ const main = defineCommand({
   meta: {
     name: "crew",
     description: "CLI tool for managing Claude Code agent teams",
-    version: "0.1.0",
+    version: pkg.version,
   },
   subCommands: {
     attach,

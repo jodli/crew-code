@@ -10,12 +10,12 @@ describe("renderError", () => {
   });
 
   test("falls back to [kind] for unknown error kinds", () => {
-    const result = renderError({ kind: "some_future_error" } as CrewError);
+    const result = renderError({ kind: "some_future_error" } as unknown as CrewError);
     expect(result).toBe("[some_future_error]");
   });
 
   test("includes extra fields in fallback", () => {
-    const result = renderError({ kind: "some_future_error", detail: "boom" } as CrewError);
+    const result = renderError({ kind: "some_future_error", detail: "boom" } as unknown as CrewError);
     expect(result).toContain("[some_future_error]");
     expect(result).toContain("boom");
   });

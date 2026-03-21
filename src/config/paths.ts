@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import envPaths from "env-paths";
 
 export function claudeTeamsDir(): string {
-  return join(homedir(), ".claude", "teams");
+  return process.env.CREW_TEAMS_DIR ?? join(homedir(), ".claude", "teams");
 }
 
 export function claudeTeamDir(name: string): string {
