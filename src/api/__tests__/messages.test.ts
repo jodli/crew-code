@@ -1,12 +1,12 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { createApp } from "../server.ts";
+import { join } from "node:path";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import { CREW_SENDER } from "../../types/constants.ts";
 import type { AppContext } from "../../types/context.ts";
+import { createApp } from "../server.ts";
 
 let tmpDir: string;
 let app: ReturnType<typeof createApp>;
@@ -45,19 +45,13 @@ async function setupTeamWithAgent() {
 async function seedCrewInbox(messages: unknown[]) {
   const inboxDir = join(tmpDir, "alpha", "inboxes");
   await mkdir(inboxDir, { recursive: true });
-  await writeFile(
-    join(inboxDir, `${CREW_SENDER}.json`),
-    JSON.stringify(messages, null, 2),
-  );
+  await writeFile(join(inboxDir, `${CREW_SENDER}.json`), JSON.stringify(messages, null, 2));
 }
 
 describe("POST /api/teams/:name/agents/:agent/messages", () => {
   test("sends a message", async () => {
     await setupTeamWithAgent();
-    const res = await app.request(
-      "/api/teams/alpha/agents/coder/messages",
-      json({ message: "Hello!", from: "api" }),
-    );
+    const res = await app.request("/api/teams/alpha/agents/coder/messages", json({ message: "Hello!", from: "api" }));
     expect(res.status).toBe(201);
   });
 });
@@ -65,14 +59,15 @@ describe("POST /api/teams/:name/agents/:agent/messages", () => {
 describe("GET /api/teams/:name/agents/:agent/messages", () => {
   test("returns inbox with sent messages", async () => {
     await setupTeamWithAgent();
-    await app.request(
-      "/api/teams/alpha/agents/coder/messages",
-      json({ message: "Hello!", from: "api" }),
-    );
+    await app.request("/api/teams/alpha/agents/coder/messages", json({ message: "Hello!", from: "api" }));
 
     const res = await app.request("/api/teams/alpha/agents/coder/messages");
     expect(res.status).toBe(200);
-    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
+    const body = (await res.json()) as {
+      messages: Array<Record<string, unknown>>;
+      unreadCount: number;
+      totalCount: number;
+    };
     expect(body.messages).toHaveLength(1);
     expect(body.messages[0].text).toBe("Hello!");
     expect(body.unreadCount).toBe(1);
@@ -80,14 +75,15 @@ describe("GET /api/teams/:name/agents/:agent/messages", () => {
 
   test("filters unread with ?status=unread", async () => {
     await setupTeamWithAgent();
-    await app.request(
-      "/api/teams/alpha/agents/coder/messages",
-      json({ message: "Hello!", from: "api" }),
-    );
+    await app.request("/api/teams/alpha/agents/coder/messages", json({ message: "Hello!", from: "api" }));
 
     const res = await app.request("/api/teams/alpha/agents/coder/messages?status=unread");
     expect(res.status).toBe(200);
-    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
+    const body = (await res.json()) as {
+      messages: Array<Record<string, unknown>>;
+      unreadCount: number;
+      totalCount: number;
+    };
     expect(body.messages).toHaveLength(1);
   });
 
@@ -95,7 +91,11 @@ describe("GET /api/teams/:name/agents/:agent/messages", () => {
     await setupTeamWithAgent();
     const res = await app.request("/api/teams/alpha/agents/coder/messages");
     expect(res.status).toBe(200);
-    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
+    const body = (await res.json()) as {
+      messages: Array<Record<string, unknown>>;
+      unreadCount: number;
+      totalCount: number;
+    };
     expect(body.messages).toHaveLength(0);
   });
 });
@@ -109,7 +109,11 @@ describe("GET /api/teams/:name/messages (crew channel)", () => {
 
     const res = await app.request("/api/teams/alpha/messages");
     expect(res.status).toBe(200);
-    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
+    const body = (await res.json()) as {
+      messages: Array<Record<string, unknown>>;
+      unreadCount: number;
+      totalCount: number;
+    };
     expect(body.messages).toHaveLength(1);
     expect(body.messages[0].text).toBe("Response from agent");
     expect(body.messages[0].from).toBe("coder");
@@ -118,13 +122,15 @@ describe("GET /api/teams/:name/messages (crew channel)", () => {
 
   test("filters unread with ?status=unread", async () => {
     await setupTeamWithAgent();
-    await seedCrewInbox([
-      { from: "coder", text: "New msg", timestamp: "2026-03-21T18:00:00Z", read: false },
-    ]);
+    await seedCrewInbox([{ from: "coder", text: "New msg", timestamp: "2026-03-21T18:00:00Z", read: false }]);
 
     const res = await app.request("/api/teams/alpha/messages?status=unread");
     expect(res.status).toBe(200);
-    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
+    const body = (await res.json()) as {
+      messages: Array<Record<string, unknown>>;
+      unreadCount: number;
+      totalCount: number;
+    };
     expect(body.messages).toHaveLength(1);
   });
 
@@ -132,7 +138,11 @@ describe("GET /api/teams/:name/messages (crew channel)", () => {
     await setupTeamWithAgent();
     const res = await app.request("/api/teams/alpha/messages");
     expect(res.status).toBe(200);
-    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
+    const body = (await res.json()) as {
+      messages: Array<Record<string, unknown>>;
+      unreadCount: number;
+      totalCount: number;
+    };
     expect(body.messages).toHaveLength(0);
   });
 

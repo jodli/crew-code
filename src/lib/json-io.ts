@@ -1,13 +1,10 @@
-import { readFile, writeFile, rename, mkdtemp, rm } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type { z } from "zod";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
 
-export async function readJson<T>(
-  path: string,
-  schema: z.ZodType<T>,
-): Promise<Result<T>> {
+export async function readJson<T>(path: string, schema: z.ZodType<T>): Promise<Result<T>> {
   let raw: string;
   try {
     raw = await readFile(path, "utf-8");
@@ -46,14 +43,11 @@ export async function readJson<T>(
   return ok(result.data);
 }
 
-export async function writeJson(
-  path: string,
-  data: unknown,
-): Promise<Result<void>> {
+export async function writeJson(path: string, data: unknown): Promise<Result<void>> {
   try {
     const tmpDir = await mkdtemp(join(dirname(path), ".crew-tmp-"));
     const tmpPath = join(tmpDir, "tmp.json");
-    await writeFile(tmpPath, JSON.stringify(data, null, 2) + "\n", "utf-8");
+    await writeFile(tmpPath, `${JSON.stringify(data, null, 2)}\n`, "utf-8");
     await rename(tmpPath, path);
     await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
     return ok(undefined);
@@ -66,10 +60,7 @@ export async function writeJson(
   }
 }
 
-export async function withLock<T>(
-  lockPath: string,
-  fn: () => Promise<T>,
-): Promise<Result<T>> {
+export async function withLock<T>(lockPath: string, fn: () => Promise<T>): Promise<Result<T>> {
   const { lock } = await import("proper-lockfile");
   let release: (() => Promise<void>) | undefined;
   try {

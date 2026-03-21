@@ -1,8 +1,8 @@
+import { CREW_SENDER } from "../types/constants.ts";
 import type { AppContext } from "../types/context.ts";
 import type { InboxMessage } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { err } from "../types/result.ts";
-import { CREW_SENDER } from "../types/constants.ts";
 
 export interface CrewChannelFilter {
   unreadOnly?: boolean;
@@ -32,21 +32,14 @@ export async function getCrewMessages(
   const totalCount = allMessages.length;
   const unreadCount = allMessages.filter((m) => !m.read).length;
 
-  const sorted = [...allMessages].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-  );
+  const sorted = [...allMessages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-  const messages = filter?.unreadOnly
-    ? sorted.filter((m) => !m.read)
-    : sorted;
+  const messages = filter?.unreadOnly ? sorted.filter((m) => !m.read) : sorted;
 
   return { ok: true as const, value: { team, messages, totalCount, unreadCount } };
 }
 
-export async function markCrewMessagesRead(
-  ctx: AppContext,
-  team: string,
-): Promise<Result<void>> {
+export async function markCrewMessagesRead(ctx: AppContext, team: string): Promise<Result<void>> {
   const exists = await ctx.configStore.teamExists(team);
   if (!exists) {
     return err({ kind: "team_not_found", team });

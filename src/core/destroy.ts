@@ -1,8 +1,8 @@
-import type { AppContext } from "../types/context.ts";
-import type { ProcessRegistry } from "../ports/process-registry.ts";
-import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
 import { validateName } from "../lib/validate-name.ts";
+import type { ProcessRegistry } from "../ports/process-registry.ts";
+import type { AppContext } from "../types/context.ts";
+import type { Result } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
 
 export interface DestroyInput {
   team: string;

@@ -1,10 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
-import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
-import type { AppContext } from "../../types/context.ts";
-import type { Blueprint } from "../../config/blueprint-schema.ts";
-import { listBlueprints } from "../../actions/list-blueprints.ts";
+import { useKeyboard } from "@opentui/react";
+import { useCallback, useEffect, useState } from "react";
 import { getBlueprint } from "../../actions/get-blueprint.ts";
+import { listBlueprints } from "../../actions/list-blueprints.ts";
+import type { Blueprint } from "../../config/blueprint-schema.ts";
+import type { AppContext } from "../../types/context.ts";
 
 interface BlueprintLoadFormProps {
   ctx: AppContext;
@@ -38,22 +38,25 @@ export function BlueprintLoadForm({ ctx, onSubmit, onCancel }: BlueprintLoadForm
   }, [ctx]);
 
   useKeyboard(
-    useCallback((key: KeyEvent) => {
-      if (key.name === "escape") {
-        onCancel();
-        return;
-      }
-
-      if (key.name === "up" || key.name === "k") {
-        setSelectedIndex((i) => Math.max(0, i - 1));
-      } else if (key.name === "down" || key.name === "j") {
-        setSelectedIndex((i) => Math.min(blueprints.length - 1, i + 1));
-      } else if (key.name === "return") {
-        if (blueprints[selectedIndex]) {
-          onSubmit(blueprints[selectedIndex]);
+    useCallback(
+      (key: KeyEvent) => {
+        if (key.name === "escape") {
+          onCancel();
+          return;
         }
-      }
-    }, [blueprints, selectedIndex, onSubmit, onCancel]),
+
+        if (key.name === "up" || key.name === "k") {
+          setSelectedIndex((i) => Math.max(0, i - 1));
+        } else if (key.name === "down" || key.name === "j") {
+          setSelectedIndex((i) => Math.min(blueprints.length - 1, i + 1));
+        } else if (key.name === "return") {
+          if (blueprints[selectedIndex]) {
+            onSubmit(blueprints[selectedIndex]);
+          }
+        }
+      },
+      [blueprints, selectedIndex, onSubmit, onCancel],
+    ),
   );
 
   const maxVisible = 8;

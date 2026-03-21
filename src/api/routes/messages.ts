@@ -1,15 +1,15 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import type { Env } from "../server.ts";
-import { errorResponse } from "../errors.ts";
+import { z } from "zod";
+import { getCrewMessages } from "../../actions/get-crew-channel.ts";
 import { getInbox } from "../../actions/get-inbox.ts";
 import { sendMessage } from "../../actions/send-message.ts";
-import { getCrewMessages } from "../../actions/get-crew-channel.ts";
-import { watchFile } from "../../lib/file-watcher.ts";
 import { claudeInboxPath } from "../../config/paths.ts";
+import { watchFile } from "../../lib/file-watcher.ts";
 import { CREW_SENDER } from "../../types/constants.ts";
+import { errorResponse } from "../errors.ts";
+import type { Env } from "../server.ts";
 
 const SendMessageBody = z.object({
   message: z.string(),

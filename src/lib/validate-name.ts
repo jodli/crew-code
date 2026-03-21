@@ -1,5 +1,5 @@
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
 
 const NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 

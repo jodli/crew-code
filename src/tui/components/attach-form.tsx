@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import type { InputRenderable, KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
-import type { KeyEvent, InputRenderable } from "@opentui/core";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface AttachFormProps {
   agentName: string;
@@ -19,7 +19,7 @@ export function AttachForm({ agentName, storedArgs, onSubmit, onCancel }: Attach
     if (inputRef.current && initialValue) {
       inputRef.current.value = initialValue;
     }
-  }, []);
+  }, [initialValue]);
 
   const handleSubmit = useCallback(() => {
     const val = inputRef.current?.value ?? args;
@@ -28,11 +28,14 @@ export function AttachForm({ agentName, storedArgs, onSubmit, onCancel }: Attach
   }, [args, onSubmit]);
 
   useKeyboard(
-    useCallback((key: KeyEvent) => {
-      if (key.name === "escape") {
-        onCancel();
-      }
-    }, [onCancel]),
+    useCallback(
+      (key: KeyEvent) => {
+        if (key.name === "escape") {
+          onCancel();
+        }
+      },
+      [onCancel],
+    ),
   );
 
   return (

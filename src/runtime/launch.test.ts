@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { selectLaunchMode } from "./launch.ts";
 import type { AgentLaunchInfo } from "../types/domain.ts";
+import { selectLaunchMode } from "./launch.ts";
 
 const base: AgentLaunchInfo = {
   agentId: "scout@my-team",
@@ -22,10 +22,7 @@ describe("runtime/selectLaunchMode", () => {
   });
 
   test("returns 'new' when sessionId is undefined", () => {
-    const mode = selectLaunchMode(
-      { ...base, sessionId: undefined },
-      () => true,
-    );
+    const mode = selectLaunchMode({ ...base, sessionId: undefined }, () => true);
     expect(mode).toBe("new");
   });
 

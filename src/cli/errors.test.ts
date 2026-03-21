@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { renderError } from "./errors.ts";
 import type { CrewError } from "../types/errors.ts";
+import { renderError } from "./errors.ts";
 
 describe("renderError", () => {
   test("renders known error kinds with context", () => {

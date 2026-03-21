@@ -4,18 +4,18 @@
  * After an agent goes idle, writing a new message to its inbox file
  * should wake it up and trigger processing.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
+  appendToInbox,
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  pollInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  pollInbox,
-  appendToInbox,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
 
 describe("compat: hot inject", () => {
@@ -32,11 +32,7 @@ describe("compat: hot inject", () => {
     const agentName = "sleeper";
 
     await registerAgent(team, agentName, { model: COMPAT_MODEL });
-    await seedInbox(
-      team,
-      agentName,
-      "Welcome to the team! Please say hello and wait for further tasks.",
-    );
+    await seedInbox(team, agentName, "Welcome to the team! Please say hello and wait for further tasks.");
 
     paneId = await launchAgent(team, agentName, {
       model: COMPAT_MODEL,
@@ -54,11 +50,7 @@ describe("compat: hot inject", () => {
     const countBefore = beforeMessages.length;
 
     // Inject a new message to the idle agent
-    await appendToInbox(
-      team,
-      agentName,
-      "Quick question: what is the capital of France? Answer in one word.",
-    );
+    await appendToInbox(team, agentName, "Quick question: what is the capital of France? Answer in one word.");
 
     // Wait for agent to wake up and respond
     await waitForAgentIdle(paneId, { timeoutMs: 90_000, quietMs: 8_000 });

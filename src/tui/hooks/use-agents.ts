@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import type { AppContext } from "../../types/context.ts";
-import type { MemberDetail } from "../../core/status.ts";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { listAgents } from "../../actions/list-agents.ts";
-import { watchFile, watchDir, debounce } from "../../lib/file-watcher.ts";
-import { claudeTeamConfigPath, claudeInboxesDir } from "../../config/paths.ts";
-import { processRegistryPath } from "../../config/paths.ts";
+import { claudeInboxesDir, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
+import type { MemberDetail } from "../../core/status.ts";
+import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
+import type { AppContext } from "../../types/context.ts";
 
 export interface AgentSummary {
   name: string;
@@ -21,20 +20,14 @@ export interface AgentSummary {
   extraArgs?: string[];
 }
 
-export function toAgentSummary(
-  member: MemberDetail,
-  liveAgentIds: Set<string>,
-): AgentSummary {
+export function toAgentSummary(member: MemberDetail, liveAgentIds: Set<string>): AgentSummary {
   return {
     ...member,
     status: liveAgentIds.has(member.agentId) ? "alive" : "dead",
   };
 }
 
-export function useAgents(
-  ctx: AppContext,
-  teamName: string | null,
-) {
+export function useAgents(ctx: AppContext, teamName: string | null) {
   const [agents, setAgents] = useState<AgentSummary[]>([]);
 
   const refresh = useCallback(async () => {
@@ -70,15 +63,23 @@ export function useAgents(
     const cleanups: (() => void)[] = [];
     try {
       cleanups.push(watchFile(claudeTeamConfigPath(teamName), () => debouncedRefresh()));
-    } catch { /* file may not exist */ }
+    } catch {
+      /* file may not exist */
+    }
     try {
       cleanups.push(watchDir(claudeInboxesDir(teamName), () => debouncedRefresh()));
-    } catch { /* dir may not exist */ }
+    } catch {
+      /* dir may not exist */
+    }
     try {
       cleanups.push(watchFile(processRegistryPath(teamName), () => debouncedRefresh()));
-    } catch { /* file may not exist */ }
+    } catch {
+      /* file may not exist */
+    }
 
-    return () => cleanups.forEach((c) => c());
+    return () => {
+      for (const c of cleanups) c();
+    };
   }, [refresh, debouncedRefresh, teamName]);
 
   return agents;

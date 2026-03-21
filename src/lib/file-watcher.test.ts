@@ -1,8 +1,8 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { watchFile, watchDir, debounce } from "./file-watcher.ts";
+import { join } from "node:path";
+import { debounce, watchDir, watchFile } from "./file-watcher.ts";
 
 let tmpDir: string;
 
@@ -93,7 +93,9 @@ describe("watchDir", () => {
 describe("debounce", () => {
   test("coalesces rapid calls into one", async () => {
     let callCount = 0;
-    const fn = debounce(() => { callCount++; }, 100);
+    const fn = debounce(() => {
+      callCount++;
+    }, 100);
 
     fn();
     fn();
@@ -108,7 +110,9 @@ describe("debounce", () => {
 
   test("fires again after debounce window", async () => {
     let callCount = 0;
-    const fn = debounce(() => { callCount++; }, 50);
+    const fn = debounce(() => {
+      callCount++;
+    }, 50);
 
     fn();
     await Bun.sleep(100);

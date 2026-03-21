@@ -1,13 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import {
-  planDestroy,
-  executeDestroy,
-  type DestroyPlan,
-} from "./destroy.ts";
+import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
-import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
-import { ok, err } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
+import { type DestroyPlan, executeDestroy, planDestroy } from "./destroy.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",
@@ -44,14 +40,22 @@ function makeMockRegistry(entries: RegistryEntry[] = []): ProcessRegistry & { ki
   return {
     killed,
     cleaned,
-    async activate() { return ok(undefined); },
-    async deactivate() { return ok(undefined); },
-    async isAlive(_team, agentId) { return entries.some((e) => e.agentId === agentId); },
+    async activate() {
+      return ok(undefined);
+    },
+    async deactivate() {
+      return ok(undefined);
+    },
+    async isAlive(_team, agentId) {
+      return entries.some((e) => e.agentId === agentId);
+    },
     async kill(_team, agentId) {
       killed.push(agentId);
       return ok(true);
     },
-    async listActive() { return ok([...entries]); },
+    async listActive() {
+      return ok([...entries]);
+    },
     async cleanup(team) {
       cleaned.push(team);
       return ok(undefined);
@@ -126,9 +130,7 @@ describe("core/destroy", () => {
 
     test("only includes alive agents from registry", async () => {
       resetTracking();
-      const registry = makeMockRegistry([
-        { agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now() },
-      ]);
+      const registry = makeMockRegistry([{ agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now() }]);
       const ctx = makeCtx(sampleConfig);
 
       const result = await planDestroy(ctx, { team: "my-team" }, registry);
@@ -220,8 +222,7 @@ describe("core/destroy", () => {
       ...makeCtx(sampleConfig),
       configStore: {
         ...makeCtx(sampleConfig).configStore,
-        getTeam: async () =>
-          err({ kind: "config_not_found", path: "/fake/path" }),
+        getTeam: async () => err({ kind: "config_not_found", path: "/fake/path" }),
       },
     };
     const result = await planDestroy(ctx, { team: "no-team" });

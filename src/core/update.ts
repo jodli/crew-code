@@ -8,10 +8,7 @@ export interface UpdateTeamInput {
   description?: string;
 }
 
-export async function updateTeam(
-  ctx: AppContext,
-  input: UpdateTeamInput,
-): Promise<Result<TeamConfig>> {
+export async function updateTeam(ctx: AppContext, input: UpdateTeamInput): Promise<Result<TeamConfig>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) return teamResult;
 
@@ -33,10 +30,7 @@ export interface UpdateAgentInput {
   extraArgs?: string[];
 }
 
-export async function updateAgent(
-  ctx: AppContext,
-  input: UpdateAgentInput,
-): Promise<Result<AgentMember>> {
+export async function updateAgent(ctx: AppContext, input: UpdateAgentInput): Promise<Result<AgentMember>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) return teamResult;
 

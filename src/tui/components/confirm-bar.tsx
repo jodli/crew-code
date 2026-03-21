@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
+import { useKeyboard } from "@opentui/react";
+import { useCallback } from "react";
 
 interface ConfirmBarProps {
   message: string;
@@ -24,10 +24,7 @@ export function ConfirmBar({ message, onConfirm, onCancel }: ConfirmBarProps) {
 
   return (
     <box height={1} paddingX={1}>
-      <text
-        content={`${message}  [y] confirm  [n/Esc] cancel`}
-        fg="#f7768e"
-      />
+      <text content={`${message}  [y] confirm  [n/Esc] cancel`} fg="#f7768e" />
     </box>
   );
 }

@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { AppContext } from "../types/context.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
+import { validateName } from "../lib/validate-name.ts";
+import type { AppContext } from "../types/context.ts";
 import type { AgentLaunchInfo } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
-import { planCreate, executeCreate, type CreatePlan } from "./create.ts";
+import { err, ok } from "../types/result.ts";
+import { type CreatePlan, executeCreate, planCreate } from "./create.ts";
 import { executeSpawn, type SpawnPlan } from "./spawn.ts";
-import { validateName } from "../lib/validate-name.ts";
 
 export interface LoadInput {
   nameOrPath: string;
@@ -29,10 +29,7 @@ export interface LoadOutput {
   hasLead: boolean;
 }
 
-export async function planLoad(
-  ctx: AppContext,
-  input: LoadInput,
-): Promise<Result<LoadPlan>> {
+export async function planLoad(ctx: AppContext, input: LoadInput): Promise<Result<LoadPlan>> {
   if (!ctx.blueprintStore) {
     return err({ kind: "launch_failed", detail: "BlueprintStore not configured" });
   }
@@ -95,10 +92,7 @@ export async function planLoad(
   return ok({ blueprint, teamName: resolvedName, createPlan, spawnPlans, hasLead });
 }
 
-export async function executeLoad(
-  ctx: AppContext,
-  plan: LoadPlan,
-): Promise<Result<LoadOutput>> {
+export async function executeLoad(ctx: AppContext, plan: LoadPlan): Promise<Result<LoadOutput>> {
   const createResult = await executeCreate(ctx, plan.createPlan);
   if (!createResult.ok) return createResult as Result<never>;
 

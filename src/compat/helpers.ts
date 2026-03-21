@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { join } from "node:path";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -120,12 +120,7 @@ export async function registerAgent(
   await writeFile(team.configPath, JSON.stringify(config, null, 2));
 }
 
-export async function seedInbox(
-  team: TestTeam,
-  agentName: string,
-  message: string,
-  from = "team-lead",
-): Promise<void> {
+export async function seedInbox(team: TestTeam, agentName: string, message: string, from = "team-lead"): Promise<void> {
   const inboxPath = join(team.inboxesDir, `${agentName}.json`);
   const msg = [
     {
@@ -153,30 +148,23 @@ export async function launchAgent(
   } = {},
 ): Promise<string> {
   const agentId = `${agentName}@${team.name}`;
-  const claudeArgs = [
-    "--agent-id",
-    agentId,
-    "--agent-name",
-    agentName,
-    "--team-name",
-    team.name,
-  ];
+  const claudeArgs = ["--agent-id", agentId, "--agent-name", agentName, "--team-name", team.name];
 
   if (opts.color) claudeArgs.push("--agent-color", opts.color);
-  if (opts.parentSessionId)
-    claudeArgs.push("--parent-session-id", opts.parentSessionId);
+  if (opts.parentSessionId) claudeArgs.push("--parent-session-id", opts.parentSessionId);
   if (opts.model) claudeArgs.push("--model", opts.model);
 
-  const envPrefix = opts.env?.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS === undefined
-    ? "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1"
-    : `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=${opts.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS}`;
+  const envPrefix =
+    opts.env?.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS === undefined
+      ? "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1"
+      : `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=${opts.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS}`;
 
   const cmd = `${envPrefix} claude ${claudeArgs.join(" ")}`;
 
-  const proc = Bun.spawn(
-    ["tmux", "split-window", "-h", "-d", "-c", process.cwd(), "-P", "-F", "#{pane_id}", cmd],
-    { stdout: "pipe", stderr: "pipe" },
-  );
+  const proc = Bun.spawn(["tmux", "split-window", "-h", "-d", "-c", process.cwd(), "-P", "-F", "#{pane_id}", cmd], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
 
   const stdout = await new Response(proc.stdout).text();
   const exitCode = await proc.exited;
@@ -239,9 +227,7 @@ export async function pollInbox(
     await Bun.sleep(intervalMs);
   }
 
-  throw new Error(
-    `Timed out waiting for ${minMessages} message(s) in ${agentName} inbox after ${timeoutMs}ms`,
-  );
+  throw new Error(`Timed out waiting for ${minMessages} message(s) in ${agentName} inbox after ${timeoutMs}ms`);
 }
 
 // ---------------------------------------------------------------------------
@@ -257,10 +243,7 @@ export async function readConfig(team: TestTeam): Promise<unknown> {
 // Read inbox
 // ---------------------------------------------------------------------------
 
-export async function readInbox(
-  team: TestTeam,
-  agentName: string,
-): Promise<unknown[]> {
+export async function readInbox(team: TestTeam, agentName: string): Promise<unknown[]> {
   const inboxPath = join(team.inboxesDir, `${agentName}.json`);
   try {
     const raw = await readFile(inboxPath, "utf-8");
@@ -322,10 +305,7 @@ export async function waitForAgentIdle(
 
   while (Date.now() < deadline) {
     try {
-      const proc = Bun.spawn(
-        ["tmux", "capture-pane", "-t", paneId, "-p"],
-        { stdout: "pipe", stderr: "pipe" },
-      );
+      const proc = Bun.spawn(["tmux", "capture-pane", "-t", paneId, "-p"], { stdout: "pipe", stderr: "pipe" });
       const content = await new Response(proc.stdout).text();
       await proc.exited;
 

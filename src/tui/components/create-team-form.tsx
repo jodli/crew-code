@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
-import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
+import { useKeyboard } from "@opentui/react";
+import { useCallback, useState } from "react";
 
 interface CreateTeamFormProps {
   onSubmit: (name: string, description: string) => void;
@@ -25,20 +25,21 @@ export function CreateTeamForm({ onSubmit, onCancel }: CreateTeamFormProps) {
   }, [name, description, onSubmit]);
 
   useKeyboard(
-    useCallback((key: KeyEvent) => {
-      if (key.name === "escape") {
-        onCancel();
-        return;
-      }
-      if (key.name === "tab") {
-        setActiveField((f) => {
-          const idx = fields.indexOf(f);
-          return key.shift
-            ? fields[(idx - 1 + fields.length) % fields.length]
-            : fields[(idx + 1) % fields.length];
-        });
-      }
-    }, [onCancel]),
+    useCallback(
+      (key: KeyEvent) => {
+        if (key.name === "escape") {
+          onCancel();
+          return;
+        }
+        if (key.name === "tab") {
+          setActiveField((f) => {
+            const idx = fields.indexOf(f);
+            return key.shift ? fields[(idx - 1 + fields.length) % fields.length] : fields[(idx + 1) % fields.length];
+          });
+        }
+      },
+      [onCancel],
+    ),
   );
 
   const handleInput = (setter: (v: string) => void) => (val: string) => {

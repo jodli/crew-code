@@ -1,7 +1,7 @@
 import type { AppContext } from "../types/context.ts";
 import type { InboxMessage } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
 
 export interface InboxFilter {
   unreadOnly?: boolean;
@@ -43,13 +43,9 @@ export async function getInbox(
   const unreadCount = allMessages.filter((m) => !m.read).length;
 
   // Sort oldest first (chronological)
-  const sorted = [...allMessages].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-  );
+  const sorted = [...allMessages].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-  const messages = filter?.unreadOnly
-    ? sorted.filter((m) => !m.read)
-    : sorted;
+  const messages = filter?.unreadOnly ? sorted.filter((m) => !m.read) : sorted;
 
   return ok({ team, agent, messages, totalCount, unreadCount });
 }

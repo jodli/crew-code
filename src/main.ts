@@ -1,19 +1,19 @@
 import { defineCommand, runMain } from "citty";
 import pkg from "../package.json";
 import attach from "./cli/commands/attach.ts";
+import blueprint from "./cli/commands/blueprint.ts";
 import create from "./cli/commands/create.ts";
-import spawn from "./cli/commands/spawn.ts";
-import status from "./cli/commands/status.ts";
-import send from "./cli/commands/send.ts";
 import destroy from "./cli/commands/destroy.ts";
 import doctor from "./cli/commands/doctor.ts";
 import inbox from "./cli/commands/inbox.ts";
-import remove from "./cli/commands/remove.ts";
-import tui from "./cli/commands/tui.ts";
-import blueprint from "./cli/commands/blueprint.ts";
-import update from "./cli/commands/update.ts";
 import messages from "./cli/commands/messages.ts";
+import remove from "./cli/commands/remove.ts";
+import send from "./cli/commands/send.ts";
 import serve from "./cli/commands/serve.ts";
+import spawn from "./cli/commands/spawn.ts";
+import status from "./cli/commands/status.ts";
+import tui from "./cli/commands/tui.ts";
+import update from "./cli/commands/update.ts";
 
 const main = defineCommand({
   meta: {

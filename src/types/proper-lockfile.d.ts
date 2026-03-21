@@ -3,8 +3,5 @@ declare module "proper-lockfile" {
     retries?: number;
     stale?: number;
   }
-  export function lock(
-    path: string,
-    opts?: LockOptions,
-  ): Promise<() => Promise<void>>;
+  export function lock(path: string, opts?: LockOptions): Promise<() => Promise<void>>;
 }

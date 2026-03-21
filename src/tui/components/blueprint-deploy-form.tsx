@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import type { InputRenderable, KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
-import type { KeyEvent, InputRenderable } from "@opentui/core";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Blueprint } from "../../config/blueprint-schema.ts";
 
 interface BlueprintDeployFormProps {
@@ -17,7 +17,7 @@ export function BlueprintDeployForm({ blueprint, onDeploy, onBack }: BlueprintDe
     if (inputRef.current) {
       inputRef.current.value = blueprint.name;
     }
-  }, []);
+  }, [blueprint.name]);
 
   const handleSubmit = useCallback(() => {
     const val = inputRef.current?.value ?? name;
@@ -27,11 +27,14 @@ export function BlueprintDeployForm({ blueprint, onDeploy, onBack }: BlueprintDe
   }, [name, blueprint, onDeploy]);
 
   useKeyboard(
-    useCallback((key: KeyEvent) => {
-      if (key.name === "escape") {
-        onBack();
-      }
-    }, [onBack]),
+    useCallback(
+      (key: KeyEvent) => {
+        if (key.name === "escape") {
+          onBack();
+        }
+      },
+      [onBack],
+    ),
   );
 
   return (

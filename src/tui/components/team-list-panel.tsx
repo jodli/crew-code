@@ -48,13 +48,7 @@ export function TeamListPanel({ teams, selectedIndex, focused }: TeamListPanelPr
 
         const label = `${prefix} ${team.name} (${team.aliveCount}/${team.agentCount})`;
 
-        return (
-          <text
-            key={team.name}
-            content={label}
-            fg={isSelected ? "#c0caf5" : aliveColor}
-          />
-        );
+        return <text key={team.name} content={label} fg={isSelected ? "#c0caf5" : aliveColor} />;
       })}
     </box>
   );

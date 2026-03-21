@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { planLoad, executeLoad } from "./blueprint-load.ts";
-import type { AppContext } from "../types/context.ts";
+import type { Blueprint } from "../config/blueprint-schema.ts";
+import type { BlueprintStore } from "../ports/blueprint-store.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { InboxStore } from "../ports/inbox-store.ts";
-import type { BlueprintStore } from "../ports/blueprint-store.ts";
-import type { Blueprint } from "../config/blueprint-schema.ts";
-import type { TeamConfig, InboxMessage } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
+import type { AppContext } from "../types/context.ts";
+import type { InboxMessage, TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
+import { executeLoad, planLoad } from "./blueprint-load.ts";
 
 const sampleBlueprint: Blueprint = {
   name: "review-team",
@@ -26,9 +26,15 @@ function makeBlueprintStore(bp?: Blueprint): BlueprintStore {
       }
       return err({ kind: "blueprint_not_found", name: nameOrPath });
     },
-    async save() { return ok("/fake/path.yaml"); },
-    async list() { return ok(bp ? [bp.name] : []); },
-    async exists(name) { return bp?.name === name; },
+    async save() {
+      return ok("/fake/path.yaml");
+    },
+    async list() {
+      return ok(bp ? [bp.name] : []);
+    },
+    async exists(name) {
+      return bp?.name === name;
+    },
   };
 }
 
@@ -48,10 +54,20 @@ function makeConfigStore(): ConfigStore & { teams: Map<string, TeamConfig> } {
       teams.set(name, updated);
       return ok(updated);
     },
-    async teamExists(name) { return teams.has(name); },
-    async createTeam(config) { teams.set(config.name, config); return ok(undefined); },
-    async listTeams() { return ok([...teams.keys()]); },
-    async deleteTeam(name) { teams.delete(name); return ok(undefined); },
+    async teamExists(name) {
+      return teams.has(name);
+    },
+    async createTeam(config) {
+      teams.set(config.name, config);
+      return ok(undefined);
+    },
+    async listTeams() {
+      return ok([...teams.keys()]);
+    },
+    async deleteTeam(name) {
+      teams.delete(name);
+      return ok(undefined);
+    },
   };
 }
 
@@ -66,14 +82,24 @@ function makeInboxStore(): InboxStore & { inboxes: Map<string, InboxMessage[]> }
     async readMessages(team, agent) {
       return ok(inboxes.get(`${team}/${agent}`) ?? []);
     },
-    async appendMessage() { return ok(undefined); },
-    async listInboxes() { return ok([]); },
-    async deleteInbox() { return ok(undefined); },
-    async markAllRead() { return ok(undefined); },
+    async appendMessage() {
+      return ok(undefined);
+    },
+    async listInboxes() {
+      return ok([]);
+    },
+    async deleteInbox() {
+      return ok(undefined);
+    },
+    async markAllRead() {
+      return ok(undefined);
+    },
   };
 }
 
-function makeCtx(bp?: Blueprint): AppContext & { configStore: ReturnType<typeof makeConfigStore>; inboxStore: ReturnType<typeof makeInboxStore> } {
+function makeCtx(
+  bp?: Blueprint,
+): AppContext & { configStore: ReturnType<typeof makeConfigStore>; inboxStore: ReturnType<typeof makeInboxStore> } {
   const configStore = makeConfigStore();
   const inboxStore = makeInboxStore();
   return {

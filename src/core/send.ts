@@ -1,7 +1,7 @@
+import { CREW_SENDER } from "../types/constants.ts";
 import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
-import { CREW_SENDER } from "../types/constants.ts";
+import { err, ok } from "../types/result.ts";
 
 export interface SendInput {
   team: string;
@@ -10,10 +10,7 @@ export interface SendInput {
   from?: string;
 }
 
-export async function sendMessage(
-  ctx: AppContext,
-  input: SendInput,
-): Promise<Result<void>> {
+export async function sendMessage(ctx: AppContext, input: SendInput): Promise<Result<void>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) {
     if (teamResult.error.kind === "config_not_found") {

@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { getCrewMessages, markCrewMessagesRead } from "./crew-channel.ts";
+import { makeInboxStore } from "../test/helpers.ts";
+import { CREW_SENDER } from "../types/constants.ts";
 import type { AppContext } from "../types/context.ts";
 import type { InboxMessage } from "../types/domain.ts";
-import { CREW_SENDER } from "../types/constants.ts";
-import { ok, err } from "../types/result.ts";
-import { makeInboxStore } from "../test/helpers.ts";
+import { err, ok } from "../types/result.ts";
+import { getCrewMessages, markCrewMessagesRead } from "./crew-channel.ts";
 
 const sampleMessages: InboxMessage[] = [
   {

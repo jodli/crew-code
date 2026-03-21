@@ -24,11 +24,7 @@ export function detectTerminalEmulator(): TerminalEmulator {
   return "xdg-terminal-exec";
 }
 
-export function buildTerminalCommand(
-  emulator: TerminalEmulator,
-  command: string[],
-  cwd: string,
-): string[] {
+export function buildTerminalCommand(emulator: TerminalEmulator, command: string[], cwd: string): string[] {
   switch (emulator) {
     case "ghostty":
       return ["ghostty", `--working-directory=${cwd}`, "-e", ...command];

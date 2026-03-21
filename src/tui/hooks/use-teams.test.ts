@@ -1,7 +1,7 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, mkdir, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import type { TeamConfig } from "../../types/domain.ts";
 import type { TeamSummary } from "./use-teams.ts";
@@ -60,9 +60,7 @@ describe("useTeams — data layer", () => {
     expect(namesResult.ok).toBe(true);
     if (!namesResult.ok) return;
 
-    const configs = await Promise.all(
-      namesResult.value.map((n) => store.getTeam(n)),
-    );
+    const configs = await Promise.all(namesResult.value.map((n) => store.getTeam(n)));
 
     const summaries: TeamSummary[] = configs
       .filter((r) => r.ok)
@@ -104,9 +102,7 @@ describe("useTeams — data layer", () => {
 
     // Simulate a live agent via a set
     const liveAgentIds = new Set(["agent-0@delta"]);
-    const aliveCount = result.value.members.filter((m) =>
-      liveAgentIds.has(m.agentId),
-    ).length;
+    const aliveCount = result.value.members.filter((m) => liveAgentIds.has(m.agentId)).length;
 
     expect(aliveCount).toBe(1);
   });

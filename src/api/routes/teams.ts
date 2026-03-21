@@ -1,17 +1,16 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import type { Env } from "../server.ts";
-import { errorResponse } from "../errors.ts";
-import { listTeams } from "../../actions/list-teams.ts";
-import { getTeamDetail } from "../../actions/get-team-detail.ts";
+import { z } from "zod";
 import { createTeam } from "../../actions/create-team.ts";
-import { updateTeam } from "../../actions/update-team.ts";
 import { destroyTeam } from "../../actions/destroy-team.ts";
-import { watchFile, watchDir, debounce } from "../../lib/file-watcher.ts";
-import { claudeTeamConfigPath, claudeInboxesDir } from "../../config/paths.ts";
-import { processRegistryPath } from "../../config/paths.ts";
+import { getTeamDetail } from "../../actions/get-team-detail.ts";
+import { listTeams } from "../../actions/list-teams.ts";
+import { updateTeam } from "../../actions/update-team.ts";
+import { claudeInboxesDir, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
+import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
+import { errorResponse } from "../errors.ts";
+import type { Env } from "../server.ts";
 
 const CreateTeamBody = z.object({
   name: z.string(),
@@ -93,16 +92,22 @@ export function teamRoutes() {
       const cleanups: (() => void)[] = [];
       try {
         cleanups.push(watchFile(claudeTeamConfigPath(name), () => debouncedPush()));
-      } catch { /* file may not exist */ }
+      } catch {
+        /* file may not exist */
+      }
       try {
         cleanups.push(watchDir(claudeInboxesDir(name), () => debouncedPush()));
-      } catch { /* dir may not exist */ }
+      } catch {
+        /* dir may not exist */
+      }
       try {
         cleanups.push(watchFile(processRegistryPath(name), () => debouncedPush()));
-      } catch { /* file may not exist */ }
+      } catch {
+        /* file may not exist */
+      }
 
       stream.onAbort(() => {
-        cleanups.forEach((c) => c());
+        for (const c of cleanups) c();
       });
 
       // Keep stream alive

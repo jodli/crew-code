@@ -1,11 +1,11 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { getInbox } from "../../core/inbox.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
+import { getInbox } from "../../core/inbox.ts";
+import type { AppContext } from "../../types/context.ts";
 import { renderError } from "../errors.ts";
 import { renderMessage } from "../format-message.ts";
-import type { AppContext } from "../../types/context.ts";
 
 export default defineCommand({
   meta: {
@@ -51,9 +51,7 @@ export default defineCommand({
 
     const { messages, totalCount, unreadCount, team, agent } = result.value;
 
-    console.log(
-      `${pc.bold(team)} / ${pc.bold(agent)} — ${totalCount} messages (${unreadCount} unread)`,
-    );
+    console.log(`${pc.bold(team)} / ${pc.bold(agent)} — ${totalCount} messages (${unreadCount} unread)`);
 
     if (messages.length === 0) {
       console.log(`\n  ${pc.dim("No messages.")}`);

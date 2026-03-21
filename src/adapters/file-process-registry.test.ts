@@ -1,7 +1,7 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { FileProcessRegistry } from "./file-process-registry.ts";
 
 let tmpDir: string;
@@ -10,8 +10,7 @@ let registry: FileProcessRegistry;
 beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), "crew-registry-test-"));
   registry = new FileProcessRegistry({
-    registryPath: (teamName: string) =>
-      join(tmpDir, teamName, "processes.json"),
+    registryPath: (teamName: string) => join(tmpDir, teamName, "processes.json"),
     registryDir: (teamName: string) => join(tmpDir, teamName),
   });
 });
@@ -26,10 +25,7 @@ describe("FileProcessRegistry", () => {
       const result = await registry.activate("team-a", "scout@team-a", 12345);
       expect(result.ok).toBe(true);
 
-      const raw = await readFile(
-        join(tmpDir, "team-a", "processes.json"),
-        "utf-8",
-      );
+      const raw = await readFile(join(tmpDir, "team-a", "processes.json"), "utf-8");
       const entries = JSON.parse(raw);
       expect(entries).toHaveLength(1);
       expect(entries[0].agentId).toBe("scout@team-a");
@@ -45,9 +41,7 @@ describe("FileProcessRegistry", () => {
       const result = await registry.listActive("team-a");
       expect(result.ok).toBe(true);
       if (result.ok) {
-        const scouts = result.value.filter(
-          (e) => e.agentId === "scout@team-a",
-        );
+        const scouts = result.value.filter((e) => e.agentId === "scout@team-a");
         expect(scouts).toHaveLength(1);
       }
     });

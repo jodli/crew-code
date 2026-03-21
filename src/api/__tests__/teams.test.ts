@@ -1,11 +1,11 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createApp } from "../server.ts";
+import { join } from "node:path";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import type { AppContext } from "../../types/context.ts";
+import { createApp } from "../server.ts";
 
 let tmpDir: string;
 let app: ReturnType<typeof createApp>;
@@ -55,7 +55,7 @@ describe("GET /api/teams", () => {
     await app.request("/api/teams", json({ name: "alpha" }));
     const res = await app.request("/api/teams");
     expect(res.status).toBe(200);
-    const body = await res.json() as Array<Record<string, unknown>>;
+    const body = (await res.json()) as Array<Record<string, unknown>>;
     expect(body).toHaveLength(1);
     expect(body[0].name).toBe("alpha");
   });
@@ -65,15 +65,15 @@ describe("POST /api/teams", () => {
   test("creates a team", async () => {
     const res = await app.request("/api/teams", json({ name: "alpha", description: "Test team" }));
     expect(res.status).toBe(201);
-    const body = await res.json() as Record<string, unknown>;
-    expect(body["name"]).toBe("alpha");
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.name).toBe("alpha");
   });
 
   test("returns 409 for duplicate team", async () => {
     await app.request("/api/teams", json({ name: "alpha" }));
     const res = await app.request("/api/teams", json({ name: "alpha" }));
     expect(res.status).toBe(409);
-    const body = await res.json() as { error: { kind: string } };
+    const body = (await res.json()) as { error: { kind: string } };
     expect(body.error.kind).toBe("team_already_exists");
   });
 });
@@ -83,9 +83,9 @@ describe("GET /api/teams/:name", () => {
     await app.request("/api/teams", json({ name: "alpha" }));
     const res = await app.request("/api/teams/alpha");
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
-    expect(body["name"]).toBe("alpha");
-    expect(body["members"]).toBeArray();
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.name).toBe("alpha");
+    expect(body.members).toBeArray();
   });
 
   test("returns 404 for missing team", async () => {
@@ -99,8 +99,8 @@ describe("PATCH /api/teams/:name", () => {
     await app.request("/api/teams", json({ name: "alpha" }));
     const res = await app.request("/api/teams/alpha", patch({ description: "Updated" }));
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
-    expect(body["description"]).toBe("Updated");
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.description).toBe("Updated");
   });
 
   test("returns 404 for missing team", async () => {

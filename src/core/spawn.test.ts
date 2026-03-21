@@ -1,14 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import {
-  planSpawn,
-  executeSpawn,
-  type SpawnPlan,
-} from "./spawn.ts";
-import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { InboxStore } from "../ports/inbox-store.ts";
-import type { TeamConfig, InboxMessage } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
+import type { AppContext } from "../types/context.ts";
+import type { InboxMessage, TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
+import { executeSpawn, planSpawn, type SpawnPlan } from "./spawn.ts";
 
 const baseConfig: TeamConfig = {
   name: "test-team",
@@ -28,9 +24,7 @@ const baseConfig: TeamConfig = {
   ],
 };
 
-function makeConfigStore(
-  config: TeamConfig | null = baseConfig,
-): ConfigStore & { lastUpdated?: TeamConfig } {
+function makeConfigStore(config: TeamConfig | null = baseConfig): ConfigStore & { lastUpdated?: TeamConfig } {
   let current = config ? { ...config, members: [...config.members] } : null;
   const store: ConfigStore & { lastUpdated?: TeamConfig } = {
     async getTeam(name: string) {
@@ -95,10 +89,7 @@ function makeInboxStore(): InboxStore & {
   return store;
 }
 
-function makeCtx(overrides?: {
-  configStore?: ConfigStore;
-  inboxStore?: InboxStore;
-}): AppContext {
+function makeCtx(overrides?: { configStore?: ConfigStore; inboxStore?: InboxStore }): AppContext {
   return {
     configStore: overrides?.configStore ?? makeConfigStore(),
     inboxStore: overrides?.inboxStore ?? makeInboxStore(),
@@ -151,7 +142,7 @@ describe("core/planSpawn", () => {
           name: "agent-3",
           agentType: "general-purpose",
           joinedAt: 1773387766070,
-    
+
           cwd: "/tmp",
           subscriptions: [],
         },
@@ -280,11 +271,21 @@ describe("core/executeSpawn", () => {
       async createInbox() {
         return err({ kind: "file_write_failed" as const, path: "/fake", detail: "boom" });
       },
-      async readMessages() { return ok([] as InboxMessage[]); },
-      async appendMessage() { return ok(undefined); },
-      async listInboxes() { return ok([] as string[]); },
-      async deleteInbox() { return ok(undefined); },
-    async markAllRead() { return ok(undefined); },
+      async readMessages() {
+        return ok([] as InboxMessage[]);
+      },
+      async appendMessage() {
+        return ok(undefined);
+      },
+      async listInboxes() {
+        return ok([] as string[]);
+      },
+      async deleteInbox() {
+        return ok(undefined);
+      },
+      async markAllRead() {
+        return ok(undefined);
+      },
     };
     const ctx = makeCtx({ configStore, inboxStore });
     const result = await executeSpawn(ctx, basePlan);
@@ -294,4 +295,3 @@ describe("core/executeSpawn", () => {
     expect(configStore.lastUpdated?.members[0].name).toBe("team-lead");
   });
 });
-

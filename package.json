@@ -10,7 +10,9 @@
     "start": "bun run src/main.ts",
     "build": "bun build --compile src/main.ts --outfile dist/crew",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "format": "biome check --write src/"
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
@@ -29,6 +31,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.8",
     "@types/bun": "^1.2.4",
     "@types/react": "^19.2.14"
   }

@@ -29,14 +29,8 @@ export interface TeamDetail {
   members: MemberDetail[];
 }
 
-async function enrichMembers(
-  ctx: AppContext,
-  team: string,
-  members: AgentMember[],
-): Promise<MemberDetail[]> {
-  const activeResult = ctx.processRegistry
-    ? await ctx.processRegistry.listActive(team)
-    : undefined;
+async function enrichMembers(ctx: AppContext, team: string, members: AgentMember[]): Promise<MemberDetail[]> {
+  const activeResult = ctx.processRegistry ? await ctx.processRegistry.listActive(team) : undefined;
   const pidByAgentId = new Map<string, number>();
   if (activeResult?.ok) {
     for (const entry of activeResult.value) {
@@ -47,9 +41,7 @@ async function enrichMembers(
   const enriched: MemberDetail[] = [];
   for (const member of members) {
     const msgsResult = await ctx.inboxStore.readMessages(team, member.name);
-    const unreadCount = msgsResult.ok
-      ? msgsResult.value.filter((m) => !m.read).length
-      : 0;
+    const unreadCount = msgsResult.ok ? msgsResult.value.filter((m) => !m.read).length : 0;
 
     enriched.push({
       name: member.name,
@@ -68,9 +60,7 @@ async function enrichMembers(
   return enriched;
 }
 
-export async function listTeams(
-  ctx: AppContext,
-): Promise<Result<TeamSummary[]>> {
+export async function listTeams(ctx: AppContext): Promise<Result<TeamSummary[]>> {
   const namesResult = await ctx.configStore.listTeams();
   if (!namesResult.ok) return namesResult;
 
@@ -90,10 +80,7 @@ export async function listTeams(
   return ok(summaries);
 }
 
-export async function getTeamDetail(
-  ctx: AppContext,
-  team: string,
-): Promise<Result<TeamDetail>> {
+export async function getTeamDetail(ctx: AppContext, team: string): Promise<Result<TeamDetail>> {
   const teamResult = await ctx.configStore.getTeam(team);
   if (!teamResult.ok) return teamResult;
 
@@ -107,10 +94,7 @@ export async function getTeamDetail(
   });
 }
 
-export async function listAgents(
-  ctx: AppContext,
-  team: string,
-): Promise<Result<MemberDetail[]>> {
+export async function listAgents(ctx: AppContext, team: string): Promise<Result<MemberDetail[]>> {
   const teamResult = await ctx.configStore.getTeam(team);
   if (!teamResult.ok) return teamResult;
 

@@ -1,7 +1,7 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
 import { App } from "./app.tsx";
-import { createLauncher, type BackendType } from "./launcher/detect.ts";
+import { type BackendType, createLauncher } from "./launcher/detect.ts";
 
 export async function startTui(backendOverride?: BackendType) {
   const launcher = createLauncher(backendOverride);

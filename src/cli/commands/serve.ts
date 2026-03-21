@@ -34,7 +34,7 @@ export default defineCommand({
     const app = createApp(ctx);
     const port = parseInt(args.port, 10);
 
-    if (isNaN(port) || port < 1 || port > 65535) {
+    if (Number.isNaN(port) || port < 1 || port > 65535) {
       console.error(`Invalid port: ${args.port} (must be 1-65535)`);
       process.exit(1);
     }

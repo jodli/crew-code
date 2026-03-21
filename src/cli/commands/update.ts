@@ -1,10 +1,10 @@
 import { defineCommand } from "citty";
+import { updateAgent } from "../../actions/update-agent.ts";
+import { updateTeam } from "../../actions/update-team.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { updateTeam } from "../../actions/update-team.ts";
-import { updateAgent } from "../../actions/update-agent.ts";
-import { renderError } from "../errors.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 export default defineCommand({
   meta: {

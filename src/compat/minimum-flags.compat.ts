@@ -4,17 +4,17 @@
  * --agent-id, --agent-name, --team-name are the minimum required flags.
  * Agent should boot in team mode, read inbox, and respond.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  pollInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  pollInbox,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
 
 describe("compat: minimum flags", () => {

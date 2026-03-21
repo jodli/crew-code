@@ -1,9 +1,9 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, writeFile, mkdir, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { JsonFileConfigStore } from "./json-file-config-store.ts";
+import { join } from "node:path";
 import type { TeamConfig } from "../types/domain.ts";
+import { JsonFileConfigStore } from "./json-file-config-store.ts";
 
 let tmpDir: string;
 let store: JsonFileConfigStore;
@@ -40,10 +40,7 @@ const sampleConfig: TeamConfig = {
 async function writeTeamConfig(name: string, config: TeamConfig) {
   const teamDir = join(tmpDir, name);
   await mkdir(teamDir, { recursive: true });
-  await writeFile(
-    join(teamDir, "config.json"),
-    JSON.stringify(config, null, 2),
-  );
+  await writeFile(join(teamDir, "config.json"), JSON.stringify(config, null, 2));
 }
 
 describe("JsonFileConfigStore", () => {

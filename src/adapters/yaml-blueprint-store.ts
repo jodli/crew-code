@@ -1,13 +1,13 @@
 import { existsSync } from "node:fs";
-import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
-import { join, basename } from "node:path";
-import { stringify, parse } from "yaml";
-import type { BlueprintStore } from "../ports/blueprint-store.ts";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
+import { parse, stringify } from "yaml";
 import type { Blueprint } from "../config/blueprint-schema.ts";
 import { BlueprintSchema } from "../config/blueprint-schema.ts";
-import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
 import { blueprintsDir as defaultBlueprintsDir } from "../config/paths.ts";
+import type { BlueprintStore } from "../ports/blueprint-store.ts";
+import type { Result } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
 
 function isFilePath(nameOrPath: string): boolean {
   return nameOrPath.includes("/") || nameOrPath.endsWith(".yaml") || nameOrPath.endsWith(".yml");
@@ -21,9 +21,7 @@ export class YamlBlueprintStore implements BlueprintStore {
   }
 
   async load(nameOrPath: string): Promise<Result<Blueprint>> {
-    const filePath = isFilePath(nameOrPath)
-      ? nameOrPath
-      : join(this.dir, `${nameOrPath}.yaml`);
+    const filePath = isFilePath(nameOrPath) ? nameOrPath : join(this.dir, `${nameOrPath}.yaml`);
 
     if (!existsSync(filePath)) {
       return err({ kind: "blueprint_not_found", name: nameOrPath });

@@ -3,8 +3,8 @@ import pc from "picocolors";
 import { createTeam } from "../../actions/create-team.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 export default defineCommand({
   meta: {

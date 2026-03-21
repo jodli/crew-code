@@ -1,8 +1,8 @@
-import type { AppContext } from "../types/context.ts";
-import type { ProcessRegistry } from "../ports/process-registry.ts";
-import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
 import { validateName } from "../lib/validate-name.ts";
+import type { ProcessRegistry } from "../ports/process-registry.ts";
+import type { AppContext } from "../types/context.ts";
+import type { Result } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
 
 export interface RemoveInput {
   team: string;
@@ -42,9 +42,7 @@ export async function planRemove(
     return err({ kind: "agent_not_found", agent: input.name, team: input.team });
   }
 
-  const isAlive = registry
-    ? await registry.isAlive(input.team, member.agentId)
-    : false;
+  const isAlive = registry ? await registry.isAlive(input.team, member.agentId) : false;
 
   const inboxResult = await ctx.inboxStore.listInboxes(input.team);
   const inboxes = inboxResult.ok ? inboxResult.value : [];

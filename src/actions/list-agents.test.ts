@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { listAgents } from "./list-agents.ts";
 import type { AppContext } from "../types/context.ts";
-import { ok, err } from "../types/result.ts";
 import type { TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
+import { listAgents } from "./list-agents.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",

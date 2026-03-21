@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { navReducer, initialNavState, type NavState } from "./navigation.ts";
+import { initialNavState, type NavState, navReducer } from "./navigation.ts";
 
 describe("navReducer", () => {
   test("initial state is dashboard, teams panel, index 0", () => {

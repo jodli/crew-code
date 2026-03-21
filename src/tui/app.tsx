@@ -1,50 +1,53 @@
-import { useState, useReducer, useCallback, useEffect } from "react";
-import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
-import { JsonFileConfigStore } from "../adapters/json-file-config-store.ts";
-import { JsonFileInboxStore } from "../adapters/json-file-inbox-store.ts";
-import { FileProcessRegistry } from "../adapters/file-process-registry.ts";
-import { CREW_SENDER } from "../types/constants.ts";
-import { useTeams } from "./hooks/use-teams.ts";
-import { useAgents } from "./hooks/use-agents.ts";
-import { navReducer, initialNavState, type NavState, type NavAction } from "./views/navigation.ts";
-import { TeamListPanel } from "./components/team-list-panel.tsx";
-import { AgentListPanel } from "./components/agent-list-panel.tsx";
-import { ShortcutBar } from "./components/shortcut-bar.tsx";
-import { HelpOverlay } from "./components/help-overlay.tsx";
-import { CreateTeamForm } from "./components/create-team-form.tsx";
-import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
-import { ConfirmBar } from "./components/confirm-bar.tsx";
-import { ErrorToast } from "./components/error-toast.tsx";
-import { InboxView } from "./components/inbox-view.tsx";
-import { SendMessageForm } from "./components/send-message-form.tsx";
-import { AttachForm } from "./components/attach-form.tsx";
-import { BlueprintLoadForm } from "./components/blueprint-load-form.tsx";
-import { BlueprintDeployForm } from "./components/blueprint-deploy-form.tsx";
-import { EditTeamForm } from "./components/edit-team-form.tsx";
-import { EditAgentForm } from "./components/edit-agent-form.tsx";
-import type { Launcher } from "./launcher/port.ts";
-import { buildSpawnCommand, buildAttachCommand } from "./launcher/commands.ts";
-import { killAgent } from "../actions/kill-agent.ts";
+import { useKeyboard, useTerminalDimensions } from "@opentui/react";
+import { useCallback, useEffect, useReducer, useState } from "react";
+import { attachAgent } from "../actions/attach-agent.ts";
 import { createTeam } from "../actions/create-team.ts";
 import { destroyTeam } from "../actions/destroy-team.ts";
+import { killAgent } from "../actions/kill-agent.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
 import { sendMessage } from "../actions/send-message.ts";
-import { attachAgent } from "../actions/attach-agent.ts";
-import { updateTeam } from "../actions/update-team.ts";
-import { updateAgent } from "../actions/update-agent.ts";
 import { planSpawn } from "../actions/spawn-agent.ts";
-import { planLoad, executeLoad } from "../core/blueprint-load.ts";
+import { updateAgent } from "../actions/update-agent.ts";
+import { updateTeam } from "../actions/update-team.ts";
+import { FileProcessRegistry } from "../adapters/file-process-registry.ts";
+import { JsonFileConfigStore } from "../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../adapters/json-file-inbox-store.ts";
 import { YamlBlueprintStore } from "../adapters/yaml-blueprint-store.ts";
-import type { Blueprint } from "../config/blueprint-schema.ts";
-import type { CrewError } from "../types/errors.ts";
 import { renderError } from "../cli/errors.ts";
+import type { Blueprint } from "../config/blueprint-schema.ts";
+import { executeLoad, planLoad } from "../core/blueprint-load.ts";
+import { CREW_SENDER } from "../types/constants.ts";
+import type { CrewError } from "../types/errors.ts";
+import { AgentListPanel } from "./components/agent-list-panel.tsx";
+import { AttachForm } from "./components/attach-form.tsx";
+import { BlueprintDeployForm } from "./components/blueprint-deploy-form.tsx";
+import { BlueprintLoadForm } from "./components/blueprint-load-form.tsx";
+import { ConfirmBar } from "./components/confirm-bar.tsx";
+import { CreateTeamForm } from "./components/create-team-form.tsx";
+import { EditAgentForm } from "./components/edit-agent-form.tsx";
+import { EditTeamForm } from "./components/edit-team-form.tsx";
+import { ErrorToast } from "./components/error-toast.tsx";
+import { HelpOverlay } from "./components/help-overlay.tsx";
+import { InboxView } from "./components/inbox-view.tsx";
+import { SendMessageForm } from "./components/send-message-form.tsx";
+import { ShortcutBar } from "./components/shortcut-bar.tsx";
+import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
+import { TeamListPanel } from "./components/team-list-panel.tsx";
+import { useAgents } from "./hooks/use-agents.ts";
+import { useTeams } from "./hooks/use-teams.ts";
+import { buildAttachCommand, buildSpawnCommand } from "./launcher/commands.ts";
+import type { Launcher } from "./launcher/port.ts";
+import { initialNavState, type NavAction, type NavState, navReducer } from "./views/navigation.ts";
 
 function tuiErrorMessage(error: CrewError): string {
   switch (error.kind) {
-    case "stale_session": return `Agent "${error.agent}" has a stale session. Press 'r' to remove.`;
-    case "no_session_id": return `Agent "${error.agent}" has no session ID.`;
-    default: return renderError(error);
+    case "stale_session":
+      return `Agent "${error.agent}" has a stale session. Press 'r' to remove.`;
+    case "no_session_id":
+      return `Agent "${error.agent}" has no session ID.`;
+    default:
+      return renderError(error);
   }
 }
 
@@ -77,9 +80,7 @@ export function App({ launcher }: AppProps) {
     }
   }, [teams.length, nav]);
 
-  const selectedTeamName = nav !== "quit" && teams[nav.teamIndex]
-    ? teams[nav.teamIndex].name
-    : null;
+  const selectedTeamName = nav !== "quit" && teams[nav.teamIndex] ? teams[nav.teamIndex].name : null;
 
   const agents = useAgents(ctx, selectedTeamName);
 
@@ -91,22 +92,26 @@ export function App({ launcher }: AppProps) {
     }
   }, [agents.length, nav]);
 
-  const selectedAgent = nav !== "quit" ? agents[nav.agentIndex] ?? null : null;
+  const selectedAgent = nav !== "quit" ? (agents[nav.agentIndex] ?? null) : null;
 
   const isOverlay = nav !== "quit" && nav.view.screen !== "dashboard";
-  const isConfirm = nav !== "quit" && (nav.view.screen === "confirm-kill" || nav.view.screen === "confirm-destroy" || nav.view.screen === "confirm-remove");
+  const isConfirm =
+    nav !== "quit" &&
+    (nav.view.screen === "confirm-kill" ||
+      nav.view.screen === "confirm-destroy" ||
+      nav.view.screen === "confirm-remove");
   // Views that handle all their own keyboard input
-  const isDelegatedView = nav !== "quit" && (
-    nav.view.screen === "create-team" ||
-    nav.view.screen === "spawn-agent" ||
-    nav.view.screen === "send-message" ||
-    nav.view.screen === "inbox" ||
-    nav.view.screen === "attach-form" ||
-    nav.view.screen === "load-blueprint" ||
-    nav.view.screen === "deploy-blueprint" ||
-    nav.view.screen === "edit-team" ||
-    nav.view.screen === "edit-agent"
-  );
+  const isDelegatedView =
+    nav !== "quit" &&
+    (nav.view.screen === "create-team" ||
+      nav.view.screen === "spawn-agent" ||
+      nav.view.screen === "send-message" ||
+      nav.view.screen === "inbox" ||
+      nav.view.screen === "attach-form" ||
+      nav.view.screen === "load-blueprint" ||
+      nav.view.screen === "deploy-blueprint" ||
+      nav.view.screen === "edit-team" ||
+      nav.view.screen === "edit-agent");
 
   const handleKey = useCallback(
     (key: KeyEvent) => {
@@ -144,9 +149,7 @@ export function App({ launcher }: AppProps) {
         if (key.name === "up" || key.name === "k") {
           dispatch({ type: "move_up" });
         } else if (key.name === "down" || key.name === "j") {
-          const maxIndex = nav.panel === "teams"
-            ? Math.max(0, teams.length - 1)
-            : Math.max(0, agents.length - 1);
+          const maxIndex = nav.panel === "teams" ? Math.max(0, teams.length - 1) : Math.max(0, agents.length - 1);
           dispatch({ type: "move_down", maxIndex });
         } else if ((key.name === "return" || key.name === "l") && nav.panel === "teams") {
           dispatch({ type: "focus_agents" });
@@ -184,22 +187,26 @@ export function App({ launcher }: AppProps) {
 
   useKeyboard(handleKey);
 
-  const handleCreateTeam = useCallback(
-    async (name: string, description: string) => {
-      const result = await createTeam(ctx, {
-        name,
-        description: description || undefined,
-      });
-      if (!result.ok) {
-        setError(tuiErrorMessage(result.error));
-      }
-      dispatch({ type: "close_overlay" });
-    },
-    [],
-  );
+  const handleCreateTeam = useCallback(async (name: string, description: string) => {
+    const result = await createTeam(ctx, {
+      name,
+      description: description || undefined,
+    });
+    if (!result.ok) {
+      setError(tuiErrorMessage(result.error));
+    }
+    dispatch({ type: "close_overlay" });
+  }, []);
 
   const handleSpawnAgent = useCallback(
-    async (opts: { name: string; agentType: string; prompt: string; model: string; cwd: string; extraArgs: string[] }) => {
+    async (opts: {
+      name: string;
+      agentType: string;
+      prompt: string;
+      model: string;
+      cwd: string;
+      extraArgs: string[];
+    }) => {
       if (!selectedTeamName) return;
       const validation = await planSpawn(ctx, {
         team: selectedTeamName,
@@ -228,7 +235,7 @@ export function App({ launcher }: AppProps) {
       killAgent(ctx.processRegistry, selectedTeamName ?? "", agent.agentId);
     }
     dispatch({ type: "close_overlay" });
-  }, [nav, agents]);
+  }, [nav, agents, selectedTeamName]);
 
   const handleConfirmDestroy = useCallback(async () => {
     if (!selectedTeamName) return;
@@ -285,13 +292,10 @@ export function App({ launcher }: AppProps) {
     [launcher, selectedTeamName, selectedAgent],
   );
 
-  const handleSelectBlueprint = useCallback(
-    (blueprint: Blueprint) => {
-      setSelectedBlueprint(blueprint);
-      dispatch({ type: "open_deploy_blueprint" });
-    },
-    [],
-  );
+  const handleSelectBlueprint = useCallback((blueprint: Blueprint) => {
+    setSelectedBlueprint(blueprint);
+    dispatch({ type: "open_deploy_blueprint" });
+  }, []);
 
   const handleDeployBlueprint = useCallback(
     async (blueprint: Blueprint, teamName: string) => {
@@ -381,19 +385,15 @@ export function App({ launcher }: AppProps) {
           onClose={handleCancelOverlay}
           onSend={() => dispatch({ type: "open_send_message" })}
         />
-        {nav.view.screen === "inbox" && error && (
-          <ErrorToast message={error} onDismiss={handleDismissError} />
-        )}
+        {nav.view.screen === "inbox" && error && <ErrorToast message={error} onDismiss={handleDismissError} />}
       </box>
     );
   }
 
   // Build confirm messages
-  const killMessage = selectedAgent
-    ? `Kill agent "${selectedAgent.name}"?`
-    : "";
+  const killMessage = selectedAgent ? `Kill agent "${selectedAgent.name}"?` : "";
   const destroyMessage = selectedTeamName
-    ? `Destroy team "${selectedTeamName}"? Kills ${agents.filter(a => a.status === "alive").length} agent(s).`
+    ? `Destroy team "${selectedTeamName}"? Kills ${agents.filter((a) => a.status === "alive").length} agent(s).`
     : "";
   const removeMessage = selectedAgent
     ? selectedAgent.status === "alive"
@@ -411,11 +411,7 @@ export function App({ launcher }: AppProps) {
 
       {/* Main content — two panels side by side */}
       <box flexGrow={1} flexDirection="row">
-        <TeamListPanel
-          teams={teams}
-          selectedIndex={nav.teamIndex}
-          focused={nav.panel === "teams" && !isOverlay}
-        />
+        <TeamListPanel teams={teams} selectedIndex={nav.teamIndex} focused={nav.panel === "teams" && !isOverlay} />
         <AgentListPanel
           agents={agents}
           selectedIndex={nav.agentIndex}
@@ -426,23 +422,11 @@ export function App({ launcher }: AppProps) {
 
       {/* Bottom bar — either shortcut bar or confirm bar */}
       {nav.view.screen === "confirm-kill" ? (
-        <ConfirmBar
-          message={killMessage}
-          onConfirm={handleConfirmKill}
-          onCancel={handleCancelOverlay}
-        />
+        <ConfirmBar message={killMessage} onConfirm={handleConfirmKill} onCancel={handleCancelOverlay} />
       ) : nav.view.screen === "confirm-destroy" ? (
-        <ConfirmBar
-          message={destroyMessage}
-          onConfirm={handleConfirmDestroy}
-          onCancel={handleCancelOverlay}
-        />
+        <ConfirmBar message={destroyMessage} onConfirm={handleConfirmDestroy} onCancel={handleCancelOverlay} />
       ) : nav.view.screen === "confirm-remove" ? (
-        <ConfirmBar
-          message={removeMessage}
-          onConfirm={handleConfirmRemove}
-          onCancel={handleCancelOverlay}
-        />
+        <ConfirmBar message={removeMessage} onConfirm={handleConfirmRemove} onCancel={handleCancelOverlay} />
       ) : (
         <ShortcutBar panel={nav.panel} />
       )}
@@ -450,10 +434,7 @@ export function App({ launcher }: AppProps) {
       {/* Overlays */}
       {nav.view.screen === "help" && <HelpOverlay />}
       {nav.view.screen === "create-team" && (
-        <CreateTeamForm
-          onSubmit={handleCreateTeam}
-          onCancel={handleCancelOverlay}
-        />
+        <CreateTeamForm onSubmit={handleCreateTeam} onCancel={handleCancelOverlay} />
       )}
       {nav.view.screen === "spawn-agent" && selectedTeamName && (
         <SpawnAgentForm
@@ -472,11 +453,7 @@ export function App({ launcher }: AppProps) {
         />
       )}
       {nav.view.screen === "load-blueprint" && (
-        <BlueprintLoadForm
-          ctx={ctx}
-          onSubmit={handleSelectBlueprint}
-          onCancel={handleCancelOverlay}
-        />
+        <BlueprintLoadForm ctx={ctx} onSubmit={handleSelectBlueprint} onCancel={handleCancelOverlay} />
       )}
       {nav.view.screen === "deploy-blueprint" && selectedBlueprint && (
         <BlueprintDeployForm

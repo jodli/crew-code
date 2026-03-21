@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { parse } from "yaml";
-import { generateSkeleton } from "./blueprint-skeleton.ts";
 import { BlueprintSchema } from "../config/blueprint-schema.ts";
+import { generateSkeleton } from "./blueprint-skeleton.ts";
 
 describe("generateSkeleton", () => {
   test("contains the blueprint name", () => {

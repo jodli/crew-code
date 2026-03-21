@@ -1,5 +1,5 @@
-import { join } from "node:path";
 import { homedir } from "node:os";
+import { join } from "node:path";
 import envPaths from "env-paths";
 
 export function claudeTeamsDir(): string {

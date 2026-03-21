@@ -1,12 +1,12 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
 import { z } from "zod";
-import type { Env } from "../server.ts";
-import { errorResponse } from "../errors.ts";
 import { listAgents } from "../../actions/list-agents.ts";
+import { removeAgent } from "../../actions/remove-agent.ts";
 import { spawnAgent } from "../../actions/spawn-agent.ts";
 import { updateAgent } from "../../actions/update-agent.ts";
-import { removeAgent } from "../../actions/remove-agent.ts";
+import { errorResponse } from "../errors.ts";
+import type { Env } from "../server.ts";
 
 const SpawnAgentBody = z.object({
   name: z.string().optional(),

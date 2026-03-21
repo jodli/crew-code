@@ -4,17 +4,17 @@
  * Two agents (alice and bob) can message each other without a real team lead.
  * Uses a fake session ID. Alice is told to message bob, bob should receive it.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  pollInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  pollInbox,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
 
 describe("compat: peer-to-peer", () => {
@@ -36,18 +36,10 @@ describe("compat: peer-to-peer", () => {
     await registerAgent(team, "bob", { model: COMPAT_MODEL });
 
     // Seed alice's inbox — tell her to greet bob
-    await seedInbox(
-      team,
-      "alice",
-      "Hello alice! Please send a short greeting message to bob.",
-    );
+    await seedInbox(team, "alice", "Hello alice! Please send a short greeting message to bob.");
 
     // Seed bob's inbox — tell him to wait for messages
-    await seedInbox(
-      team,
-      "bob",
-      "Hello bob! Please wait for messages from your teammates and respond briefly.",
-    );
+    await seedInbox(team, "bob", "Hello bob! Please wait for messages from your teammates and respond briefly.");
 
     // Launch alice first
     const alicePane = await launchAgent(team, "alice", {
@@ -73,9 +65,7 @@ describe("compat: peer-to-peer", () => {
     });
 
     // Find a message from alice
-    const fromAlice = (bobMessages as { from?: string }[]).find(
-      (m) => m.from === "alice",
-    );
+    const fromAlice = (bobMessages as { from?: string }[]).find((m) => m.from === "alice");
     expect(fromAlice).toBeDefined();
   }, 180_000);
 });

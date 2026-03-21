@@ -1,12 +1,9 @@
-import { watch, existsSync, readdirSync } from "node:fs";
-import { dirname, basename, join } from "node:path";
+import { existsSync, readdirSync, watch } from "node:fs";
+import { basename, dirname, join } from "node:path";
 
 const HEARTBEAT_INTERVAL_MS = 5000;
 
-export function watchFile(
-  filePath: string,
-  callback: () => void,
-): () => void {
+export function watchFile(filePath: string, callback: () => void): () => void {
   const dir = dirname(filePath);
   const file = basename(filePath);
   let lastMtime = getFileMtime(filePath);
@@ -36,10 +33,7 @@ export function watchFile(
   };
 }
 
-export function watchDir(
-  dirPath: string,
-  callback: (filename: string) => void,
-): () => void {
+export function watchDir(dirPath: string, callback: (filename: string) => void): () => void {
   const mtimes = new Map<string, number>();
 
   const watcher = watch(dirPath, (_event, filename) => {

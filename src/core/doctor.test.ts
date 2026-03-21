@@ -1,11 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import {
-  diagnose,
-  applyFixes,
-} from "./doctor.ts";
+import { makeConfigStore, makeCtx, makeInboxStore, makeProcessRegistry } from "../test/helpers.ts";
 import type { TeamConfig } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
-import { makeCtx, makeConfigStore, makeInboxStore, makeProcessRegistry } from "../test/helpers.ts";
+import { err, ok } from "../types/result.ts";
+import { applyFixes, diagnose } from "./doctor.ts";
 
 function makeMockRegistry(activeEntries: { agentId: string; pid: number }[] = []) {
   return makeProcessRegistry({
@@ -111,9 +108,7 @@ describe("doctor core", () => {
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
-      const schemaCheck = results.value.find(
-        (r) => r.checkId === "config-schema" && r.team === "bad-team",
-      );
+      const schemaCheck = results.value.find((r) => r.checkId === "config-schema" && r.team === "bad-team");
       expect(schemaCheck).toBeDefined();
       expect(schemaCheck!.status).toBe("error");
     });
@@ -135,9 +130,7 @@ describe("doctor core", () => {
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
-      const check = results.value.find(
-        (r) => r.checkId === "config-schema" && r.team === "broken-team",
-      );
+      const check = results.value.find((r) => r.checkId === "config-schema" && r.team === "broken-team");
       expect(check).toBeDefined();
       expect(check!.status).toBe("error");
       expect(check!.message).toContain("Cannot read config");
@@ -169,17 +162,13 @@ describe("doctor core", () => {
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
-      const jsonCheck = results.value.find(
-        (r) => r.checkId === "inbox-json" && r.detail?.includes("scout"),
-      );
+      const jsonCheck = results.value.find((r) => r.checkId === "inbox-json" && r.detail?.includes("scout"));
       expect(jsonCheck).toBeDefined();
       expect(jsonCheck!.status).toBe("error");
     });
 
     test("reports process-registry health when registry is available", async () => {
-      const registry = makeMockRegistry([
-        { agentId: "team-lead@my-team", pid: process.pid },
-      ]);
+      const registry = makeMockRegistry([{ agentId: "team-lead@my-team", pid: process.pid }]);
 
       const ctx = makeCtx({
         configStore: makeConfigStore({
@@ -197,9 +186,7 @@ describe("doctor core", () => {
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
-      const registryCheck = results.value.find(
-        (r) => r.checkId === "process-registry",
-      );
+      const registryCheck = results.value.find((r) => r.checkId === "process-registry");
       expect(registryCheck).toBeDefined();
       expect(registryCheck!.status).toBe("ok");
       expect(registryCheck!.message).toContain("1 active");

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
+import { useKeyboard } from "@opentui/react";
+import { useCallback, useEffect, useState } from "react";
+import { claudeInboxPath } from "../../config/paths.ts";
+import { watchFile } from "../../lib/file-watcher.ts";
 import type { InboxStore } from "../../ports/inbox-store.ts";
 import type { InboxMessage } from "../../types/domain.ts";
-import { watchFile } from "../../lib/file-watcher.ts";
-import { claudeInboxPath } from "../../config/paths.ts";
 
 interface InboxViewProps {
   inboxStore: InboxStore;
@@ -44,7 +44,9 @@ export function InboxView({ inboxStore, teamName, agentName, onClose, onSend }: 
     let cleanup: (() => void) | undefined;
     try {
       cleanup = watchFile(claudeInboxPath(teamName, agentName), load);
-    } catch { /* file may not exist */ }
+    } catch {
+      /* file may not exist */
+    }
     return () => cleanup?.();
   }, [inboxStore, teamName, agentName]);
 
@@ -126,20 +128,17 @@ export function InboxView({ inboxStore, teamName, agentName, onClose, onSend }: 
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
-      title={` Inbox: ${agentName} (${messages.filter(m => !m.read).length} unread) `}
+      title={` Inbox: ${agentName} (${messages.filter((m) => !m.read).length} unread) `}
       flexDirection="column"
       paddingX={1}
     >
       <box flexGrow={1} flexDirection="column">
-        {visibleLines.map((line, i) => (
-          <text key={i} content={line.content} fg={line.fg} />
+        {visibleLines.map((line) => (
+          <text key={line.content} content={line.content} fg={line.fg} />
         ))}
       </box>
       <box height={1}>
-        <text
-          content="[j/k] scroll  [g/G] top/bottom  [m] send message  [Esc] back"
-          fg="#565f89"
-        />
+        <text content="[j/k] scroll  [g/G] top/bottom  [m] send message  [Esc] back" fg="#565f89" />
       </box>
     </box>
   );

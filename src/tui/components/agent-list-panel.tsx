@@ -58,59 +58,26 @@ export function AgentListPanel({ agents, selectedIndex, focused, teamName }: Age
     >
       {/* Compact agent list */}
       <box flexGrow={1} flexDirection="column">
-        <text
-          content={`  ${"NAME".padEnd(16)} ${"STATUS".padEnd(8)} INBOX`}
-          fg="#565f89"
-        />
+        <text content={`  ${"NAME".padEnd(16)} ${"STATUS".padEnd(8)} INBOX`} fg="#565f89" />
         {agents.map((agent, i) => {
           const isSelected = i === selectedIndex;
           const prefix = isSelected && focused ? ">" : " ";
           const statusIcon = agent.status === "alive" ? "*" : ".";
-          const inbox = agent.unreadCount > 0
-            ? `${agent.unreadCount} unread`
-            : "-";
+          const inbox = agent.unreadCount > 0 ? `${agent.unreadCount} unread` : "-";
 
           const line = `${prefix} ${agent.name.padEnd(16)} ${statusIcon} ${agent.status.padEnd(6)} ${inbox}`;
 
-          return (
-            <text
-              key={agent.agentId}
-              content={line}
-              fg={isSelected ? "#c0caf5" : "#a9b1d6"}
-            />
-          );
+          return <text key={agent.agentId} content={line} fg={isSelected ? "#c0caf5" : "#a9b1d6"} />;
         })}
       </box>
 
       {/* Detail section for selected agent */}
-      <box
-        height={7}
-        border
-        borderStyle="single"
-        borderColor="#565f89"
-        flexDirection="column"
-        paddingX={1}
-      >
-        <text
-          content={`Session  ${selected.sessionId || "-"}`}
-          fg="#a9b1d6"
-        />
-        <text
-          content={`CWD      ${selected.cwd}`}
-          fg="#a9b1d6"
-        />
-        <text
-          content={`Model    ${selected.model || "(default)"}`}
-          fg="#a9b1d6"
-        />
-        <text
-          content={`Args     ${selected.extraArgs?.length ? selected.extraArgs.join(" ") : "-"}`}
-          fg="#a9b1d6"
-        />
-        <text
-          content={`PID      ${selected.processId || "-"}`}
-          fg="#565f89"
-        />
+      <box height={7} border borderStyle="single" borderColor="#565f89" flexDirection="column" paddingX={1}>
+        <text content={`Session  ${selected.sessionId || "-"}`} fg="#a9b1d6" />
+        <text content={`CWD      ${selected.cwd}`} fg="#a9b1d6" />
+        <text content={`Model    ${selected.model || "(default)"}`} fg="#a9b1d6" />
+        <text content={`Args     ${selected.extraArgs?.length ? selected.extraArgs.join(" ") : "-"}`} fg="#a9b1d6" />
+        <text content={`PID      ${selected.processId || "-"}`} fg="#565f89" />
       </box>
     </box>
   );

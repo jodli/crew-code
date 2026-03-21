@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { planCreate, createTeam } from "./create-team.ts";
 import type { AppContext } from "../types/context.ts";
-import { ok, err } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
+import { createTeam, planCreate } from "./create-team.ts";
 
 function makeCtx(teamExists = false): AppContext {
   return {

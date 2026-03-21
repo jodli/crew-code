@@ -1,14 +1,14 @@
 import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { z } from "zod";
+import {
+  processRegistryDir as defaultRegistryDir,
+  processRegistryPath as defaultRegistryPath,
+} from "../config/paths.ts";
+import { readJson, withLock, writeJson } from "../lib/json-io.ts";
 import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
-import {
-  processRegistryPath as defaultRegistryPath,
-  processRegistryDir as defaultRegistryDir,
-} from "../config/paths.ts";
-import { readJson, writeJson, withLock } from "../lib/json-io.ts";
+import { err, ok } from "../types/result.ts";
 
 const RegistryEntrySchema = z.object({
   agentId: z.string(),
@@ -55,11 +55,7 @@ export class FileProcessRegistry implements ProcessRegistry {
     this.deps = { ...defaultDeps, ...deps };
   }
 
-  async activate(
-    teamName: string,
-    agentId: string,
-    pid: number,
-  ): Promise<Result<void>> {
+  async activate(teamName: string, agentId: string, pid: number): Promise<Result<void>> {
     const path = this.deps.registryPath(teamName);
     const dir = this.deps.registryDir(teamName);
 

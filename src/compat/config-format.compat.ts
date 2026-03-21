@@ -4,19 +4,19 @@
  * After an agent boots and responds, the config.json should still
  * match our expected schema (name, createdAt, leadAgentId, etc.).
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { TeamConfigSchema } from "../config/schemas.ts";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  readConfig,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  readConfig,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
-import { TeamConfigSchema } from "../config/schemas.ts";
 
 describe("compat: config format", () => {
   let team: TestTeam;

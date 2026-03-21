@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildClaudeArgs } from "../runtime/claude-args.ts";
-import type { TeamConfig, AgentLaunchInfo } from "../types/domain.ts";
+import type { AgentLaunchInfo, TeamConfig } from "../types/domain.ts";
 
 /**
  * These tests ensure our config.json structure matches what Claude Code's
@@ -46,9 +46,7 @@ describe("protocol conformance", () => {
 
   test("TeamConfig has leadSessionId field", () => {
     expect(config).toHaveProperty("leadSessionId");
-    expect(config.leadSessionId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-    );
+    expect(config.leadSessionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
 
   test("lead member has agentType 'team-lead'", () => {

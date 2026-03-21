@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { ok, err, type Result } from "./result.ts";
 import type { CrewError } from "./errors.ts";
+import { err, ok, type Result } from "./result.ts";
 
 describe("Result helpers", () => {
   test("ok(value) returns { ok: true, value }", () => {

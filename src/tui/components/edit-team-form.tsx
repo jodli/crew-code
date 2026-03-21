@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import type { InputRenderable, KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
-import type { KeyEvent, InputRenderable } from "@opentui/core";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface EditTeamFormProps {
   teamName: string;
@@ -17,7 +17,7 @@ export function EditTeamForm({ teamName, currentDescription, onSubmit, onCancel 
     if (inputRef.current && currentDescription) {
       inputRef.current.value = currentDescription;
     }
-  }, []);
+  }, [currentDescription]);
 
   const handleSubmit = useCallback(() => {
     const val = inputRef.current?.value ?? description;
@@ -25,11 +25,14 @@ export function EditTeamForm({ teamName, currentDescription, onSubmit, onCancel 
   }, [description, onSubmit]);
 
   useKeyboard(
-    useCallback((key: KeyEvent) => {
-      if (key.name === "escape") {
-        onCancel();
-      }
-    }, [onCancel]),
+    useCallback(
+      (key: KeyEvent) => {
+        if (key.name === "escape") {
+          onCancel();
+        }
+      },
+      [onCancel],
+    ),
   );
 
   return (

@@ -14,10 +14,7 @@ function makeMember(overrides: Partial<MemberDetail> & { name: string }): Member
 
 describe("useAgents — data layer", () => {
   test("returns dead status when agent is not in live set", () => {
-    const members: MemberDetail[] = [
-      makeMember({ name: "team-lead" }),
-      makeMember({ name: "coder" }),
-    ];
+    const members: MemberDetail[] = [makeMember({ name: "team-lead" }), makeMember({ name: "coder" })];
 
     const liveAgentIds = new Set<string>();
     const agents = members.map((m) => toAgentSummary(m, liveAgentIds));

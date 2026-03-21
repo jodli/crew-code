@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { attachAgent } from "./attach.ts";
-import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
-import type { TeamConfig } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
 import { makeConfigStore as makeBaseConfigStore, makeInboxStore } from "../test/helpers.ts";
+import type { AppContext } from "../types/context.ts";
+import type { TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
+import { attachAgent } from "./attach.ts";
 
 const baseConfig: TeamConfig = {
   name: "test-team",
@@ -48,9 +48,7 @@ function makeConfigStore(config: TeamConfig | null = baseConfig): ConfigStore {
   });
 }
 
-function makeCtx(overrides?: {
-  configStore?: ConfigStore;
-}): AppContext {
+function makeCtx(overrides?: { configStore?: ConfigStore }): AppContext {
   return {
     configStore: overrides?.configStore ?? makeConfigStore(),
     inboxStore: makeInboxStore(),
@@ -96,9 +94,7 @@ describe("core/attach", () => {
     if (result.ok) {
       expect(result.value.launchOptions.agentId).toBe("scout@test-team");
       expect(result.value.launchOptions.sessionId).toBe("scout-session-uuid");
-      expect(result.value.launchOptions.parentSessionId).toBe(
-        "lead-session-uuid",
-      );
+      expect(result.value.launchOptions.parentSessionId).toBe("lead-session-uuid");
       expect(result.value.launchOptions.model).toBe("opus");
       expect(result.value.launchOptions.color).toBe("blue");
     }
@@ -160,5 +156,4 @@ describe("core/attach", () => {
       expect(result.error.kind).toBe("no_session_id");
     }
   });
-
 });

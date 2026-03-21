@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { removeAgent } from "./remove-agent.ts";
+import { makeConfigStore, makeInboxStore } from "../test/helpers.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok } from "../types/result.ts";
-import { makeConfigStore, makeInboxStore } from "../test/helpers.ts";
+import { removeAgent } from "./remove-agent.ts";
 
 const baseConfig: TeamConfig = {
   name: "t",

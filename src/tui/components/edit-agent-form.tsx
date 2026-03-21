@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import type { InputRenderable, KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
-import type { KeyEvent, InputRenderable } from "@opentui/core";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AgentSummary } from "../hooks/use-agents.ts";
 
 interface EditAgentFormProps {
@@ -10,20 +10,13 @@ interface EditAgentFormProps {
   onCancel: () => void;
 }
 
-const MODEL_OPTIONS = [
-  "(default)",
-  "claude-sonnet-4-6",
-  "claude-opus-4-6",
-  "claude-haiku-4-5-20251001",
-] as const;
+const MODEL_OPTIONS = ["(default)", "claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001"] as const;
 
 type Field = "model" | "prompt" | "color" | "args";
 const fields: Field[] = ["model", "prompt", "color", "args"];
 
 export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }: EditAgentFormProps) {
-  const initialModelIndex = agent.model
-    ? MODEL_OPTIONS.indexOf(agent.model as typeof MODEL_OPTIONS[number])
-    : 0;
+  const initialModelIndex = agent.model ? MODEL_OPTIONS.indexOf(agent.model as (typeof MODEL_OPTIONS)[number]) : 0;
 
   const [modelIndex, setModelIndex] = useState(initialModelIndex >= 0 ? initialModelIndex : 0);
   const [prompt, setPrompt] = useState(agent.prompt ?? "");
@@ -39,7 +32,7 @@ export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }
     if (promptRef.current && agent.prompt) promptRef.current.value = agent.prompt;
     if (colorRef.current && agent.color) colorRef.current.value = agent.color;
     if (argsRef.current && agent.extraArgs?.length) argsRef.current.value = agent.extraArgs.join(" ");
-  }, []);
+  }, [agent.color, agent.extraArgs?.join, agent.extraArgs?.length, agent.prompt]);
 
   const handleSubmit = useCallback(() => {
     const selectedModel = modelIndex === 0 ? undefined : MODEL_OPTIONS[modelIndex];
@@ -56,34 +49,43 @@ export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }
   }, [modelIndex, prompt, color, args, onSubmit]);
 
   useKeyboard(
-    useCallback((key: KeyEvent) => {
-      if (key.name === "escape") {
-        onCancel();
-        return;
-      }
-
-      if (key.name === "tab") {
-        const idx = fields.indexOf(activeField);
-        const next = key.shift
-          ? fields[(idx - 1 + fields.length) % fields.length]
-          : fields[(idx + 1) % fields.length];
-        setActiveField(next);
-        return;
-      }
-
-      if (activeField === "model") {
-        if (key.name === "left" || key.name === "h") {
-          setModelIndex((i) => (i - 1 + MODEL_OPTIONS.length) % MODEL_OPTIONS.length);
-        } else if (key.name === "right" || key.name === "l") {
-          setModelIndex((i) => (i + 1) % MODEL_OPTIONS.length);
-        } else if (key.name === "return") {
-          handleSubmit();
+    useCallback(
+      (key: KeyEvent) => {
+        if (key.name === "escape") {
+          onCancel();
+          return;
         }
-      }
-    }, [activeField, onCancel, handleSubmit]),
+
+        if (key.name === "tab") {
+          const idx = fields.indexOf(activeField);
+          const next = key.shift
+            ? fields[(idx - 1 + fields.length) % fields.length]
+            : fields[(idx + 1) % fields.length];
+          setActiveField(next);
+          return;
+        }
+
+        if (activeField === "model") {
+          if (key.name === "left" || key.name === "h") {
+            setModelIndex((i) => (i - 1 + MODEL_OPTIONS.length) % MODEL_OPTIONS.length);
+          } else if (key.name === "right" || key.name === "l") {
+            setModelIndex((i) => (i + 1) % MODEL_OPTIONS.length);
+          } else if (key.name === "return") {
+            handleSubmit();
+          }
+        }
+      },
+      [activeField, onCancel, handleSubmit],
+    ),
   );
 
-  const textInputRow = (field: Field, label: string, placeholder: string, ref: React.RefObject<InputRenderable | null>, onInput: (val: string) => void) => {
+  const textInputRow = (
+    field: Field,
+    label: string,
+    placeholder: string,
+    ref: React.RefObject<InputRenderable | null>,
+    onInput: (val: string) => void,
+  ) => {
     const active = activeField === field;
     const prefix = active ? "> " : "  ";
     return (

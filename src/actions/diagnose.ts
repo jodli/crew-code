@@ -1,1 +1,1 @@
-export { diagnose, applyFixes } from "../core/doctor.ts";
+export { applyFixes, diagnose } from "../core/doctor.ts";

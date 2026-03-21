@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
-import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
+import { useKeyboard } from "@opentui/react";
+import { useCallback, useState } from "react";
 
 interface SendMessageFormProps {
   teamName: string;
@@ -18,11 +18,14 @@ export function SendMessageForm({ teamName, agentName, onSubmit, onCancel }: Sen
   }, [message, onSubmit]);
 
   useKeyboard(
-    useCallback((key: KeyEvent) => {
-      if (key.name === "escape") {
-        onCancel();
-      }
-    }, [onCancel]),
+    useCallback(
+      (key: KeyEvent) => {
+        if (key.name === "escape") {
+          onCancel();
+        }
+      },
+      [onCancel],
+    ),
   );
 
   return (

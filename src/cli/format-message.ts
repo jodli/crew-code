@@ -19,11 +19,7 @@ export function truncateText(text: string, full: boolean): string {
   if (full) return text;
   const lines = text.split("\n");
   if (lines.length <= MAX_LINES) return text;
-  return (
-    lines.slice(0, MAX_LINES).join("\n") +
-    "\n" +
-    pc.dim("[truncated — use --full to see complete message]")
-  );
+  return `${lines.slice(0, MAX_LINES).join("\n")}\n${pc.dim("[truncated — use --full to see complete message]")}`;
 }
 
 export function renderMessage(msg: InboxMessage, full: boolean): string {

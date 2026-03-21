@@ -1,22 +1,32 @@
 import { describe, expect, test } from "bun:test";
-import { killAgent } from "./kill-agent.ts";
 import type { ProcessRegistry } from "../ports/process-registry.ts";
 import { ok } from "../types/result.ts";
+import { killAgent } from "./kill-agent.ts";
 
 function makeMockRegistry(entries: Map<string, number> = new Map()): ProcessRegistry & { killed: string[] } {
   const killed: string[] = [];
   return {
     killed,
-    async activate() { return ok(undefined); },
-    async deactivate() { return ok(undefined); },
-    async isAlive(_team, agentId) { return entries.has(agentId); },
+    async activate() {
+      return ok(undefined);
+    },
+    async deactivate() {
+      return ok(undefined);
+    },
+    async isAlive(_team, agentId) {
+      return entries.has(agentId);
+    },
     async kill(_team, agentId) {
       killed.push(agentId);
       entries.delete(agentId);
       return ok(true);
     },
-    async listActive() { return ok([]); },
-    async cleanup() { return ok(undefined); },
+    async listActive() {
+      return ok([]);
+    },
+    async cleanup() {
+      return ok(undefined);
+    },
   };
 }
 

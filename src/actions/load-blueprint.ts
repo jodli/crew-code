@@ -1,1 +1,1 @@
-export { planLoad, executeLoad } from "../core/blueprint-load.ts";
+export { executeLoad, planLoad } from "../core/blueprint-load.ts";

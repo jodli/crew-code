@@ -1,16 +1,13 @@
 import { existsSync } from "node:fs";
-import { readdir, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { claudeTeamConfigPath as defaultConfigPath, claudeTeamsDir as defaultTeamsDir } from "../config/paths.ts";
+import { TeamConfigSchema } from "../config/schemas.ts";
+import { readJson, withLock, writeJson } from "../lib/json-io.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
-import {
-  claudeTeamConfigPath as defaultConfigPath,
-  claudeTeamsDir as defaultTeamsDir,
-} from "../config/paths.ts";
-import { TeamConfigSchema } from "../config/schemas.ts";
-import { readJson, writeJson, withLock } from "../lib/json-io.ts";
+import { err, ok } from "../types/result.ts";
 
 export interface ConfigStoreDeps {
   configPath: (name: string) => string;
@@ -34,10 +31,7 @@ export class JsonFileConfigStore implements ConfigStore {
     return readJson(path, TeamConfigSchema);
   }
 
-  async updateTeam(
-    name: string,
-    updater: (config: TeamConfig) => TeamConfig,
-  ): Promise<Result<TeamConfig>> {
+  async updateTeam(name: string, updater: (config: TeamConfig) => TeamConfig): Promise<Result<TeamConfig>> {
     const path = this.deps.configPath(name);
 
     const lockResult = await withLock(path, async () => {
@@ -85,7 +79,7 @@ export class JsonFileConfigStore implements ConfigStore {
 
     // Exclusive create (wx) prevents TOCTOU race between existsSync and write
     try {
-      const content = JSON.stringify(config, null, 2) + "\n";
+      const content = `${JSON.stringify(config, null, 2)}\n`;
       await writeFile(path, content, { flag: "wx" });
       return ok(undefined);
     } catch (e: unknown) {

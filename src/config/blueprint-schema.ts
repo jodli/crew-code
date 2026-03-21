@@ -12,10 +12,12 @@ export const BlueprintAgentSchema = z.object({
 export const BlueprintSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
-  agents: z.array(BlueprintAgentSchema).min(1).refine(
-    (agents) => agents.filter((a) => a.agentType === "team-lead").length <= 1,
-    { message: "Blueprint must have at most one team-lead agent" },
-  ),
+  agents: z
+    .array(BlueprintAgentSchema)
+    .min(1)
+    .refine((agents) => agents.filter((a) => a.agentType === "team-lead").length <= 1, {
+      message: "Blueprint must have at most one team-lead agent",
+    }),
 });
 
 export type Blueprint = z.infer<typeof BlueprintSchema>;

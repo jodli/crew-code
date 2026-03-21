@@ -1,13 +1,15 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
 import { z } from "zod";
-import type { Env } from "../server.ts";
+import { applyFixes, diagnose } from "../../actions/diagnose.ts";
 import { errorResponse } from "../errors.ts";
-import { diagnose, applyFixes } from "../../actions/diagnose.ts";
+import type { Env } from "../server.ts";
 
-const FixBody = z.object({
-  team: z.string().optional(),
-}).optional();
+const FixBody = z
+  .object({
+    team: z.string().optional(),
+  })
+  .optional();
 
 export function doctorRoutes() {
   const r = new Hono<Env>();

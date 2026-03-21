@@ -23,10 +23,7 @@ export interface FixResult {
   message: string;
 }
 
-export async function diagnose(
-  ctx: AppContext,
-  input: DiagnoseInput,
-): Promise<Result<DiagnosticResult[]>> {
+export async function diagnose(ctx: AppContext, input: DiagnoseInput): Promise<Result<DiagnosticResult[]>> {
   const results: DiagnosticResult[] = [];
 
   // Check 1: claude CLI installed
@@ -131,10 +128,7 @@ export async function diagnose(
           team: teamName,
           fixable: true,
           fix: async (fixCtx: AppContext) => {
-            const deleteResult = await fixCtx.inboxStore.deleteInbox(
-              teamName,
-              inbox,
-            );
+            const deleteResult = await fixCtx.inboxStore.deleteInbox(teamName, inbox);
             if (!deleteResult.ok) return deleteResult;
             return ok(`Deleted orphaned inbox "${inbox}" in team "${teamName}"`);
           },
@@ -148,10 +142,7 @@ export async function diagnose(
         const readResult = await ctx.inboxStore.readMessages(teamName, inbox);
         if (!readResult.ok) {
           const error = readResult.error;
-          if (
-            error.kind === "json_parse_failed" ||
-            error.kind === "schema_validation_failed"
-          ) {
+          if (error.kind === "json_parse_failed" || error.kind === "schema_validation_failed") {
             results.push({
               checkId: "inbox-json",
               status: "error",
@@ -169,10 +160,7 @@ export async function diagnose(
   return ok(results);
 }
 
-export async function applyFixes(
-  ctx: AppContext,
-  diagnostics: DiagnosticResult[],
-): Promise<Result<FixResult[]>> {
+export async function applyFixes(ctx: AppContext, diagnostics: DiagnosticResult[]): Promise<Result<FixResult[]>> {
   const fixResults: FixResult[] = [];
 
   for (const diag of diagnostics) {

@@ -1,11 +1,11 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createApp } from "../server.ts";
+import { join } from "node:path";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import type { AppContext } from "../../types/context.ts";
+import { createApp } from "../server.ts";
 
 let tmpDir: string;
 let app: ReturnType<typeof createApp>;
@@ -59,7 +59,7 @@ describe("POST /api/teams/:name/agents", () => {
     await createTeam("alpha");
     const res = await app.request("/api/teams/alpha/agents", json({ name: "coder" }));
     expect(res.status).toBe(201);
-    const body = await res.json() as Record<string, unknown>;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.name).toBe("coder");
     expect(body.team).toBe("alpha");
     expect(body.launchOptions).toBeDefined();
@@ -83,7 +83,7 @@ describe("PATCH /api/teams/:name/agents/:agent", () => {
       body: JSON.stringify({ model: "claude-sonnet-4-6" }),
     });
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.model).toBe("claude-sonnet-4-6");
   });
 

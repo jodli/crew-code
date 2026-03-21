@@ -1,12 +1,12 @@
 import { defineCommand } from "citty";
 import Table from "cli-table3";
+import { getBlueprint } from "../../../actions/get-blueprint.ts";
+import { listBlueprints } from "../../../actions/list-blueprints.ts";
 import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
 import { YamlBlueprintStore } from "../../../adapters/yaml-blueprint-store.ts";
-import { listBlueprints } from "../../../actions/list-blueprints.ts";
-import { getBlueprint } from "../../../actions/get-blueprint.ts";
-import { renderError } from "../../errors.ts";
 import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -39,11 +39,7 @@ export default defineCommand({
     for (const name of namesResult.value) {
       const bp = await getBlueprint(ctx, name);
       if (bp.ok) {
-        table.push([
-          bp.value.name,
-          bp.value.description ?? "",
-          String(bp.value.agents.length),
-        ]);
+        table.push([bp.value.name, bp.value.description ?? "", String(bp.value.agents.length)]);
       }
     }
 

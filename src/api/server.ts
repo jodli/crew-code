@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { AppContext } from "../types/context.ts";
-import { teamRoutes } from "./routes/teams.ts";
 import { agentRoutes } from "./routes/agents.ts";
-import { messageRoutes } from "./routes/messages.ts";
-import { doctorRoutes } from "./routes/doctor.ts";
 import { blueprintRoutes } from "./routes/blueprints.ts";
+import { doctorRoutes } from "./routes/doctor.ts";
+import { messageRoutes } from "./routes/messages.ts";
+import { teamRoutes } from "./routes/teams.ts";
 
 export type Env = {
   Variables: {

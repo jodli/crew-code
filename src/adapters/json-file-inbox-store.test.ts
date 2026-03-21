@@ -1,10 +1,10 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, readFile, rm, mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
-import { JsonFileInboxStore } from "./json-file-inbox-store.ts";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { InboxMessage } from "../types/domain.ts";
+import { JsonFileInboxStore } from "./json-file-inbox-store.ts";
 
 let tmpDir: string;
 let store: JsonFileInboxStore;
@@ -13,8 +13,7 @@ beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), "crew-inbox-test-"));
   store = new JsonFileInboxStore({
     inboxesDir: (team: string) => join(tmpDir, team, "inboxes"),
-    inboxPath: (team: string, agent: string) =>
-      join(tmpDir, team, "inboxes", `${agent}.json`),
+    inboxPath: (team: string, agent: string) => join(tmpDir, team, "inboxes", `${agent}.json`),
   });
 });
 
@@ -86,10 +85,7 @@ describe("JsonFileInboxStore", () => {
           read: true,
         },
       ];
-      await writeFile(
-        join(inboxesDir, "agent1.json"),
-        JSON.stringify(messages, null, 2),
-      );
+      await writeFile(join(inboxesDir, "agent1.json"), JSON.stringify(messages, null, 2));
 
       const result = await store.readMessages("test-team", "agent1");
       expect(result.ok).toBe(true);
@@ -121,10 +117,7 @@ describe("JsonFileInboxStore", () => {
           read: true,
         },
       ];
-      await writeFile(
-        join(inboxesDir, "agent1.json"),
-        JSON.stringify(existing, null, 2),
-      );
+      await writeFile(join(inboxesDir, "agent1.json"), JSON.stringify(existing, null, 2));
 
       const newMsg: InboxMessage = {
         from: "external",
@@ -136,9 +129,7 @@ describe("JsonFileInboxStore", () => {
       const result = await store.appendMessage("test-team", "agent1", newMsg);
       expect(result.ok).toBe(true);
 
-      const content = JSON.parse(
-        await readFile(join(inboxesDir, "agent1.json"), "utf-8"),
-      );
+      const content = JSON.parse(await readFile(join(inboxesDir, "agent1.json"), "utf-8"));
       expect(content).toHaveLength(2);
       expect(content[0].from).toBe("team-lead");
       expect(content[1].from).toBe("external");
@@ -206,9 +197,7 @@ describe("JsonFileInboxStore", () => {
         expect(r.ok).toBe(true);
       }
 
-      const content = JSON.parse(
-        await readFile(join(inboxesDir, "agent1.json"), "utf-8"),
-      );
+      const content = JSON.parse(await readFile(join(inboxesDir, "agent1.json"), "utf-8"));
       expect(content).toHaveLength(5);
     });
   });

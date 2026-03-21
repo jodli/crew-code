@@ -1,5 +1,5 @@
-import type { TeamConfig } from "../types/domain.ts";
 import type { Blueprint, BlueprintAgent } from "../config/blueprint-schema.ts";
+import type { TeamConfig } from "../types/domain.ts";
 
 export function teamToBlueprint(config: TeamConfig): Blueprint {
   const agents: BlueprintAgent[] = config.members.map((m) => {

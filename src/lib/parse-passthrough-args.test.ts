@@ -7,9 +7,11 @@ describe("parsePassthroughArgs", () => {
   });
 
   test("returns args after -- separator", () => {
-    expect(
-      parsePassthroughArgs(["create", "my-team", "--", "--verbose", "--effort", "high"]),
-    ).toEqual(["--verbose", "--effort", "high"]);
+    expect(parsePassthroughArgs(["create", "my-team", "--", "--verbose", "--effort", "high"])).toEqual([
+      "--verbose",
+      "--effort",
+      "high",
+    ]);
   });
 
   test("returns empty array when -- is last element", () => {
@@ -17,9 +19,7 @@ describe("parsePassthroughArgs", () => {
   });
 
   test("uses first -- occurrence", () => {
-    expect(
-      parsePassthroughArgs(["create", "--", "--foo", "--", "--bar"]),
-    ).toEqual(["--foo", "--", "--bar"]);
+    expect(parsePassthroughArgs(["create", "--", "--foo", "--", "--bar"])).toEqual(["--foo", "--", "--bar"]);
   });
 
   test("returns empty array for empty input", () => {

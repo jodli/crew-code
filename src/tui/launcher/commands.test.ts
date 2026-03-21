@@ -1,45 +1,58 @@
 import { describe, expect, test } from "bun:test";
-import { buildSpawnCommand, buildCreateCommand, buildAttachCommand } from "./commands.ts";
+import { buildAttachCommand, buildCreateCommand, buildSpawnCommand } from "./commands.ts";
 
 describe("buildSpawnCommand", () => {
   test("minimal: team only", () => {
-    expect(buildSpawnCommand("my-team", {})).toEqual([
-      "crew", "spawn", "--team", "my-team",
-    ]);
+    expect(buildSpawnCommand("my-team", {})).toEqual(["crew", "spawn", "--team", "my-team"]);
   });
 
   test("with all options", () => {
-    expect(buildSpawnCommand("my-team", {
-      name: "coder",
-      prompt: "Implement auth",
-      model: "opus",
-    })).toEqual([
-      "crew", "spawn", "--team", "my-team",
-      "--name", "coder",
-      "--prompt", "Implement auth",
-      "--model", "opus",
+    expect(
+      buildSpawnCommand("my-team", {
+        name: "coder",
+        prompt: "Implement auth",
+        model: "opus",
+      }),
+    ).toEqual([
+      "crew",
+      "spawn",
+      "--team",
+      "my-team",
+      "--name",
+      "coder",
+      "--prompt",
+      "Implement auth",
+      "--model",
+      "opus",
     ]);
   });
 
   test("skips empty strings", () => {
     expect(buildSpawnCommand("t", { name: "", prompt: "do stuff", model: "" })).toEqual([
-      "crew", "spawn", "--team", "t",
-      "--prompt", "do stuff",
+      "crew",
+      "spawn",
+      "--team",
+      "t",
+      "--prompt",
+      "do stuff",
     ]);
   });
 
   test("appends -- and extra args when provided", () => {
     expect(buildSpawnCommand("my-team", { name: "coder", extraArgs: ["--verbose"] })).toEqual([
-      "crew", "spawn", "--team", "my-team",
-      "--name", "coder",
-      "--", "--verbose",
+      "crew",
+      "spawn",
+      "--team",
+      "my-team",
+      "--name",
+      "coder",
+      "--",
+      "--verbose",
     ]);
   });
 
   test("omits -- when extraArgs is empty", () => {
-    expect(buildSpawnCommand("my-team", { extraArgs: [] })).toEqual([
-      "crew", "spawn", "--team", "my-team",
-    ]);
+    expect(buildSpawnCommand("my-team", { extraArgs: [] })).toEqual(["crew", "spawn", "--team", "my-team"]);
   });
 });
 
@@ -50,8 +63,14 @@ describe("buildCreateCommand", () => {
 
   test("appends -- and extra args when provided", () => {
     expect(buildCreateCommand("alpha", ["--verbose", "--effort", "high"])).toEqual([
-      "crew", "create", "--name", "alpha",
-      "--", "--verbose", "--effort", "high",
+      "crew",
+      "create",
+      "--name",
+      "alpha",
+      "--",
+      "--verbose",
+      "--effort",
+      "high",
     ]);
   });
 
@@ -62,21 +81,23 @@ describe("buildCreateCommand", () => {
 
 describe("buildAttachCommand", () => {
   test("builds attach command", () => {
-    expect(buildAttachCommand("alpha", "coder")).toEqual([
-      "crew", "attach", "--team", "alpha", "--name", "coder",
-    ]);
+    expect(buildAttachCommand("alpha", "coder")).toEqual(["crew", "attach", "--team", "alpha", "--name", "coder"]);
   });
 
   test("appends -- and extra args when provided", () => {
     expect(buildAttachCommand("alpha", "coder", ["--verbose"])).toEqual([
-      "crew", "attach", "--team", "alpha", "--name", "coder",
-      "--", "--verbose",
+      "crew",
+      "attach",
+      "--team",
+      "alpha",
+      "--name",
+      "coder",
+      "--",
+      "--verbose",
     ]);
   });
 
   test("omits -- when extra args is empty", () => {
-    expect(buildAttachCommand("alpha", "coder", [])).toEqual([
-      "crew", "attach", "--team", "alpha", "--name", "coder",
-    ]);
+    expect(buildAttachCommand("alpha", "coder", [])).toEqual(["crew", "attach", "--team", "alpha", "--name", "coder"]);
   });
 });

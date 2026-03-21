@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Hono } from "hono";
-import { errorStatus, errorResponse } from "../errors.ts";
 import type { CrewError } from "../../types/errors.ts";
+import { errorResponse, errorStatus } from "../errors.ts";
 
 describe("errorStatus", () => {
   test("maps not-found errors to 404", () => {
@@ -44,7 +44,7 @@ describe("errorResponse", () => {
     const res = await app.request("/test");
     expect(res.status).toBe(404);
 
-    const body = await res.json() as { error: { kind: string; message: string } };
+    const body = (await res.json()) as { error: { kind: string; message: string } };
     expect(body.error.kind).toBe("team_not_found");
     expect(body.error.message).toContain("alpha");
   });

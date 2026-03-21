@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { planCreate, executeCreate, type CreatePlan } from "./create.ts";
-import type { AppContext } from "../types/context.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
-import type { TeamConfig } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
 import { makeConfigStore as makeBaseConfigStore, makeInboxStore } from "../test/helpers.ts";
+import type { AppContext } from "../types/context.ts";
+import type { TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
+import { type CreatePlan, executeCreate, planCreate } from "./create.ts";
 
 let createdConfig: TeamConfig | undefined;
 

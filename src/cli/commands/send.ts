@@ -3,8 +3,8 @@ import pc from "picocolors";
 import { sendMessage } from "../../actions/send-message.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -51,8 +51,6 @@ export default defineCommand({
       process.exit(1);
     }
 
-    console.error(
-      `Message sent to ${pc.bold(args.agent)} in team ${pc.bold(args.team)}.`,
-    );
+    console.error(`Message sent to ${pc.bold(args.agent)} in team ${pc.bold(args.team)}.`);
   },
 });

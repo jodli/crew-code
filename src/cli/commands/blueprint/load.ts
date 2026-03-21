@@ -3,9 +3,9 @@ import pc from "picocolors";
 import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
 import { YamlBlueprintStore } from "../../../adapters/yaml-blueprint-store.ts";
-import { planLoad, executeLoad } from "../../../core/blueprint-load.ts";
-import { renderError } from "../../errors.ts";
+import { executeLoad, planLoad } from "../../../core/blueprint-load.ts";
 import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -69,7 +69,9 @@ export default defineCommand({
     console.error(pc.bold(`Team "${result.value.teamName}" created from blueprint.`));
     if (!result.value.hasLead) {
       console.error(`\n  ${pc.yellow("Warning:")} No team-lead agent in blueprint. Spawn one for permission requests:`);
-      console.error(`  ${pc.cyan(`crew spawn --team ${result.value.teamName} --agent-type team-lead --name team-lead`)}`);
+      console.error(
+        `  ${pc.cyan(`crew spawn --team ${result.value.teamName} --agent-type team-lead --name team-lead`)}`,
+      );
     }
     console.error(`\nAttach to agents:`);
     for (const opts of result.value.launchOptions) {

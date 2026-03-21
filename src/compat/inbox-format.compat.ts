@@ -4,18 +4,18 @@
  * After an agent processes its inbox, the file should still be
  * a JSON array of message objects with the expected fields.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { z } from "zod";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  pollInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  pollInbox,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
 
 const InboxMessageSchema = z.object({

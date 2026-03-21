@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { planRemove, executeRemove } from "./remove.ts";
+import { makeConfigStore, makeInboxStore, makeProcessRegistry } from "../test/helpers.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
-import { makeConfigStore, makeInboxStore, makeProcessRegistry } from "../test/helpers.ts";
+import { err, ok } from "../types/result.ts";
+import { executeRemove, planRemove } from "./remove.ts";
 
 function makeMockRegistry(aliveAgentIds: string[] = []) {
   return makeProcessRegistry({

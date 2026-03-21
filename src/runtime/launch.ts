@@ -1,7 +1,7 @@
 import type { AgentLaunchInfo } from "../types/domain.ts";
+import type { LaunchMode } from "./claude-args.ts";
 import { buildClaudeArgs, CLAUDE_TEAMS_ENV_VAR } from "./claude-args.ts";
 import { sessionExistsOnDisk } from "./claude-session.ts";
-import type { LaunchMode } from "./claude-args.ts";
 
 export interface LaunchResult {
   pid: number;
@@ -20,15 +20,10 @@ export function selectLaunchMode(
   info: AgentLaunchInfo,
   checkSession: (cwd: string, sessionId: string) => boolean,
 ): LaunchMode {
-  return info.sessionId && checkSession(info.cwd, info.sessionId)
-    ? "resume"
-    : "new";
+  return info.sessionId && checkSession(info.cwd, info.sessionId) ? "resume" : "new";
 }
 
-export function launchAgent(
-  info: AgentLaunchInfo,
-  deps: Partial<LaunchDeps> = {},
-): LaunchResult {
+export function launchAgent(info: AgentLaunchInfo, deps: Partial<LaunchDeps> = {}): LaunchResult {
   const { checkSession } = { ...defaultDeps, ...deps };
   const mode = selectLaunchMode(info, checkSession);
 

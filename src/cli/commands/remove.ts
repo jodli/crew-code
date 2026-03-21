@@ -1,13 +1,13 @@
+import { confirm } from "@clack/prompts";
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { confirm } from "@clack/prompts";
-import { planRemove } from "../../core/remove.ts";
 import { removeAgent } from "../../actions/remove-agent.ts";
 import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
+import { planRemove } from "../../core/remove.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -39,10 +39,14 @@ export default defineCommand({
       processRegistry,
     };
 
-    const planResult = await planRemove(ctx, {
-      team: args.team,
-      name: args.name,
-    }, processRegistry);
+    const planResult = await planRemove(
+      ctx,
+      {
+        team: args.team,
+        name: args.name,
+      },
+      processRegistry,
+    );
 
     if (!planResult.ok) {
       console.error(renderError(planResult.error));

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { makeConfigStore, makeCtx } from "../test/helpers.ts";
+import { err, ok } from "../types/result.ts";
 import { destroyTeam } from "./destroy-team.ts";
-import { ok, err } from "../types/result.ts";
-import { makeCtx, makeConfigStore } from "../test/helpers.ts";
 
 describe("actions/destroy-team", () => {
   test("propagates plan error (team_not_found)", async () => {
@@ -25,8 +25,7 @@ describe("actions/destroy-team", () => {
             leadSessionId: "x",
             members: [],
           }),
-        deleteTeam: async () =>
-          err({ kind: "file_write_failed", path: "/fake", detail: "boom" }),
+        deleteTeam: async () => err({ kind: "file_write_failed", path: "/fake", detail: "boom" }),
       }),
     });
 

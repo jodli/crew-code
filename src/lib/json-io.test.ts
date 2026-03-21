@@ -1,9 +1,9 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, writeFile, readFile, readdir, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { z } from "zod";
-import { readJson, writeJson, withLock } from "./json-io.ts";
+import { readJson, withLock, writeJson } from "./json-io.ts";
 
 const TestSchema = z.object({ name: z.string(), value: z.number() });
 
@@ -139,9 +139,7 @@ describe("lib/json-io", () => {
       expect(r2.ok).toBe(true);
 
       // p1 should complete before p2 starts
-      expect(order.indexOf("p1-end")).toBeLessThan(
-        order.indexOf("p2-start"),
-      );
+      expect(order.indexOf("p1-end")).toBeLessThan(order.indexOf("p2-start"));
     });
   });
 });

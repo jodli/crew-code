@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { validateName } from "../lib/validate-name.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
-import { validateName } from "../lib/validate-name.ts";
+import { err, ok } from "../types/result.ts";
 
 export interface CreateInput {
   name: string;
@@ -21,10 +21,7 @@ export interface CreateOutput {
   leadSessionId: string;
 }
 
-export async function planCreate(
-  ctx: AppContext,
-  input: CreateInput,
-): Promise<Result<CreatePlan>> {
+export async function planCreate(ctx: AppContext, input: CreateInput): Promise<Result<CreatePlan>> {
   const nameCheck = validateName(input.name, "team");
   if (!nameCheck.ok) return nameCheck as Result<never>;
 
@@ -40,10 +37,7 @@ export async function planCreate(
   });
 }
 
-export async function executeCreate(
-  ctx: AppContext,
-  plan: CreatePlan,
-): Promise<Result<CreateOutput>> {
+export async function executeCreate(ctx: AppContext, plan: CreatePlan): Promise<Result<CreateOutput>> {
   const config: TeamConfig = {
     name: plan.name,
     description: plan.description,

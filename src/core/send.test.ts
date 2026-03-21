@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { sendMessage, type SendInput } from "./send.ts";
-import type { AppContext } from "../types/context.ts";
-import type { TeamConfig, InboxMessage } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
 import { makeConfigStore } from "../test/helpers.ts";
+import type { AppContext } from "../types/context.ts";
+import type { InboxMessage, TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
+import { type SendInput, sendMessage } from "./send.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",
@@ -31,8 +31,7 @@ const sampleConfig: TeamConfig = {
   ],
 };
 
-let appendedMessages: { team: string; agent: string; message: InboxMessage }[] =
-  [];
+let appendedMessages: { team: string; agent: string; message: InboxMessage }[] = [];
 
 function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
   return {
@@ -145,8 +144,7 @@ describe("core/send", () => {
   test("maps config_not_found to team_not_found", async () => {
     const ctx = makeCtx({
       configStore: makeConfigStore({
-        getTeam: async () =>
-          err({ kind: "config_not_found", path: "/fake/path" }),
+        getTeam: async () => err({ kind: "config_not_found", path: "/fake/path" }),
       }),
     });
     const result = await sendMessage(ctx, {

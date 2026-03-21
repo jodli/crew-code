@@ -1,6 +1,6 @@
 import type { Launcher } from "./port.ts";
-import { TmuxLauncher } from "./tmux.ts";
 import { TerminalLauncher } from "./terminal.ts";
+import { TmuxLauncher } from "./tmux.ts";
 
 export type BackendType = "tmux" | "terminal";
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { teamToBlueprint } from "./blueprint-export.ts";
 import type { TeamConfig } from "../types/domain.ts";
+import { teamToBlueprint } from "./blueprint-export.ts";
 
 const baseConfig: TeamConfig = {
   name: "my-team",

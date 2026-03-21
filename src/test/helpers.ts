@@ -1,18 +1,16 @@
+import type { BlueprintStore } from "../ports/blueprint-store.ts";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { InboxStore } from "../ports/inbox-store.ts";
 import type { ProcessRegistry } from "../ports/process-registry.ts";
-import type { BlueprintStore } from "../ports/blueprint-store.ts";
 import type { AppContext } from "../types/context.ts";
-import type { TeamConfig, AgentMember, InboxMessage } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
+import type { AgentMember, InboxMessage, TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
 
 // ---------------------------------------------------------------------------
 // Store factories — flat no-ops with per-method overrides
 // ---------------------------------------------------------------------------
 
-export function makeConfigStore(
-  overrides: Partial<ConfigStore> = {},
-): ConfigStore {
+export function makeConfigStore(overrides: Partial<ConfigStore> = {}): ConfigStore {
   return {
     getTeam: async () => err({ kind: "team_not_found", team: "" }),
     updateTeam: async () => err({ kind: "team_not_found", team: "" }),
@@ -24,9 +22,7 @@ export function makeConfigStore(
   };
 }
 
-export function makeInboxStore(
-  overrides: Partial<InboxStore> = {},
-): InboxStore {
+export function makeInboxStore(overrides: Partial<InboxStore> = {}): InboxStore {
   return {
     createInbox: async () => ok(undefined),
     readMessages: async () => ok([] as InboxMessage[]),
@@ -38,9 +34,7 @@ export function makeInboxStore(
   };
 }
 
-export function makeProcessRegistry(
-  overrides: Partial<ProcessRegistry> = {},
-): ProcessRegistry {
+export function makeProcessRegistry(overrides: Partial<ProcessRegistry> = {}): ProcessRegistry {
   return {
     activate: async () => ok(undefined),
     deactivate: async () => ok(undefined),
@@ -52,9 +46,7 @@ export function makeProcessRegistry(
   };
 }
 
-export function makeBlueprintStore(
-  overrides: Partial<BlueprintStore> = {},
-): BlueprintStore {
+export function makeBlueprintStore(overrides: Partial<BlueprintStore> = {}): BlueprintStore {
   return {
     load: async (name) => err({ kind: "blueprint_not_found", name }),
     save: async () => ok("/fake/path.yaml"),
@@ -80,9 +72,7 @@ export function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
 // Fixture factories
 // ---------------------------------------------------------------------------
 
-export function makeMember(
-  overrides: Partial<AgentMember> & { name: string },
-): AgentMember {
+export function makeMember(overrides: Partial<AgentMember> & { name: string }): AgentMember {
   return {
     agentId: `${overrides.name}@test`,
     agentType: "general-purpose",
@@ -93,18 +83,14 @@ export function makeMember(
   };
 }
 
-export function makeTeamConfig(
-  overrides: Partial<TeamConfig> = {},
-): TeamConfig {
+export function makeTeamConfig(overrides: Partial<TeamConfig> = {}): TeamConfig {
   const name = overrides.name ?? "test-team";
   return {
     name,
     createdAt: 0,
     leadAgentId: `team-lead@${name}`,
     leadSessionId: "lead-session",
-    members: [
-      makeMember({ name: "team-lead", agentType: "team-lead" }),
-    ],
+    members: [makeMember({ name: "team-lead", agentType: "team-lead" })],
     ...overrides,
   };
 }

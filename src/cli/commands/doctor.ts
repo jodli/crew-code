@@ -1,10 +1,10 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { diagnose, applyFixes } from "../../core/doctor.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
+import { applyFixes, diagnose } from "../../core/doctor.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 const statusIcon = {
   ok: pc.green("✓"),
@@ -81,9 +81,7 @@ export default defineCommand({
     } else {
       const fixable = issues.filter((d) => d.fixable);
       if (fixable.length > 0) {
-        console.error(
-          pc.yellow(`\n${fixable.length} issue(s) can be auto-fixed. Run with --fix to repair.`),
-        );
+        console.error(pc.yellow(`\n${fixable.length} issue(s) can be auto-fixed. Run with --fix to repair.`));
       }
     }
   },

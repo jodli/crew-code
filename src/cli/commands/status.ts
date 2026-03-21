@@ -1,12 +1,12 @@
 import { defineCommand } from "citty";
-import pc from "picocolors";
 import Table from "cli-table3";
-import { listTeams, getTeamDetail } from "../../core/status.ts";
+import pc from "picocolors";
 import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
+import { getTeamDetail, listTeams } from "../../core/status.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -45,9 +45,7 @@ export default defineCommand({
       }
 
       const detail = result.value;
-      console.error(
-        `${pc.bold(detail.name)}${detail.description ? ` — ${detail.description}` : ""}`,
-      );
+      console.error(`${pc.bold(detail.name)}${detail.description ? ` — ${detail.description}` : ""}`);
 
       const table = new Table({
         head: ["Agent", "Status", "Session", "Unread", "CWD"],
@@ -89,11 +87,7 @@ export default defineCommand({
     });
 
     for (const t of result.value) {
-      table.push([
-        t.name,
-        t.description ?? "",
-        String(t.memberCount),
-      ]);
+      table.push([t.name, t.description ?? "", String(t.memberCount)]);
     }
 
     console.log(table.toString());

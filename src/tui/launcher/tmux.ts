@@ -4,14 +4,7 @@ export class TmuxLauncher implements Launcher {
   readonly name = "tmux";
 
   async openTerminal(command: string[], cwd: string, label?: string): Promise<void> {
-    const args = [
-      "new-window",
-      "-d",
-      "-c", cwd,
-      ...(label ? ["-n", label] : []),
-      "--",
-      ...command,
-    ];
+    const args = ["new-window", "-d", "-c", cwd, ...(label ? ["-n", label] : []), "--", ...command];
 
     const proc = Bun.spawn(["tmux", ...args], {
       stdout: "pipe",

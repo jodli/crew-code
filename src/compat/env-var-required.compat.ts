@@ -5,15 +5,15 @@
  * should be silently ignored and Claude starts as a normal session.
  * We detect this by checking that the agent does NOT read/process its inbox.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  readInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  readInbox,
-  COMPAT_MODEL,
   type TestTeam,
 } from "./helpers.ts";
 

@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { claudeTeamsDir } from "../../config/paths.ts";
+import { debounce, watchDir } from "../../lib/file-watcher.ts";
 import type { ConfigStore } from "../../ports/config-store.ts";
 import type { ProcessRegistry } from "../../ports/process-registry.ts";
 import type { TeamConfig } from "../../types/domain.ts";
-import { watchDir, debounce } from "../../lib/file-watcher.ts";
-import { claudeTeamsDir } from "../../config/paths.ts";
 
 export interface TeamSummary {
   name: string;
@@ -13,13 +13,8 @@ export interface TeamSummary {
   createdAt: number;
 }
 
-function summarizeTeam(
-  config: TeamConfig,
-  liveAgentIds: Set<string>,
-): TeamSummary {
-  const aliveCount = config.members.filter((m) =>
-    liveAgentIds.has(m.agentId),
-  ).length;
+function summarizeTeam(config: TeamConfig, liveAgentIds: Set<string>): TeamSummary {
+  const aliveCount = config.members.filter((m) => liveAgentIds.has(m.agentId)).length;
 
   return {
     name: config.name,
@@ -30,19 +25,14 @@ function summarizeTeam(
   };
 }
 
-export function useTeams(
-  configStore: ConfigStore,
-  processRegistry?: ProcessRegistry,
-) {
+export function useTeams(configStore: ConfigStore, processRegistry?: ProcessRegistry) {
   const [teams, setTeams] = useState<TeamSummary[]>([]);
 
   const refresh = useCallback(async () => {
     const namesResult = await configStore.listTeams();
     if (!namesResult.ok) return;
 
-    const configs = await Promise.all(
-      namesResult.value.map((n) => configStore.getTeam(n)),
-    );
+    const configs = await Promise.all(namesResult.value.map((n) => configStore.getTeam(n)));
 
     const validConfigs = configs.filter((r) => r.ok).map((r) => r.value);
 
@@ -69,8 +59,12 @@ export function useTeams(
     const cleanups: (() => void)[] = [];
     try {
       cleanups.push(watchDir(claudeTeamsDir(), () => debouncedRefresh()));
-    } catch { /* dir may not exist */ }
-    return () => cleanups.forEach((c) => c());
+    } catch {
+      /* dir may not exist */
+    }
+    return () => {
+      for (const c of cleanups) c();
+    };
   }, [refresh, debouncedRefresh]);
 
   return teams;

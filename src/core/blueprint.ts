@@ -1,9 +1,9 @@
-import type { AppContext } from "../types/context.ts";
 import type { Blueprint, BlueprintAgent } from "../config/blueprint-schema.ts";
 import { BlueprintSchema } from "../config/blueprint-schema.ts";
-import { teamToBlueprint } from "./blueprint-export.ts";
+import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
+import { teamToBlueprint } from "./blueprint-export.ts";
 
 function requireBlueprintStore(ctx: AppContext) {
   if (!ctx.blueprintStore) {
@@ -12,18 +12,13 @@ function requireBlueprintStore(ctx: AppContext) {
   return ok(ctx.blueprintStore);
 }
 
-export async function listBlueprints(
-  ctx: AppContext,
-): Promise<Result<string[]>> {
+export async function listBlueprints(ctx: AppContext): Promise<Result<string[]>> {
   const storeResult = requireBlueprintStore(ctx);
   if (!storeResult.ok) return storeResult;
   return storeResult.value.list();
 }
 
-export async function getBlueprint(
-  ctx: AppContext,
-  name: string,
-): Promise<Result<Blueprint>> {
+export async function getBlueprint(ctx: AppContext, name: string): Promise<Result<Blueprint>> {
   const storeResult = requireBlueprintStore(ctx);
   if (!storeResult.ok) return storeResult;
   return storeResult.value.load(name);
@@ -44,7 +39,7 @@ export async function createBlueprint(
     return err({ kind: "blueprint_invalid", name: blueprint.name ?? "unknown", detail });
   }
 
-  if (!opts?.overwrite && await store.exists(parseResult.data.name)) {
+  if (!opts?.overwrite && (await store.exists(parseResult.data.name))) {
     return err({ kind: "blueprint_already_exists", name: parseResult.data.name });
   }
 
@@ -57,10 +52,7 @@ export interface UpdateBlueprintInput {
   agents?: BlueprintAgent[];
 }
 
-export async function updateBlueprint(
-  ctx: AppContext,
-  input: UpdateBlueprintInput,
-): Promise<Result<Blueprint>> {
+export async function updateBlueprint(ctx: AppContext, input: UpdateBlueprintInput): Promise<Result<Blueprint>> {
   const storeResult = requireBlueprintStore(ctx);
   if (!storeResult.ok) return storeResult;
   const store = storeResult.value;
@@ -86,10 +78,7 @@ export async function updateBlueprint(
   return ok(parseResult.data);
 }
 
-export async function exportTeamAsBlueprint(
-  ctx: AppContext,
-  input: { team: string },
-): Promise<Result<Blueprint>> {
+export async function exportTeamAsBlueprint(ctx: AppContext, input: { team: string }): Promise<Result<Blueprint>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) return teamResult;
 

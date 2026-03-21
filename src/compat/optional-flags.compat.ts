@@ -4,17 +4,17 @@
  * --agent-color and --parent-session-id should remain optional.
  * Agent launched WITH these flags should still function normally.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  pollInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  pollInbox,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
 
 describe("compat: optional flags", () => {

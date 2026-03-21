@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { updateTeam } from "./update-team.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
+import { updateTeam } from "./update-team.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { listTeams, getTeamDetail, listAgents } from "./status.ts";
-import type { TeamConfig, InboxMessage } from "../types/domain.ts";
-import { ok, err } from "../types/result.ts";
-import { makeCtx, makeConfigStore, makeInboxStore } from "../test/helpers.ts";
+import { makeConfigStore, makeCtx, makeInboxStore } from "../test/helpers.ts";
+import type { InboxMessage, TeamConfig } from "../types/domain.ts";
+import { err, ok } from "../types/result.ts";
+import { getTeamDetail, listAgents, listTeams } from "./status.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",
@@ -106,9 +106,7 @@ describe("status core", () => {
         expect(result.value.name).toBe("my-team");
         expect(result.value.members).toHaveLength(2);
 
-        const lead = result.value.members.find(
-          (m) => m.name === "team-lead",
-        )!;
+        const lead = result.value.members.find((m) => m.name === "team-lead")!;
         expect(lead.unreadCount).toBe(2); // two messages with read: false
         expect(lead.sessionId).toBe("a1824be0-cc35-49a5-8874-fa2aa58cae81");
         expect(lead.processId).toBeUndefined();

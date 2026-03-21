@@ -4,17 +4,17 @@
  * When an agent launches, it should read and process its seeded inbox
  * message. We verify by checking that the seed message gets marked as read.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  pollInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  pollInbox,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
 
 describe("compat: inbox read on launch", () => {
@@ -31,11 +31,7 @@ describe("compat: inbox read on launch", () => {
     const agentName = "reader";
 
     await registerAgent(team, agentName, { model: COMPAT_MODEL });
-    await seedInbox(
-      team,
-      agentName,
-      "Welcome to the team! Please acknowledge with a brief greeting.",
-    );
+    await seedInbox(team, agentName, "Welcome to the team! Please acknowledge with a brief greeting.");
 
     paneId = await launchAgent(team, agentName, {
       model: COMPAT_MODEL,

@@ -1,13 +1,13 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
 import { attachAgent } from "../../actions/attach-agent.ts";
-import { launchAgent } from "../../runtime/launch.ts";
 import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
 import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
+import { launchAgent } from "../../runtime/launch.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -44,9 +44,7 @@ export default defineCommand({
       process.exit(1);
     }
 
-    console.error(
-      `Attaching as ${pc.bold(result.value.name)} to ${pc.bold(args.team)}...`,
-    );
+    console.error(`Attaching as ${pc.bold(result.value.name)} to ${pc.bold(args.team)}...`);
     console.error(`  Resuming session ${result.value.launchOptions.sessionId}\n`);
 
     const cliArgs = parsePassthroughArgs(rawArgs);
@@ -54,15 +52,15 @@ export default defineCommand({
       result.value.launchOptions.extraArgs = cliArgs;
       await ctx.configStore.updateTeam(args.team, (cfg) => ({
         ...cfg,
-        members: cfg.members.map((m) =>
-          m.agentId === result.value.agentId ? { ...m, extraArgs: cliArgs } : m,
-        ),
+        members: cfg.members.map((m) => (m.agentId === result.value.agentId ? { ...m, extraArgs: cliArgs } : m)),
       }));
     }
     const { pid, exited } = launchAgent(result.value.launchOptions);
     const activateResult = await processRegistry.activate(args.team, result.value.agentId, pid);
     if (!activateResult.ok) {
-      console.error(`Warning: failed to register process: ${"detail" in activateResult.error ? activateResult.error.detail : activateResult.error.kind}`);
+      console.error(
+        `Warning: failed to register process: ${"detail" in activateResult.error ? activateResult.error.detail : activateResult.error.kind}`,
+      );
     }
     const code = await exited;
     process.exit(code);

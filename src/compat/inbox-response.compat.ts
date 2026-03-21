@@ -4,17 +4,17 @@
  * After reading its initial message, the agent should send a response
  * back to the team-lead's inbox file.
  */
-import { describe, test, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
+  COMPAT_MODEL,
   createTestTeam,
+  killPane,
+  launchAgent,
+  pollInbox,
   registerAgent,
   seedInbox,
-  launchAgent,
-  killPane,
-  pollInbox,
-  waitForAgentIdle,
-  COMPAT_MODEL,
   type TestTeam,
+  waitForAgentIdle,
 } from "./helpers.ts";
 
 describe("compat: inbox response", () => {
@@ -31,11 +31,7 @@ describe("compat: inbox response", () => {
     const agentName = "responder";
 
     await registerAgent(team, agentName, { model: COMPAT_MODEL });
-    await seedInbox(
-      team,
-      agentName,
-      "Hello! Please introduce yourself with a short greeting.",
-    );
+    await seedInbox(team, agentName, "Hello! Please introduce yourself with a short greeting.");
 
     paneId = await launchAgent(team, agentName, {
       model: COMPAT_MODEL,

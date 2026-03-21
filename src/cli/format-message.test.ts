@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { truncateText, renderMessage, formatTimestamp, colorize, MAX_LINES } from "./format-message.ts";
 import type { InboxMessage } from "../types/domain.ts";
+import { colorize, formatTimestamp, MAX_LINES, renderMessage, truncateText } from "./format-message.ts";
 
 describe("truncateText", () => {
   test("returns text unchanged when full=true", () => {
@@ -75,7 +75,9 @@ describe("renderMessage", () => {
   test("truncates long text when full=false", () => {
     const msg: InboxMessage = {
       ...base,
-      text: Array(MAX_LINES + 5).fill("line").join("\n"),
+      text: Array(MAX_LINES + 5)
+        .fill("line")
+        .join("\n"),
     };
     const result = renderMessage(msg, false);
     expect(result).toContain("truncated");
@@ -84,7 +86,9 @@ describe("renderMessage", () => {
   test("does not truncate when full=true", () => {
     const msg: InboxMessage = {
       ...base,
-      text: Array(MAX_LINES + 5).fill("line").join("\n"),
+      text: Array(MAX_LINES + 5)
+        .fill("line")
+        .join("\n"),
     };
     const result = renderMessage(msg, true);
     expect(result).not.toContain("truncated");

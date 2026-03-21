@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { TeamConfigSchema, InboxSchema } from "./schemas.ts";
+import { InboxSchema, TeamConfigSchema } from "./schemas.ts";
 
 describe("config/schemas", () => {
   describe("TeamConfigSchema", () => {

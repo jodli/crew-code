@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { AppContext } from "../types/context.ts";
-import type { AgentMember, InboxMessage, AgentLaunchInfo } from "../types/domain.ts";
-import type { Result } from "../types/result.ts";
-import { ok, err } from "../types/result.ts";
 import { validateName } from "../lib/validate-name.ts";
+import type { AppContext } from "../types/context.ts";
+import type { AgentLaunchInfo, AgentMember, InboxMessage } from "../types/domain.ts";
+import type { Result } from "../types/result.ts";
+import { err, ok } from "../types/result.ts";
 
 export interface SpawnInput {
   team: string;
@@ -45,10 +45,7 @@ function nextAgentName(members: AgentMember[]): string {
   return `agent-${max + 1}`;
 }
 
-export async function planSpawn(
-  ctx: AppContext,
-  input: SpawnInput,
-): Promise<Result<SpawnPlan>> {
+export async function planSpawn(ctx: AppContext, input: SpawnInput): Promise<Result<SpawnPlan>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) {
     if (teamResult.error.kind === "config_not_found") {
@@ -96,10 +93,7 @@ export async function planSpawn(
   });
 }
 
-export async function executeSpawn(
-  ctx: AppContext,
-  plan: SpawnPlan,
-): Promise<Result<SpawnOutput>> {
+export async function executeSpawn(ctx: AppContext, plan: SpawnPlan): Promise<Result<SpawnOutput>> {
   const isLead = plan.agentType === "team-lead";
 
   const newMember: AgentMember = {
@@ -134,11 +128,7 @@ export async function executeSpawn(
       ]
     : [];
 
-  const inboxResult = await ctx.inboxStore.createInbox(
-    plan.team,
-    plan.agentName,
-    initialMessages,
-  );
+  const inboxResult = await ctx.inboxStore.createInbox(plan.team, plan.agentName, initialMessages);
   if (!inboxResult.ok) {
     // Rollback: remove member from config
     await ctx.configStore.updateTeam(plan.team, (cfg) => ({

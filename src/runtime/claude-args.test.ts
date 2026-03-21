@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { buildClaudeArgs, CLAUDE_TEAMS_ENV_VAR } from "./claude-args.ts";
 import type { AgentLaunchInfo } from "../types/domain.ts";
+import { buildClaudeArgs, CLAUDE_TEAMS_ENV_VAR } from "./claude-args.ts";
 
 const base: AgentLaunchInfo = {
   agentId: "scout@my-team",
@@ -12,11 +12,7 @@ const base: AgentLaunchInfo = {
 describe("runtime/buildClaudeArgs", () => {
   test("includes required flags: agent-id, agent-name, team-name", () => {
     const args = buildClaudeArgs(base);
-    expect(args).toEqual([
-      "--agent-id", "scout@my-team",
-      "--agent-name", "scout",
-      "--team-name", "my-team",
-    ]);
+    expect(args).toEqual(["--agent-id", "scout@my-team", "--agent-name", "scout", "--team-name", "my-team"]);
   });
 
   test("includes optional color flag when provided", () => {
@@ -51,10 +47,7 @@ describe("runtime/buildClaudeArgs", () => {
   });
 
   test("includes --resume in resume mode", () => {
-    const args = buildClaudeArgs(
-      { ...base, sessionId: "abc-def-123" },
-      "resume",
-    );
+    const args = buildClaudeArgs({ ...base, sessionId: "abc-def-123" }, "resume");
     expect(args).toContain("--resume");
     expect(args).toContain("abc-def-123");
     expect(args).not.toContain("--session-id");
@@ -66,27 +59,26 @@ describe("runtime/buildClaudeArgs", () => {
       extraArgs: ["--verbose", "--effort", "high"],
     });
     expect(args).toEqual([
-      "--agent-id", "scout@my-team",
-      "--agent-name", "scout",
-      "--team-name", "my-team",
-      "--verbose", "--effort", "high",
+      "--agent-id",
+      "scout@my-team",
+      "--agent-name",
+      "scout",
+      "--team-name",
+      "my-team",
+      "--verbose",
+      "--effort",
+      "high",
     ]);
   });
 
   test("does not append anything when extraArgs is empty", () => {
     const args = buildClaudeArgs({ ...base, extraArgs: [] });
-    expect(args).toEqual([
-      "--agent-id", "scout@my-team",
-      "--agent-name", "scout",
-      "--team-name", "my-team",
-    ]);
+    expect(args).toEqual(["--agent-id", "scout@my-team", "--agent-name", "scout", "--team-name", "my-team"]);
   });
 });
 
 describe("CLAUDE_TEAMS_ENV_VAR", () => {
   test("exports the correct env var name", () => {
-    expect(CLAUDE_TEAMS_ENV_VAR).toBe(
-      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS",
-    );
+    expect(CLAUDE_TEAMS_ENV_VAR).toBe("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS");
   });
 });

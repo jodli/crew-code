@@ -1,13 +1,13 @@
+import { confirm } from "@clack/prompts";
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { confirm } from "@clack/prompts";
-import { planDestroy } from "../../core/destroy.ts";
 import { destroyTeam } from "../../actions/destroy-team.ts";
 import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
+import { planDestroy } from "../../core/destroy.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 export default defineCommand({
   meta: {

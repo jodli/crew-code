@@ -1,13 +1,13 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
 import { spawnAgent } from "../../actions/spawn-agent.ts";
-import { launchAgent } from "../../runtime/launch.ts";
 import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { renderError } from "../errors.ts";
 import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
+import { launchAgent } from "../../runtime/launch.ts";
 import type { AppContext } from "../../types/context.ts";
+import { renderError } from "../errors.ts";
 
 const ALLOWED_AGENT_TYPES = ["team-lead", "general-purpose"];
 
@@ -77,15 +77,15 @@ export default defineCommand({
       process.exit(1);
     }
 
-    console.error(
-      `Agent ${pc.bold(result.value.name)} registered in ${pc.bold(args.team)}`,
-    );
+    console.error(`Agent ${pc.bold(result.value.name)} registered in ${pc.bold(args.team)}`);
     console.error(`  Agent ID: ${result.value.agentId}`);
     console.error(`  Launching Claude...\n`);
     const { pid, exited } = launchAgent(result.value.launchOptions);
     const activateResult = await processRegistry.activate(args.team, result.value.agentId, pid);
     if (!activateResult.ok) {
-      console.error(`Warning: failed to register process: ${"detail" in activateResult.error ? activateResult.error.detail : activateResult.error.kind}`);
+      console.error(
+        `Warning: failed to register process: ${"detail" in activateResult.error ? activateResult.error.detail : activateResult.error.kind}`,
+      );
     }
     const code = await exited;
     process.exit(code);

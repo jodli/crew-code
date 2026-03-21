@@ -1,11 +1,11 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createApp } from "../server.ts";
+import { join } from "node:path";
 import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
 import type { AppContext } from "../../types/context.ts";
+import { createApp } from "../server.ts";
 
 let tmpDir: string;
 let app: ReturnType<typeof createApp>;
@@ -32,16 +32,16 @@ describe("GET /api/doctor", () => {
   test("returns diagnostics array", async () => {
     const res = await app.request("/api/doctor");
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toBeArray();
   });
 
   test("does not include fix function in response", async () => {
     const res = await app.request("/api/doctor");
     expect(res.status).toBe(200);
-    const body = await res.json() as Array<Record<string, unknown>>;
+    const body = (await res.json()) as Array<Record<string, unknown>>;
     for (const item of body) {
-      expect(item["fix"]).toBeUndefined();
+      expect(item.fix).toBeUndefined();
     }
   });
 });
@@ -54,7 +54,7 @@ describe("POST /api/doctor/fix", () => {
       body: JSON.stringify({}),
     });
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toBeArray();
   });
 });
