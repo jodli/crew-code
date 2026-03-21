@@ -216,8 +216,8 @@ export function App({ launcher }: AppProps) {
       const args = buildSpawnCommand(selectedTeamName, opts);
       try {
         await launcher.openTerminal(args, opts.cwd, `crew:${opts.name || "agent"}`);
-      } catch (e: any) {
-        setError(`Failed to spawn: ${e.message}`);
+      } catch (e: unknown) {
+        setError(`Failed to spawn: ${e instanceof Error ? e.message : String(e)}`);
       }
       dispatch({ type: "close_overlay" });
     },
@@ -280,8 +280,8 @@ export function App({ launcher }: AppProps) {
       const args = buildAttachCommand(selectedTeamName, selectedAgent.name, extraArgs);
       try {
         await launcher.openTerminal(args, selectedAgent.cwd, `crew:${selectedAgent.name}`);
-      } catch (e: any) {
-        setError(`Failed to attach: ${e.message}`);
+      } catch (e: unknown) {
+        setError(`Failed to attach: ${e instanceof Error ? e.message : String(e)}`);
       }
       dispatch({ type: "close_overlay" });
     },
@@ -318,8 +318,8 @@ export function App({ launcher }: AppProps) {
         const cmd = buildAttachCommand(result.value.teamName, opts.agentName, opts.extraArgs);
         try {
           await launcher.openTerminal(cmd, opts.cwd, `crew:${opts.agentName}`);
-        } catch (e: any) {
-          setError(`Failed to launch ${opts.agentName}: ${e.message}`);
+        } catch (e: unknown) {
+          setError(`Failed to launch ${opts.agentName}: ${e instanceof Error ? e.message : String(e)}`);
           break;
         }
       }

@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { readdir, mkdir, rm, writeFile } from "node:fs/promises";
-import { dirname, basename } from "node:path";
+import { dirname, basename, join } from "node:path";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
@@ -70,7 +70,7 @@ export class JsonFileConfigStore implements ConfigStore {
     }
 
     const teamDir = dirname(path);
-    const inboxesDir = `${teamDir}/inboxes`;
+    const inboxesDir = join(teamDir, "inboxes");
 
     try {
       await mkdir(teamDir, { recursive: true });

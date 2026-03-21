@@ -41,8 +41,8 @@ export class YamlBlueprintStore implements BlueprintStore {
         });
       }
       return ok(result.data);
-    } catch (e: any) {
-      return err({ kind: "blueprint_invalid", name: nameOrPath, detail: e.message });
+    } catch (e: unknown) {
+      return err({ kind: "blueprint_invalid", name: nameOrPath, detail: String(e) });
     }
   }
 
