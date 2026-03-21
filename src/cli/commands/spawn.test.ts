@@ -19,8 +19,9 @@ describe("CLI spawn command", () => {
     const mod = await import("./spawn.ts");
     const cmd = mod.default;
     expect(cmd.args).toBeDefined();
-    expect(cmd.args!.team).toBeDefined();
-    expect(cmd.args!.team.type).toBe("string");
-    expect(cmd.args!.team.required).toBe(true);
+    const args = cmd.args as Record<string, { type: string; required?: boolean }>;
+    expect(args.team).toBeDefined();
+    expect(args.team.type).toBe("string");
+    expect(args.team.required).toBe(true);
   });
 });

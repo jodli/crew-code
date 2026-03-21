@@ -58,9 +58,8 @@ export function AttachForm({ agentName, storedArgs, onSubmit, onCancel }: Attach
           focused
           placeholder="e.g. --verbose --effort high"
           onInput={setArgs}
-          onSubmit={handleSubmit}
+          onSubmit={() => handleSubmit()}
           flexGrow={1}
-          fg="#c0caf5"
         />
       </box>
       <text content="" />

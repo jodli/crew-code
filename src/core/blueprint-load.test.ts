@@ -69,6 +69,7 @@ function makeInboxStore(): InboxStore & { inboxes: Map<string, InboxMessage[]> }
     async appendMessage() { return ok(undefined); },
     async listInboxes() { return ok([]); },
     async deleteInbox() { return ok(undefined); },
+    async markAllRead() { return ok(undefined); },
   };
 }
 
@@ -110,6 +111,7 @@ describe("planLoad", () => {
     await ctx.configStore.createTeam({
       name: "review-team",
       createdAt: Date.now(),
+      leadAgentId: "team-lead@review-team",
       leadSessionId: "abc",
       members: [],
     });

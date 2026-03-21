@@ -1,4 +1,5 @@
 import type { AppContext } from "../types/context.ts";
+import type { InboxMessage } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { err } from "../types/result.ts";
 import { CREW_SENDER } from "../types/constants.ts";

@@ -32,16 +32,16 @@ describe("GET /api/doctor", () => {
   test("returns diagnostics array", async () => {
     const res = await app.request("/api/doctor");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body).toBeArray();
   });
 
   test("does not include fix function in response", async () => {
     const res = await app.request("/api/doctor");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Array<Record<string, unknown>>;
     for (const item of body) {
-      expect(item.fix).toBeUndefined();
+      expect(item["fix"]).toBeUndefined();
     }
   });
 });
@@ -54,7 +54,7 @@ describe("POST /api/doctor/fix", () => {
       body: JSON.stringify({}),
     });
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body).toBeArray();
   });
 });

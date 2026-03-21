@@ -47,9 +47,8 @@ export function SendMessageForm({ teamName, agentName, onSubmit, onCancel }: Sen
           focused
           placeholder="type your message..."
           onInput={setMessage}
-          onSubmit={handleSubmit}
+          onSubmit={() => handleSubmit()}
           flexGrow={1}
-          fg="#c0caf5"
         />
       </box>
       <text content="" />

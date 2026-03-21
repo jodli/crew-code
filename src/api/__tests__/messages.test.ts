@@ -72,7 +72,7 @@ describe("GET /api/teams/:name/agents/:agent/messages", () => {
 
     const res = await app.request("/api/teams/alpha/agents/coder/messages");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
     expect(body.messages).toHaveLength(1);
     expect(body.messages[0].text).toBe("Hello!");
     expect(body.unreadCount).toBe(1);
@@ -87,7 +87,7 @@ describe("GET /api/teams/:name/agents/:agent/messages", () => {
 
     const res = await app.request("/api/teams/alpha/agents/coder/messages?status=unread");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
     expect(body.messages).toHaveLength(1);
   });
 
@@ -95,7 +95,7 @@ describe("GET /api/teams/:name/agents/:agent/messages", () => {
     await setupTeamWithAgent();
     const res = await app.request("/api/teams/alpha/agents/coder/messages");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
     expect(body.messages).toHaveLength(0);
   });
 });
@@ -109,7 +109,7 @@ describe("GET /api/teams/:name/messages (crew channel)", () => {
 
     const res = await app.request("/api/teams/alpha/messages");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
     expect(body.messages).toHaveLength(1);
     expect(body.messages[0].text).toBe("Response from agent");
     expect(body.messages[0].from).toBe("coder");
@@ -124,7 +124,7 @@ describe("GET /api/teams/:name/messages (crew channel)", () => {
 
     const res = await app.request("/api/teams/alpha/messages?status=unread");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
     expect(body.messages).toHaveLength(1);
   });
 
@@ -132,7 +132,7 @@ describe("GET /api/teams/:name/messages (crew channel)", () => {
     await setupTeamWithAgent();
     const res = await app.request("/api/teams/alpha/messages");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as { messages: Array<Record<string, unknown>>; unreadCount: number; totalCount: number };
     expect(body.messages).toHaveLength(0);
   });
 

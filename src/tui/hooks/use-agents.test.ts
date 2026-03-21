@@ -6,7 +6,6 @@ function makeMember(overrides: Partial<MemberDetail> & { name: string }): Member
   return {
     agentId: `${overrides.name}@test`,
     agentType: "general-purpose",
-    processId: "",
     cwd: "/tmp/project",
     unreadCount: 0,
     ...overrides,
@@ -16,8 +15,8 @@ function makeMember(overrides: Partial<MemberDetail> & { name: string }): Member
 describe("useAgents — data layer", () => {
   test("returns dead status when agent is not in live set", () => {
     const members: MemberDetail[] = [
-      makeMember({ name: "team-lead", processId: "" }),
-      makeMember({ name: "coder", processId: "0" }),
+      makeMember({ name: "team-lead" }),
+      makeMember({ name: "coder" }),
     ];
 
     const liveAgentIds = new Set<string>();
@@ -29,7 +28,7 @@ describe("useAgents — data layer", () => {
 
   test("returns alive status when agent is in live set", () => {
     const members: MemberDetail[] = [
-      makeMember({ name: "team-lead", agentId: "team-lead@test", processId: String(process.pid), sessionId: "sess-123" }),
+      makeMember({ name: "team-lead", agentId: "team-lead@test", processId: process.pid, sessionId: "sess-123" }),
     ];
 
     const liveAgentIds = new Set(["team-lead@test"]);
@@ -45,7 +44,6 @@ describe("useAgents — data layer", () => {
       name: "writer",
       agentId: "writer@gamma",
       agentType: "team-lead",
-      processId: "",
       sessionId: "sess-w",
       model: "claude-sonnet-4-6",
       prompt: "Write docs",
@@ -59,7 +57,6 @@ describe("useAgents — data layer", () => {
       agentId: "writer@gamma",
       agentType: "team-lead",
       status: "dead",
-      processId: "",
       sessionId: "sess-w",
       model: "claude-sonnet-4-6",
       prompt: "Write docs",

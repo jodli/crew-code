@@ -31,7 +31,6 @@ const sampleConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      processId: "",
       cwd: "/tmp",
       subscriptions: [],
     },

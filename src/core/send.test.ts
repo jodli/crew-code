@@ -17,20 +17,16 @@ const sampleConfig: TeamConfig = {
       name: "team-lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      processId: "%0",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: true,
     },
     {
       agentId: "scout@my-team",
       name: "scout",
       agentType: "general-purpose",
       joinedAt: 1773387766070,
-      processId: "%1",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: true,
     },
   ],
 };
@@ -56,6 +52,7 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
       readMessages: async () => ok([]),
       listInboxes: async () => ok([]),
       deleteInbox: async () => ok(undefined),
+      markAllRead: async () => ok(undefined),
       appendMessage: async (team: string, agent: string, message: InboxMessage) => {
         appendedMessages.push({ team, agent, message });
         return ok(undefined);

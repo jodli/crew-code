@@ -86,6 +86,7 @@ function makeCtx(config: TeamConfig): AppContext {
         deletedInboxes.push({ team, agent });
         return ok(undefined);
       },
+      markAllRead: async () => ok(undefined),
     },
   };
 }

@@ -31,5 +31,5 @@ export function errorStatus(e: CrewError): number {
 
 export function errorResponse(c: Context, e: CrewError) {
   const status = errorStatus(e);
-  return c.json({ error: { kind: e.kind, message: renderError(e) } }, status);
+  return c.json({ error: { kind: e.kind, message: renderError(e) } }, status as Parameters<typeof c.json>[1]);
 }

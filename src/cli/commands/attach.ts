@@ -62,7 +62,7 @@ export default defineCommand({
     const { pid, exited } = launchAgent(result.value.launchOptions);
     const activateResult = await processRegistry.activate(args.team, result.value.agentId, pid);
     if (!activateResult.ok) {
-      console.error(`Warning: failed to register process: ${activateResult.error.detail ?? activateResult.error.kind}`);
+      console.error(`Warning: failed to register process: ${"detail" in activateResult.error ? activateResult.error.detail : activateResult.error.kind}`);
     }
     const code = await exited;
     process.exit(code);

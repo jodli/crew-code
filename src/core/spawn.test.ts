@@ -88,6 +88,9 @@ function makeInboxStore(): InboxStore & {
     async deleteInbox() {
       return ok(undefined);
     },
+    async markAllRead() {
+      return ok(undefined);
+    },
   };
   return store;
 }
@@ -281,6 +284,7 @@ describe("core/executeSpawn", () => {
       async appendMessage() { return ok(undefined); },
       async listInboxes() { return ok([] as string[]); },
       async deleteInbox() { return ok(undefined); },
+    async markAllRead() { return ok(undefined); },
     };
     const ctx = makeCtx({ configStore, inboxStore });
     const result = await executeSpawn(ctx, basePlan);

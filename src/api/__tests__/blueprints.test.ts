@@ -59,7 +59,7 @@ describe("POST /api/blueprints", () => {
   test("creates a blueprint from raw content", async () => {
     const res = await app.request("/api/blueprints", json(sampleBlueprint));
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.name).toBe("review-team");
   });
 
@@ -83,7 +83,7 @@ describe("POST /api/blueprints", () => {
 
     const res = await app.request("/api/blueprints", json({ fromTeam: "alpha" }));
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.name).toBe("alpha");
     expect(body.agents).toBeArray();
   });
@@ -94,7 +94,7 @@ describe("GET /api/blueprints/:name", () => {
     await app.request("/api/blueprints", json(sampleBlueprint));
     const res = await app.request("/api/blueprints/review-team");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.name).toBe("review-team");
     expect(body.agents).toHaveLength(2);
   });
@@ -114,7 +114,7 @@ describe("PATCH /api/blueprints/:name", () => {
       body: JSON.stringify({ description: "Updated description" }),
     });
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.description).toBe("Updated description");
   });
 });
@@ -124,7 +124,7 @@ describe("POST /api/blueprints/:name/deploy", () => {
     await app.request("/api/blueprints", json(sampleBlueprint));
     const res = await app.request("/api/blueprints/review-team/deploy", json({}));
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.teamName).toBe("review-team");
     expect(body.launchOptions).toBeArray();
   });
@@ -133,7 +133,7 @@ describe("POST /api/blueprints/:name/deploy", () => {
     await app.request("/api/blueprints", json(sampleBlueprint));
     const res = await app.request("/api/blueprints/review-team/deploy", json({ teamName: "custom" }));
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.teamName).toBe("custom");
   });
 
@@ -150,7 +150,7 @@ describe("GET /api/teams/:name/blueprint", () => {
 
     const res = await app.request("/api/teams/alpha/blueprint");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.name).toBe("alpha");
     expect(body.agents).toBeArray();
   });

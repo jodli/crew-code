@@ -44,7 +44,7 @@ describe("errorResponse", () => {
     const res = await app.request("/test");
     expect(res.status).toBe(404);
 
-    const body = await res.json();
+    const body = await res.json() as { error: { kind: string; message: string } };
     expect(body.error.kind).toBe("team_not_found");
     expect(body.error.message).toContain("alpha");
   });

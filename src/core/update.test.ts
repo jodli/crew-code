@@ -25,20 +25,16 @@ const configWithAgents: TeamConfig = {
       agentType: "team-lead",
       model: "sonnet",
       joinedAt: 1773387766070,
-      processId: "%0",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: true,
     },
     {
       agentId: "scout@my-team",
       name: "scout",
       agentType: "general-purpose",
       joinedAt: 1773387766070,
-      processId: "%1",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: false,
     },
   ],
 };
@@ -67,6 +63,7 @@ function makeCtx(team?: TeamConfig): AppContext {
       appendMessage: async () => ok(undefined),
       listInboxes: async () => ok([]),
       deleteInbox: async () => ok(undefined),
+      markAllRead: async () => ok(undefined),
     },
   };
 }

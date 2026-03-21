@@ -29,7 +29,6 @@ function makeTeam(name: string, memberCount: number): TeamConfig {
     name: i === 0 ? "team-lead" : `agent-${i}`,
     agentType: i === 0 ? "team-lead" : "general-purpose",
     joinedAt: Date.now(),
-    processId: "",
     cwd: "/tmp",
     subscriptions: [],
   }));
@@ -83,8 +82,7 @@ describe("useTeams — data layer", () => {
 
   test("agents with no PID are counted as dead", async () => {
     const team = makeTeam("gamma", 2);
-    team.members[0].processId = "";
-    team.members[1].processId = "0";
+    // processId is now resolved from ProcessRegistry, not stored on AgentMember
     await store.createTeam(team);
 
     const result = await store.getTeam("gamma");

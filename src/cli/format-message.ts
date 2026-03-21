@@ -5,7 +5,7 @@ export const MAX_LINES = 5;
 
 export function colorize(text: string, color?: string): string {
   if (!color) return text;
-  const fn = (pc as Record<string, (s: string) => string>)[color];
+  const fn = (pc as unknown as Record<string, (s: string) => string>)[color];
   return fn ? fn(text) : text;
 }
 

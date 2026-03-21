@@ -59,7 +59,7 @@ describe("POST /api/teams/:name/agents", () => {
     await createTeam("alpha");
     const res = await app.request("/api/teams/alpha/agents", json({ name: "coder" }));
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.name).toBe("coder");
     expect(body.team).toBe("alpha");
     expect(body.launchOptions).toBeDefined();
@@ -83,7 +83,7 @@ describe("PATCH /api/teams/:name/agents/:agent", () => {
       body: JSON.stringify({ model: "claude-sonnet-4-6" }),
     });
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as Record<string, unknown>;
     expect(body.model).toBe("claude-sonnet-4-6");
   });
 

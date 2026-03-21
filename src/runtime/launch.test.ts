@@ -35,6 +35,7 @@ describe("runtime/selectLaunchMode", () => {
       calledWith = [cwd, sessionId];
       return false;
     });
-    expect(calledWith).toEqual(["/home/user/repos", "abc-def-123"]);
+    expect(calledWith![0]).toBe("/home/user/repos");
+    expect(calledWith![1]).toBe("abc-def-123");
   });
 });

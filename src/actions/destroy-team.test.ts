@@ -21,6 +21,7 @@ describe("actions/destroy-team", () => {
           ok({
             name: "t",
             createdAt: 0,
+            leadAgentId: "team-lead@t",
             leadSessionId: "x",
             members: [],
           }),
@@ -40,6 +41,7 @@ describe("actions/destroy-team", () => {
           ok({
             name: "t",
             createdAt: 0,
+            leadAgentId: "team-lead@t",
             leadSessionId: "x",
             members: [],
           }),

@@ -48,6 +48,7 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
       appendMessage: async () => ok(undefined),
       listInboxes: async () => ok([]),
       deleteInbox: async () => ok(undefined),
+      markAllRead: async () => ok(undefined),
     },
     ...overrides,
   };

@@ -55,9 +55,8 @@ export function EditTeamForm({ teamName, currentDescription, onSubmit, onCancel 
           focused
           placeholder="team description"
           onInput={setDescription}
-          onSubmit={handleSubmit}
+          onSubmit={() => handleSubmit()}
           flexGrow={1}
-          fg="#c0caf5"
         />
       </box>
       <text content="" />

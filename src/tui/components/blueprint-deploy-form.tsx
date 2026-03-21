@@ -57,9 +57,8 @@ export function BlueprintDeployForm({ blueprint, onDeploy, onBack }: BlueprintDe
           focused
           placeholder={blueprint.name}
           onInput={setName}
-          onSubmit={handleSubmit}
+          onSubmit={() => handleSubmit()}
           flexGrow={1}
-          fg="#c0caf5"
         />
       </box>
       <text content="" />

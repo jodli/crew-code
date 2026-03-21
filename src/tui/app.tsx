@@ -7,7 +7,7 @@ import { FileProcessRegistry } from "../adapters/file-process-registry.ts";
 import { CREW_SENDER } from "../types/constants.ts";
 import { useTeams } from "./hooks/use-teams.ts";
 import { useAgents } from "./hooks/use-agents.ts";
-import { navReducer, initialNavState } from "./views/navigation.ts";
+import { navReducer, initialNavState, type NavState, type NavAction } from "./views/navigation.ts";
 import { TeamListPanel } from "./components/team-list-panel.tsx";
 import { AgentListPanel } from "./components/agent-list-panel.tsx";
 import { ShortcutBar } from "./components/shortcut-bar.tsx";
@@ -64,7 +64,10 @@ interface AppProps {
 export function App({ launcher }: AppProps) {
   const { width, height } = useTerminalDimensions();
   const teams = useTeams(ctx.configStore, ctx.processRegistry);
-  const [nav, dispatch] = useReducer(navReducer, initialNavState);
+  const [nav, dispatch] = useReducer(
+    navReducer as (state: NavState | "quit", action: NavAction) => NavState | "quit",
+    initialNavState,
+  );
   const [exiting, setExiting] = useState(false);
   const [error, setError] = useState("");
   const [selectedBlueprint, setSelectedBlueprint] = useState<Blueprint | null>(null);

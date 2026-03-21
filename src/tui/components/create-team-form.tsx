@@ -56,9 +56,8 @@ export function CreateTeamForm({ onSubmit, onCancel }: CreateTeamFormProps) {
           focused={active}
           placeholder={placeholder}
           onInput={onInput}
-          onSubmit={handleSubmit}
+          onSubmit={() => handleSubmit()}
           flexGrow={1}
-          fg={active ? "#c0caf5" : "#a9b1d6"}
         />
       </box>
     );

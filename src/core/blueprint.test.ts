@@ -60,6 +60,7 @@ function makeCtx(blueprints: Blueprint[] = []): AppContext {
       appendMessage: async () => ok(undefined),
       listInboxes: async () => ok([]),
       deleteInbox: async () => ok(undefined),
+      markAllRead: async () => ok(undefined),
     },
     blueprintStore: makeBlueprintStore(blueprints),
   };
@@ -223,10 +224,8 @@ const sampleTeamConfig: TeamConfig = {
       name: "lead",
       agentType: "team-lead",
       joinedAt: 1773387766070,
-      processId: "%0",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: true,
     },
     {
       agentId: "dev@my-team",
@@ -235,10 +234,8 @@ const sampleTeamConfig: TeamConfig = {
       model: "opus",
       prompt: "Write code",
       joinedAt: 1773387766070,
-      processId: "%1",
       cwd: "/tmp",
       subscriptions: [],
-      isActive: false,
     },
   ],
 };
