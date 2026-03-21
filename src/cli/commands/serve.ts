@@ -34,6 +34,11 @@ export default defineCommand({
     const app = createApp(ctx);
     const port = parseInt(args.port, 10);
 
+    if (isNaN(port) || port < 1 || port > 65535) {
+      console.error(`Invalid port: ${args.port} (must be 1-65535)`);
+      process.exit(1);
+    }
+
     Bun.serve({
       fetch: app.fetch,
       port,
@@ -41,5 +46,9 @@ export default defineCommand({
     });
 
     console.error(`crew API listening on http://${args.host}:${port}`);
+
+    const shutdown = () => process.exit(0);
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
   },
 });

@@ -15,14 +15,14 @@ async function showMessages(
   ctx: AppContext,
   team: string,
   opts: { unread: boolean; full: boolean },
-): Promise<{ totalCount: number; unreadCount: number }> {
+): Promise<{ totalCount: number; unreadCount: number } | null> {
   const result = await getCrewMessages(ctx, team, {
     unreadOnly: opts.unread,
   });
 
   if (!result.ok) {
     console.error(renderError(result.error));
-    process.exit(1);
+    return null;
   }
 
   const { messages, totalCount, unreadCount } = result.value;
@@ -83,12 +83,15 @@ export default defineCommand({
     const full = args.full || false;
 
     if (!args.watch) {
-      await showMessages(ctx, args.team, { unread: args.unread || false, full });
+      const shown = await showMessages(ctx, args.team, { unread: args.unread || false, full });
+      if (!shown) process.exit(1);
       return;
     }
 
     // Watch mode: show existing, then watch for new
-    let { totalCount: lastSeen } = await showMessages(ctx, args.team, { unread: false, full });
+    const initial = await showMessages(ctx, args.team, { unread: false, full });
+    if (!initial) process.exit(1);
+    let lastSeen = initial.totalCount;
 
     console.error(pc.dim(`\nWatching for new messages... (Ctrl+C to stop)`));
 
@@ -116,10 +119,12 @@ export default defineCommand({
       }
     });
 
-    process.on("SIGINT", () => {
+    const shutdown = () => {
       cleanup();
       process.exit(0);
-    });
+    };
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
 
     // Keep process alive
     await new Promise(() => {});

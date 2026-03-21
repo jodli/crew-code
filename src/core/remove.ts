@@ -2,6 +2,7 @@ import type { AppContext } from "../types/context.ts";
 import type { ProcessRegistry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
+import { validateName } from "../lib/validate-name.ts";
 
 export interface RemoveInput {
   team: string;
@@ -21,6 +22,11 @@ export async function planRemove(
   input: RemoveInput,
   registry?: ProcessRegistry,
 ): Promise<Result<RemovePlan>> {
+  const teamCheck = validateName(input.team, "team");
+  if (!teamCheck.ok) return teamCheck as Result<never>;
+  const agentCheck = validateName(input.name, "agent");
+  if (!agentCheck.ok) return agentCheck as Result<never>;
+
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) {
     if (teamResult.error.kind === "config_not_found") {

@@ -3,6 +3,7 @@ import type { AppContext } from "../types/context.ts";
 import type { AgentMember, InboxMessage, AgentLaunchInfo } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
+import { validateName } from "../lib/validate-name.ts";
 
 export interface SpawnInput {
   team: string;
@@ -58,6 +59,11 @@ export async function planSpawn(
 
   const config = teamResult.value;
   const agentName = input.name ?? nextAgentName(config.members);
+
+  if (input.name) {
+    const nameCheck = validateName(input.name, "agent");
+    if (!nameCheck.ok) return nameCheck as Result<never>;
+  }
   const agentId = `${agentName}@${input.team}`;
   const agentType = input.agentType ?? "general-purpose";
   const isLead = agentType === "team-lead";

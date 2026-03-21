@@ -19,4 +19,5 @@ export type CrewError =
   | { kind: "stale_session"; agent: string; team: string }
   | { kind: "blueprint_not_found"; name: string }
   | { kind: "blueprint_invalid"; name: string; detail: string }
-  | { kind: "blueprint_already_exists"; name: string };
+  | { kind: "blueprint_already_exists"; name: string }
+  | { kind: "invalid_name"; name: string; label: string };

@@ -6,6 +6,7 @@ import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
 import { planCreate, executeCreate, type CreatePlan } from "./create.ts";
 import { executeSpawn, type SpawnPlan } from "./spawn.ts";
+import { validateName } from "../lib/validate-name.ts";
 
 export interface LoadInput {
   nameOrPath: string;
@@ -42,6 +43,9 @@ export async function planLoad(
   const blueprint = bpResult.value;
   const resolvedName = input.teamName ?? blueprint.name;
 
+  const teamCheck = validateName(resolvedName, "team");
+  if (!teamCheck.ok) return teamCheck as Result<never>;
+
   const createResult = await planCreate(ctx, {
     name: resolvedName,
     description: blueprint.description,
@@ -57,6 +61,9 @@ export async function planLoad(
   let hasLead = false;
 
   for (const agent of blueprint.agents) {
+    const agentCheck = validateName(agent.name, "agent");
+    if (!agentCheck.ok) return agentCheck as Result<never>;
+
     if (seenNames.has(agent.name)) {
       return err({ kind: "agent_already_exists", agent: agent.name, team: resolvedName });
     }
@@ -99,7 +106,11 @@ export async function executeLoad(
 
   for (const spawnPlan of plan.spawnPlans) {
     const spawnResult = await executeSpawn(ctx, spawnPlan);
-    if (!spawnResult.ok) return spawnResult as Result<never>;
+    if (!spawnResult.ok) {
+      // Rollback: delete the partially created team
+      await ctx.configStore.deleteTeam(plan.teamName).catch(() => {});
+      return spawnResult as Result<never>;
+    }
     launchOptions.push(spawnResult.value.launchOptions);
   }
 

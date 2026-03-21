@@ -65,6 +65,10 @@ const messages: Record<string, (e: CrewError) => string> = {
   },
   blueprint_already_exists: (e) =>
     `Blueprint "${(e as { name: string }).name}" already exists.`,
+  invalid_name: (e) => {
+    const { name, label } = e as { name: string; label: string };
+    return `Invalid ${label} name "${name}". Only letters, digits, hyphens and underscores allowed (1-64 chars).`;
+  },
 };
 
 export function renderError(e: CrewError): string {

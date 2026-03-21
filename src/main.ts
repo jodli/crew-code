@@ -38,4 +38,9 @@ const main = defineCommand({
   },
 });
 
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+  process.exit(1);
+});
+
 runMain(main);

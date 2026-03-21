@@ -3,6 +3,7 @@ import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { ok, err } from "../types/result.ts";
+import { validateName } from "../lib/validate-name.ts";
 
 export interface CreateInput {
   name: string;
@@ -24,6 +25,9 @@ export async function planCreate(
   ctx: AppContext,
   input: CreateInput,
 ): Promise<Result<CreatePlan>> {
+  const nameCheck = validateName(input.name, "team");
+  if (!nameCheck.ok) return nameCheck as Result<never>;
+
   const exists = await ctx.configStore.teamExists(input.name);
   if (exists) {
     return err({ kind: "team_already_exists", team: input.name });

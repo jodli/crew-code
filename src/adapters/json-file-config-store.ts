@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readdir, mkdir, rm } from "node:fs/promises";
+import { readdir, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, basename } from "node:path";
 import type { ConfigStore } from "../ports/config-store.ts";
 import type { TeamConfig } from "../types/domain.ts";
@@ -83,7 +83,18 @@ export class JsonFileConfigStore implements ConfigStore {
       });
     }
 
-    return writeJson(path, config);
+    // Exclusive create (wx) prevents TOCTOU race between existsSync and write
+    try {
+      const content = JSON.stringify(config, null, 2) + "\n";
+      await writeFile(path, content, { flag: "wx" });
+      return ok(undefined);
+    } catch (e: unknown) {
+      const code = (e as NodeJS.ErrnoException).code;
+      if (code === "EEXIST") {
+        return err({ kind: "team_already_exists", team: config.name });
+      }
+      return err({ kind: "file_write_failed", path, detail: String(e) });
+    }
   }
 
   async deleteTeam(name: string): Promise<Result<void>> {
