@@ -28,7 +28,6 @@ crew tui
 
 - [Bun](https://bun.sh) runtime
 - [Claude Code](https://claude.ai/code) CLI installed
-- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable
 
 ## Install
 
@@ -72,11 +71,21 @@ Use `crew --help` and `crew <command> --help` for all available options.
 
 Keybindings: `n` create, `s` spawn, `a` attach, `i` inbox, `m` message, `x` kill, `r` remove, `d` destroy, `?` help, `Tab` switch panels, `q` quit.
 
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Set to `1` to enable agent teams (required) |
+| `CREW_TEAMS_DIR` | Override default teams directory (`~/.claude/teams/`) |
+| `CREW_DEBUG` | Set to `1` to enable debug logging to stderr |
+
 ## Development
 
 ```bash
 bun test
 bun run typecheck
+bun run lint
+CREW_DEBUG=1 crew status   # verbose output for debugging
 ```
 
 ## License
