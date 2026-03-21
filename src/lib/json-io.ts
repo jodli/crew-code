@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import type { z } from "zod";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
+import { debug, warn } from "./logger.ts";
 
 export async function readJson<T>(path: string, schema: z.ZodType<T>): Promise<Result<T>> {
   let raw: string;
@@ -63,12 +64,15 @@ export async function writeJson(path: string, data: unknown): Promise<Result<voi
 export async function withLock<T>(lockPath: string, fn: () => Promise<T>): Promise<Result<T>> {
   const { lock } = await import("proper-lockfile");
   let release: (() => Promise<void>) | undefined;
+  debug("lock", "acquiring", { path: lockPath });
   try {
     release = await lock(lockPath, {
       retries: { retries: 10, minTimeout: 50, maxTimeout: 500 } as unknown as number,
       stale: 10000,
     });
+    debug("lock", "acquired", { path: lockPath });
   } catch (e: unknown) {
+    warn("lock", "failed to acquire", { path: lockPath, detail: String(e) });
     return err({
       kind: "lock_failed",
       path: lockPath,
@@ -82,6 +86,7 @@ export async function withLock<T>(lockPath: string, fn: () => Promise<T>): Promi
   } finally {
     if (release) {
       await release().catch(() => {});
+      debug("lock", "released", { path: lockPath });
     }
   }
 }

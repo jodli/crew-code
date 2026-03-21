@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { debug } from "../lib/logger.ts";
 import type { AppContext } from "../types/context.ts";
 import { agentRoutes } from "./routes/agents.ts";
 import { blueprintRoutes } from "./routes/blueprints.ts";
@@ -17,6 +18,15 @@ export function createApp(ctx: AppContext) {
   const app = new Hono<Env>();
 
   app.use("*", cors());
+
+  // Request logging
+  app.use("*", async (c, next) => {
+    const start = performance.now();
+    await next();
+    const ms = (performance.now() - start).toFixed(1);
+    debug("api", `${c.req.method} ${c.req.path} ${c.res.status} ${ms}ms`);
+  });
+
   app.use("/api/*", async (c, next) => {
     c.set("ctx", ctx);
     await next();

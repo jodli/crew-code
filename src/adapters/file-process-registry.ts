@@ -6,6 +6,7 @@ import {
   processRegistryPath as defaultRegistryPath,
 } from "../config/paths.ts";
 import { readJson, withLock, writeJson } from "../lib/json-io.ts";
+import { debug } from "../lib/logger.ts";
 import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
@@ -56,6 +57,7 @@ export class FileProcessRegistry implements ProcessRegistry {
   }
 
   async activate(teamName: string, agentId: string, pid: number): Promise<Result<void>> {
+    debug("registry", "activate", { team: teamName, agentId, pid });
     const path = this.deps.registryPath(teamName);
     const dir = this.deps.registryDir(teamName);
 
@@ -89,6 +91,7 @@ export class FileProcessRegistry implements ProcessRegistry {
   }
 
   async deactivate(teamName: string, agentId: string): Promise<Result<void>> {
+    debug("registry", "deactivate", { team: teamName, agentId });
     const path = this.deps.registryPath(teamName);
     if (!existsSync(path)) return ok(undefined);
 
@@ -111,6 +114,7 @@ export class FileProcessRegistry implements ProcessRegistry {
   }
 
   async kill(teamName: string, agentId: string): Promise<Result<boolean>> {
+    debug("registry", "kill", { team: teamName, agentId });
     const path = this.deps.registryPath(teamName);
     if (!existsSync(path)) return ok(false);
 
@@ -168,6 +172,10 @@ export class FileProcessRegistry implements ProcessRegistry {
     const alive = entries.filter((e) => isProcessAlive(e.pid));
 
     if (alive.length !== entries.length) {
+      debug("registry", "healing stale entries", {
+        team: teamName,
+        removed: entries.length - alive.length,
+      });
       const lockResult = await withLock(path, async () => {
         const writeResult = await writeJson(path, alive);
         if (!writeResult.ok) return writeResult;
