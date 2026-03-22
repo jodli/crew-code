@@ -1,10 +1,10 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { createTeam } from "../../actions/create-team.ts";
-import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
-import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import type { AppContext } from "../../types/context.ts";
-import { renderError } from "../errors.ts";
+import { createTeam } from "../../../actions/create-team.ts";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
+import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -13,7 +13,7 @@ export default defineCommand({
   },
   args: {
     name: {
-      type: "string",
+      type: "positional",
       description: "Team name",
       required: true,
     },
@@ -41,6 +41,6 @@ export default defineCommand({
 
     console.error(`Team ${pc.bold(result.value.name)} created.`);
     console.error(`\n  Spawn a lead agent:`);
-    console.error(`  ${pc.cyan(`crew spawn --team ${args.name} --agent-type team-lead --name team-lead`)}\n`);
+    console.error(`  ${pc.cyan(`crew agent spawn ${args.name} --agent-type team-lead --name team-lead`)}\n`);
   },
 });

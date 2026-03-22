@@ -1,13 +1,13 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { spawnAgent } from "../../actions/spawn-agent.ts";
-import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
-import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
-import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
-import { launchAgent } from "../../runtime/launch.ts";
-import type { AppContext } from "../../types/context.ts";
-import { renderError } from "../errors.ts";
+import { spawnAgent } from "../../../actions/spawn-agent.ts";
+import { FileProcessRegistry } from "../../../adapters/file-process-registry.ts";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
+import { parsePassthroughArgs } from "../../../lib/parse-passthrough-args.ts";
+import { launchAgent } from "../../../runtime/launch.ts";
+import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
 
 const ALLOWED_AGENT_TYPES = ["team-lead", "general-purpose"];
 
@@ -18,7 +18,7 @@ export default defineCommand({
   },
   args: {
     team: {
-      type: "string",
+      type: "positional",
       description: "Team name to spawn into",
       required: true,
     },

@@ -1,10 +1,10 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { sendMessage } from "../../actions/send-message.ts";
-import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
-import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import type { AppContext } from "../../types/context.ts";
-import { renderError } from "../errors.ts";
+import { sendMessage } from "../../../actions/send-message.ts";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
+import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -13,11 +13,11 @@ export default defineCommand({
   },
   args: {
     team: {
-      type: "string",
+      type: "positional",
       description: "Team name",
       required: true,
     },
-    agent: {
+    name: {
       type: "string",
       description: "Agent name",
       required: true,
@@ -41,7 +41,7 @@ export default defineCommand({
 
     const result = await sendMessage(ctx, {
       team: args.team,
-      agent: args.agent,
+      agent: args.name,
       message: args.message,
       from: args.from || undefined,
     });
@@ -51,6 +51,6 @@ export default defineCommand({
       process.exit(1);
     }
 
-    console.error(`Message sent to ${pc.bold(args.agent)} in team ${pc.bold(args.team)}.`);
+    console.error(`Message sent to ${pc.bold(args.name)} in team ${pc.bold(args.team)}.`);
   },
 });

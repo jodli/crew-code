@@ -1,13 +1,13 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { attachAgent } from "../../actions/attach-agent.ts";
-import { FileProcessRegistry } from "../../adapters/file-process-registry.ts";
-import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
-import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { parsePassthroughArgs } from "../../lib/parse-passthrough-args.ts";
-import { launchAgent } from "../../runtime/launch.ts";
-import type { AppContext } from "../../types/context.ts";
-import { renderError } from "../errors.ts";
+import { attachAgent } from "../../../actions/attach-agent.ts";
+import { FileProcessRegistry } from "../../../adapters/file-process-registry.ts";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
+import { parsePassthroughArgs } from "../../../lib/parse-passthrough-args.ts";
+import { launchAgent } from "../../../runtime/launch.ts";
+import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
 
 export default defineCommand({
   meta: {
@@ -16,7 +16,7 @@ export default defineCommand({
   },
   args: {
     team: {
-      type: "string",
+      type: "positional",
       description: "Team name to attach to",
       required: true,
     },

@@ -1,15 +1,15 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { getCrewMessages } from "../../actions/get-crew-channel.ts";
-import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
-import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { claudeInboxPath } from "../../config/paths.ts";
-import { markCrewMessagesRead } from "../../core/crew-channel.ts";
-import { watchFile } from "../../lib/file-watcher.ts";
-import { CREW_SENDER } from "../../types/constants.ts";
-import type { AppContext } from "../../types/context.ts";
-import { renderError } from "../errors.ts";
-import { renderMessage } from "../format-message.ts";
+import { getCrewMessages } from "../../../actions/get-crew-channel.ts";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
+import { claudeInboxPath } from "../../../config/paths.ts";
+import { markCrewMessagesRead } from "../../../core/crew-channel.ts";
+import { watchFile } from "../../../lib/file-watcher.ts";
+import { CREW_SENDER } from "../../../types/constants.ts";
+import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
+import { renderMessage } from "../../format-message.ts";
 
 async function showMessages(
   ctx: AppContext,
@@ -52,7 +52,7 @@ export default defineCommand({
   },
   args: {
     team: {
-      type: "string",
+      type: "positional",
       description: "Team name",
       required: true,
     },

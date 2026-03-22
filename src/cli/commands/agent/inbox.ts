@@ -1,11 +1,11 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { JsonFileConfigStore } from "../../adapters/json-file-config-store.ts";
-import { JsonFileInboxStore } from "../../adapters/json-file-inbox-store.ts";
-import { getInbox } from "../../core/inbox.ts";
-import type { AppContext } from "../../types/context.ts";
-import { renderError } from "../errors.ts";
-import { renderMessage } from "../format-message.ts";
+import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
+import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
+import { getInbox } from "../../../core/inbox.ts";
+import type { AppContext } from "../../../types/context.ts";
+import { renderError } from "../../errors.ts";
+import { renderMessage } from "../../format-message.ts";
 
 export default defineCommand({
   meta: {
@@ -14,11 +14,11 @@ export default defineCommand({
   },
   args: {
     team: {
-      type: "string",
+      type: "positional",
       description: "Team name",
       required: true,
     },
-    agent: {
+    name: {
       type: "string",
       description: "Agent name",
       required: true,
@@ -40,7 +40,7 @@ export default defineCommand({
       inboxStore: new JsonFileInboxStore(),
     };
 
-    const result = await getInbox(ctx, args.team, args.agent, {
+    const result = await getInbox(ctx, args.team, args.name, {
       unreadOnly: args.unread || false,
     });
 
