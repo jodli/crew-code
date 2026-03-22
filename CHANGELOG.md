@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4](https://github.com/jodli/crew-code/compare/v0.1.3...v0.1.4) (2026-03-22)
+
+
+### Bug Fixes
+
+* remove darwin targets from CD build matrix ([f3c46ca](https://github.com/jodli/crew-code/commit/f3c46ca019e0be8d6a272f2f8de5a78b85610e72))
+
+
+### Performance
+
+* reduce file-watcher test timeouts from 6s to 500ms ([5a75286](https://github.com/jodli/crew-code/commit/5a7528642d042e5c60994cdbba2e94939fce778f))
+
 ## [0.1.3](https://github.com/jodli/crew-code/compare/v0.1.2...v0.1.3) (2026-03-22)
 
 
