@@ -8,8 +8,7 @@ INSTALL_DIR="${CREW_INSTALL_DIR:-$HOME/.local/bin}"
 OS="$(uname -s)"
 case "$OS" in
   Linux)  os="linux" ;;
-  Darwin) os="macos" ;;
-  *) echo "Unsupported OS: $OS" >&2; exit 1 ;;
+  *) echo "Unsupported OS: $OS (only Linux binaries are available, build from source on macOS)" >&2; exit 1 ;;
 esac
 
 # Detect architecture

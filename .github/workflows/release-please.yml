@@ -32,10 +32,6 @@ jobs:
             outfile: crew-linux-x64
           - target: bun-linux-arm64
             outfile: crew-linux-arm64
-          - target: bun-darwin-x64
-            outfile: crew-macos-x64
-          - target: bun-darwin-arm64
-            outfile: crew-macos-arm64
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,7 +59,7 @@ jobs:
         with:
           merge-multiple: true
           path: dist/
-      - run: chmod +x dist/crew-linux-x64 dist/crew-linux-arm64 dist/crew-macos-x64 dist/crew-macos-arm64
+      - run: chmod +x dist/crew-linux-x64 dist/crew-linux-arm64
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}

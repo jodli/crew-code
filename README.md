@@ -35,11 +35,13 @@ crew tui
 
 ## Install
 
+Prebuilt binary (Linux):
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jodli/crew-code/main/install.sh | bash
 ```
 
-Or build from source ([Bun](https://bun.sh) required):
+From source ([Bun](https://bun.sh) required):
 
 ```bash
 git clone git@github.com:jodli/crew-code.git
