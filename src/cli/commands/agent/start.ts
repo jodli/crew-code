@@ -51,12 +51,16 @@ export default defineCommand({
     }
 
     // Check if agent is already running
-    const isRunning = await processRegistry.isRunning(args.team, result.value.agentId);
-    if (isRunning) {
-      const tmuxSession = `crew_${args.team}_${result.value.name}`;
+    const activeResult = await processRegistry.listActive(args.team);
+    const activeEntry = activeResult.ok
+      ? activeResult.value.find((e) => e.agentId === result.value.agentId)
+      : undefined;
+    if (activeEntry) {
       console.error(`Agent "${result.value.name}" is already running.`);
       console.error(`  Stop first:  crew agent stop ${args.team} --name ${result.value.name}`);
-      console.error(`  Or connect:  tmux attach -t ${tmuxSession}`);
+      if (activeEntry.mode === "headless") {
+        console.error(`  Or connect:  tmux attach -t crew_${args.team}_${result.value.name}`);
+      }
       process.exit(1);
     }
 
@@ -79,7 +83,7 @@ export default defineCommand({
       }
 
       const { pid } = launchAgent(result.value.launchOptions, { headless: true });
-      const activateResult = await processRegistry.activate(args.team, result.value.agentId, pid);
+      const activateResult = await processRegistry.activate(args.team, result.value.agentId, pid, "headless");
       if (!activateResult.ok) {
         console.error(
           `Warning: failed to register process: ${"detail" in activateResult.error ? activateResult.error.detail : activateResult.error.kind}`,

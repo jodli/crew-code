@@ -34,12 +34,12 @@ export default defineCommand({
       process.exit(1);
     }
 
-    // Get live agent IDs from registry
-    const runningAgentIds = new Set<string>();
+    // Get live agent entries from registry (includes mode)
+    const activeEntries = new Map<string, { mode: string }>();
     const activeResult = await processRegistry.listActive(args.team);
     if (activeResult.ok) {
       for (const entry of activeResult.value) {
-        runningAgentIds.add(entry.agentId);
+        activeEntries.set(entry.agentId, { mode: entry.mode });
       }
     }
 
@@ -53,8 +53,8 @@ export default defineCommand({
 
     const home = process.env.HOME ?? "";
     for (const m of detail.members) {
-      const running = runningAgentIds.has(m.agentId);
-      const status = running ? pc.green("running") : pc.dim("stopped");
+      const entry = activeEntries.get(m.agentId);
+      const status = entry ? pc.green(entry.mode === "headless" ? "running (headless)" : "running") : pc.dim("stopped");
       table.push([
         m.name,
         status,

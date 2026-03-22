@@ -105,7 +105,7 @@ export function agentRoutes() {
     const tmuxSession = `crew_${name}_${agent}`;
 
     if (ctx.processRegistry) {
-      await ctx.processRegistry.activate(name, member.agentId, pid);
+      await ctx.processRegistry.activate(name, member.agentId, pid, "headless");
     }
 
     return c.json({ started: true, pid, tmuxSession });

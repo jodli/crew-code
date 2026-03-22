@@ -7,7 +7,7 @@ import {
 } from "../config/paths.ts";
 import { readJson, withLock, writeJson } from "../lib/json-io.ts";
 import { debug, warn } from "../lib/logger.ts";
-import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
+import type { LaunchMode, ProcessRegistry, RegistryEntry } from "../ports/process-registry.ts";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
 
@@ -15,6 +15,7 @@ const RegistryEntrySchema = z.object({
   agentId: z.string(),
   pid: z.number(),
   activatedAt: z.number(),
+  mode: z.enum(["interactive", "headless"]).default("interactive"),
 });
 
 const RegistrySchema = z.array(RegistryEntrySchema);
@@ -56,8 +57,13 @@ export class FileProcessRegistry implements ProcessRegistry {
     this.deps = { ...defaultDeps, ...deps };
   }
 
-  async activate(teamName: string, agentId: string, pid: number): Promise<Result<void>> {
-    debug("registry", "activate", { team: teamName, agentId, pid });
+  async activate(
+    teamName: string,
+    agentId: string,
+    pid: number,
+    mode: LaunchMode = "interactive",
+  ): Promise<Result<void>> {
+    debug("registry", "activate", { team: teamName, agentId, pid, mode });
     const path = this.deps.registryPath(teamName);
     const dir = this.deps.registryDir(teamName);
 
@@ -80,7 +86,7 @@ export class FileProcessRegistry implements ProcessRegistry {
     const lockResult = await withLock(path, async () => {
       const entries = await this.readEntries(teamName);
       const filtered = entries.filter((e) => e.agentId !== agentId);
-      filtered.push({ agentId, pid, activatedAt: Date.now() });
+      filtered.push({ agentId, pid, activatedAt: Date.now(), mode });
       const writeResult = await writeJson(path, filtered);
       if (!writeResult.ok) return writeResult;
       return ok(undefined);
@@ -164,7 +170,7 @@ export class FileProcessRegistry implements ProcessRegistry {
       warn("registry", "failed to read entries", { team: teamName, error: result.error.kind });
       return [];
     }
-    return result.value;
+    return result.value as RegistryEntry[];
   }
 
   private async readEntriesHealed(teamName: string): Promise<RegistryEntry[]> {

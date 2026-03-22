@@ -115,8 +115,8 @@ describe("core/remove-team", () => {
     test("detects alive agents via registry", async () => {
       resetTracking();
       const registry = makeMockRegistry([
-        { agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now() },
-        { agentId: "scout@my-team", pid: 222, activatedAt: Date.now() },
+        { agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now(), mode: "interactive" as const },
+        { agentId: "scout@my-team", pid: 222, activatedAt: Date.now(), mode: "interactive" as const },
       ]);
       const ctx = makeCtx(sampleConfig);
 
@@ -130,7 +130,9 @@ describe("core/remove-team", () => {
 
     test("only includes alive agents from registry", async () => {
       resetTracking();
-      const registry = makeMockRegistry([{ agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now() }]);
+      const registry = makeMockRegistry([
+        { agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now(), mode: "interactive" as const },
+      ]);
       const ctx = makeCtx(sampleConfig);
 
       const result = await planRemoveTeam(ctx, { team: "my-team" }, registry);
