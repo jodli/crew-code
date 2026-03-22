@@ -9,12 +9,12 @@ export default defineCommand({
     port: {
       type: "string",
       description: "Port to listen on",
-      default: "3117",
+      default: process.env.PORT ?? "3117",
     },
     host: {
       type: "string",
       description: "Host to bind to",
-      default: "localhost",
+      default: process.env.HOST ?? "localhost",
     },
   },
   async run({ args }) {
@@ -39,7 +39,7 @@ export default defineCommand({
       process.exit(1);
     }
 
-    Bun.serve({
+    const server = Bun.serve({
       fetch: app.fetch,
       port,
       hostname: args.host,
@@ -47,7 +47,11 @@ export default defineCommand({
 
     console.error(`crew API listening on http://${args.host}:${port}`);
 
-    const shutdown = () => process.exit(0);
+    const shutdown = () => {
+      console.error("\nShutting down...");
+      server.stop(true);
+      process.exit(0);
+    };
     process.on("SIGINT", shutdown);
     process.on("SIGTERM", shutdown);
   },

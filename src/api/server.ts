@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import pkg from "../../package.json";
 import { debug, warn } from "../lib/logger.ts";
 import type { AppContext } from "../types/context.ts";
 import { agentRoutes } from "./routes/agents.ts";
@@ -31,6 +32,11 @@ export function createApp(ctx: AppContext) {
       debug("api", `${c.req.method} ${c.req.path} ${status} ${ms}ms`);
     }
   });
+
+  const startedAt = Date.now();
+  app.get("/api/health", (c) =>
+    c.json({ status: "ok", version: pkg.version, uptime: Math.floor((Date.now() - startedAt) / 1000) }),
+  );
 
   app.use("/api/*", async (c, next) => {
     c.set("ctx", ctx);
