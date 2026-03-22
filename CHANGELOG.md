@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/jodli/crew-code/compare/v0.1.1...v0.1.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* add --format=esm to bytecode build for TLA compatibility ([04dfbd1](https://github.com/jodli/crew-code/commit/04dfbd15a7815599032432e8722f0c769f1c98be))
+
 ## [0.1.1](https://github.com/jodli/crew-code/compare/v0.1.0...v0.1.1) (2026-03-22)
 
 
