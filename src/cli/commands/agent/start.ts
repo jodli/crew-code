@@ -50,6 +50,16 @@ export default defineCommand({
       process.exit(1);
     }
 
+    // Check if agent is already running
+    const isRunning = await processRegistry.isRunning(args.team, result.value.agentId);
+    if (isRunning) {
+      const tmuxSession = `crew_${args.team}_${result.value.name}`;
+      console.error(`Agent "${result.value.name}" is already running.`);
+      console.error(`  Stop first:  crew agent stop ${args.team} --name ${result.value.name}`);
+      console.error(`  Or connect:  tmux attach -t ${tmuxSession}`);
+      process.exit(1);
+    }
+
     const cliArgs = parsePassthroughArgs(rawArgs);
     if (cliArgs.length > 0) {
       result.value.launchOptions.extraArgs = cliArgs;

@@ -72,7 +72,9 @@ function launchHeadless(info: AgentLaunchInfo, args: string[]): LaunchResult {
   // Kill stale tmux session if it exists but the process is dead
   const hasSession = Bun.spawnSync(["tmux", "has-session", "-t", sessionName], { stdout: "pipe", stderr: "pipe" });
   if (hasSession.exitCode === 0) {
-    throw new Error(`tmux session "${sessionName}" already exists. Stop the agent first or run: tmux kill-session -t ${sessionName}`);
+    throw new Error(
+      `tmux session "${sessionName}" already exists. Stop the agent first or run: tmux kill-session -t ${sessionName}`,
+    );
   }
 
   const tmuxProc = Bun.spawnSync(

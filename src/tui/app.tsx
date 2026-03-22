@@ -163,7 +163,11 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_create_agent" });
         } else if ((key.name === "a" || key.name === "return") && nav.panel === "agents") {
           if (selectedAgent && selectedTeamName) {
-            dispatch({ type: "open_start_form" });
+            if (selectedAgent.status === "running") {
+              setError(`Agent "${selectedAgent.name}" is already running.`);
+            } else {
+              dispatch({ type: "open_start_form" });
+            }
           }
         } else if (key.name === "x" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_confirm_stop" });
