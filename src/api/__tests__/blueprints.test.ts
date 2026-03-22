@@ -119,26 +119,26 @@ describe("PATCH /api/blueprints/:name", () => {
   });
 });
 
-describe("POST /api/blueprints/:name/deploy", () => {
-  test("deploys a blueprint as a new team", async () => {
+describe("POST /api/blueprints/:name/load", () => {
+  test("loads a blueprint as a new team", async () => {
     await app.request("/api/blueprints", json(sampleBlueprint));
-    const res = await app.request("/api/blueprints/review-team/deploy", json({}));
+    const res = await app.request("/api/blueprints/review-team/load", json({}));
     expect(res.status).toBe(201);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.teamName).toBe("review-team");
     expect(body.launchOptions).toBeArray();
   });
 
-  test("deploys with team name override", async () => {
+  test("loads with team name override", async () => {
     await app.request("/api/blueprints", json(sampleBlueprint));
-    const res = await app.request("/api/blueprints/review-team/deploy", json({ teamName: "custom" }));
+    const res = await app.request("/api/blueprints/review-team/load", json({ teamName: "custom" }));
     expect(res.status).toBe(201);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.teamName).toBe("custom");
   });
 
   test("returns 404 for missing blueprint", async () => {
-    const res = await app.request("/api/blueprints/nope/deploy", json({}));
+    const res = await app.request("/api/blueprints/nope/load", json({}));
     expect(res.status).toBe(404);
   });
 });

@@ -3,7 +3,7 @@ import { makeConfigStore, makeInboxStore, makeProcessRegistry } from "../test/he
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { err, ok } from "../types/result.ts";
-import { executeRemove, planRemove } from "./remove.ts";
+import { executeRemoveAgent, planRemoveAgent } from "./remove.ts";
 
 function makeMockRegistry(aliveAgentIds: string[] = []) {
   return makeProcessRegistry({
@@ -49,11 +49,11 @@ const baseConfig: TeamConfig = {
   ],
 };
 
-describe("core/remove", () => {
-  describe("planRemove()", () => {
+describe("core/remove-agent", () => {
+  describe("planRemoveAgent()", () => {
     test("returns team_not_found for missing team", async () => {
       const ctx = makeCtx();
-      const result = await planRemove(ctx, { team: "no-team", name: "worker" });
+      const result = await planRemoveAgent(ctx, { team: "no-team", name: "worker" });
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -68,7 +68,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "ghost" });
+      const result = await planRemoveAgent(ctx, { team: "my-team", name: "ghost" });
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -86,7 +86,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "team-lead" });
+      const result = await planRemoveAgent(ctx, { team: "my-team", name: "team-lead" });
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -104,7 +104,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "worker" });
+      const result = await planRemoveAgent(ctx, { team: "my-team", name: "worker" });
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -123,7 +123,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "worker" }, registry);
+      const result = await planRemoveAgent(ctx, { team: "my-team", name: "worker" }, registry);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -141,7 +141,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "worker" });
+      const result = await planRemoveAgent(ctx, { team: "my-team", name: "worker" });
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -159,7 +159,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "worker" });
+      const result = await planRemoveAgent(ctx, { team: "my-team", name: "worker" });
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -177,7 +177,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await planRemove(ctx, { team: "my-team", name: "worker" });
+      const result = await planRemoveAgent(ctx, { team: "my-team", name: "worker" });
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -188,7 +188,7 @@ describe("core/remove", () => {
     });
   });
 
-  describe("executeRemove()", () => {
+  describe("executeRemoveAgent()", () => {
     test("removes member from config", async () => {
       let updatedConfig: TeamConfig | null = null;
       const ctx = makeCtx({
@@ -200,7 +200,7 @@ describe("core/remove", () => {
         }),
       });
 
-      const result = await executeRemove(ctx, {
+      const result = await executeRemoveAgent(ctx, {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
@@ -225,7 +225,7 @@ describe("core/remove", () => {
         }),
       });
 
-      await executeRemove(ctx, {
+      await executeRemoveAgent(ctx, {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
@@ -247,7 +247,7 @@ describe("core/remove", () => {
         }),
       });
 
-      await executeRemove(ctx, {
+      await executeRemoveAgent(ctx, {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
@@ -260,7 +260,7 @@ describe("core/remove", () => {
 
     test("returns ok on success", async () => {
       const ctx = makeCtx();
-      const result = await executeRemove(ctx, {
+      const result = await executeRemoveAgent(ctx, {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",

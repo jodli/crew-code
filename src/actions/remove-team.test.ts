@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { makeConfigStore, makeCtx } from "../test/helpers.ts";
 import { err, ok } from "../types/result.ts";
-import { destroyTeam } from "./destroy-team.ts";
+import { removeTeam } from "./remove-team.ts";
 
-describe("actions/destroy-team", () => {
+describe("actions/remove-team", () => {
   test("propagates plan error (team_not_found)", async () => {
     const ctx = makeCtx();
-    const result = await destroyTeam(ctx, { team: "no-team" });
+    const result = await removeTeam(ctx, { team: "no-team" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -29,7 +29,7 @@ describe("actions/destroy-team", () => {
       }),
     });
 
-    const result = await destroyTeam(ctx, { team: "t" });
+    const result = await removeTeam(ctx, { team: "t" });
     expect(result.ok).toBe(false);
   });
 
@@ -47,7 +47,7 @@ describe("actions/destroy-team", () => {
       }),
     });
 
-    const result = await destroyTeam(ctx, { team: "t" });
+    const result = await removeTeam(ctx, { team: "t" });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.team).toBe("t");

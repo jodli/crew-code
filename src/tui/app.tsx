@@ -3,9 +3,9 @@ import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { attachAgent } from "../actions/attach-agent.ts";
 import { createTeam } from "../actions/create-team.ts";
-import { destroyTeam } from "../actions/destroy-team.ts";
 import { killAgent } from "../actions/kill-agent.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
+import { removeTeam } from "../actions/remove-team.ts";
 import { sendMessage } from "../actions/send-message.ts";
 import { planSpawn } from "../actions/spawn-agent.ts";
 import { updateAgent } from "../actions/update-agent.ts";
@@ -72,7 +72,7 @@ export function App({ launcher }: AppProps) {
   const [error, setError] = useState("");
   const [selectedBlueprint, setSelectedBlueprint] = useState<Blueprint | null>(null);
 
-  // Clamp teamIndex when teams list shrinks (e.g. after destroy)
+  // Clamp teamIndex when teams list shrinks (e.g. after remove)
   useEffect(() => {
     if (nav === "quit") return;
     if (teams.length > 0 && nav.teamIndex >= teams.length) {
@@ -98,8 +98,8 @@ export function App({ launcher }: AppProps) {
   const isConfirm =
     nav !== "quit" &&
     (nav.view.screen === "confirm-kill" ||
-      nav.view.screen === "confirm-destroy" ||
-      nav.view.screen === "confirm-remove");
+      nav.view.screen === "confirm-remove-team" ||
+      nav.view.screen === "confirm-remove-agent");
   // Views that handle all their own keyboard input
   const isDelegatedView =
     nav !== "quit" &&
@@ -168,13 +168,13 @@ export function App({ launcher }: AppProps) {
         } else if (key.name === "x" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_confirm_kill" });
         } else if (key.name === "r" && nav.panel === "agents" && selectedAgent) {
-          dispatch({ type: "open_confirm_remove" });
+          dispatch({ type: "open_confirm_remove_agent" });
         } else if (key.name === "e" && nav.panel === "teams" && selectedTeamName) {
           dispatch({ type: "open_edit_team" });
         } else if (key.name === "e" && nav.panel === "agents" && selectedAgent && selectedTeamName) {
           dispatch({ type: "open_edit_agent" });
         } else if (key.name === "d" && nav.panel === "teams" && selectedTeamName) {
-          dispatch({ type: "open_confirm_destroy" });
+          dispatch({ type: "open_confirm_remove_team" });
         } else if (key.name === "i" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_inbox" });
         } else if (key.name === "m" && nav.panel === "agents" && selectedAgent && selectedTeamName) {
@@ -237,16 +237,16 @@ export function App({ launcher }: AppProps) {
     dispatch({ type: "close_overlay" });
   }, [nav, agents, selectedTeamName]);
 
-  const handleConfirmDestroy = useCallback(async () => {
+  const handleConfirmRemoveTeam = useCallback(async () => {
     if (!selectedTeamName) return;
-    const result = await destroyTeam(ctx, { team: selectedTeamName });
+    const result = await removeTeam(ctx, { team: selectedTeamName });
     if (!result.ok) {
-      setError(`Destroy failed: ${result.error.kind}`);
+      setError(`Remove failed: ${result.error.kind}`);
     }
     dispatch({ type: "close_overlay" });
   }, [selectedTeamName]);
 
-  const handleConfirmRemove = useCallback(async () => {
+  const handleConfirmRemoveAgent = useCallback(async () => {
     if (!selectedTeamName || !selectedAgent) return;
     const result = await removeAgent(ctx, { team: selectedTeamName, name: selectedAgent.name });
     if (!result.ok) {
@@ -392,10 +392,10 @@ export function App({ launcher }: AppProps) {
 
   // Build confirm messages
   const killMessage = selectedAgent ? `Kill agent "${selectedAgent.name}"?` : "";
-  const destroyMessage = selectedTeamName
-    ? `Destroy team "${selectedTeamName}"? Kills ${agents.filter((a) => a.status === "alive").length} agent(s).`
+  const removeTeamMessage = selectedTeamName
+    ? `Remove team "${selectedTeamName}"? Kills ${agents.filter((a) => a.status === "alive").length} agent(s).`
     : "";
-  const removeMessage = selectedAgent
+  const removeAgentMessage = selectedAgent
     ? selectedAgent.status === "alive"
       ? `Remove "${selectedAgent.name}"? Kills process, deletes inbox, removes from config.`
       : `Remove "${selectedAgent.name}"? Deletes inbox, removes from config.`
@@ -423,10 +423,10 @@ export function App({ launcher }: AppProps) {
       {/* Bottom bar — either shortcut bar or confirm bar */}
       {nav.view.screen === "confirm-kill" ? (
         <ConfirmBar message={killMessage} onConfirm={handleConfirmKill} onCancel={handleCancelOverlay} />
-      ) : nav.view.screen === "confirm-destroy" ? (
-        <ConfirmBar message={destroyMessage} onConfirm={handleConfirmDestroy} onCancel={handleCancelOverlay} />
-      ) : nav.view.screen === "confirm-remove" ? (
-        <ConfirmBar message={removeMessage} onConfirm={handleConfirmRemove} onCancel={handleCancelOverlay} />
+      ) : nav.view.screen === "confirm-remove-team" ? (
+        <ConfirmBar message={removeTeamMessage} onConfirm={handleConfirmRemoveTeam} onCancel={handleCancelOverlay} />
+      ) : nav.view.screen === "confirm-remove-agent" ? (
+        <ConfirmBar message={removeAgentMessage} onConfirm={handleConfirmRemoveAgent} onCancel={handleCancelOverlay} />
       ) : (
         <ShortcutBar panel={nav.panel} />
       )}

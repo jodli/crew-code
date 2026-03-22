@@ -9,14 +9,15 @@ const helpText = [
   "  h           Focus teams panel",
   "",
   "Teams Panel",
-  "  n           Create new team",
-  "  e           Edit team description",
-  "  d           Destroy team",
+  "  n           Create team",
+  "  b           Load blueprint",
+  "  e           Update team description",
+  "  d           Remove team",
   "",
   "Agents Panel",
   "  s           Spawn new agent",
   "  a / Enter   Attach to agent",
-  "  e           Edit agent properties",
+  "  e           Update agent properties",
   "  x           Kill agent",
   "  r           Remove agent",
   "  i           Open inbox",
@@ -35,7 +36,7 @@ export function HelpOverlay() {
       top={2}
       left={4}
       width="60%"
-      height={27}
+      height={28}
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"

@@ -19,7 +19,7 @@ const UpdateBlueprintBody = z.object({
   agents: BlueprintSchema.shape.agents.optional(),
 });
 
-const DeployBody = z.object({
+const LoadBody = z.object({
   teamName: z.string().optional(),
 });
 
@@ -67,7 +67,7 @@ export function blueprintRoutes() {
     return c.json(result.value);
   });
 
-  r.post("/blueprints/:name/deploy", zValidator("json", DeployBody), async (c) => {
+  r.post("/blueprints/:name/load", zValidator("json", LoadBody), async (c) => {
     const ctx = c.get("ctx");
     const name = c.req.param("name");
     const body = c.req.valid("json");

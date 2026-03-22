@@ -4,21 +4,21 @@ import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
 
-export interface DestroyInput {
+export interface RemoveTeamInput {
   team: string;
 }
 
-export interface DestroyPlan {
+export interface RemoveTeamPlan {
   team: string;
   activeAgents: { name: string; agentId: string; pid: number }[];
   inboxes: string[];
 }
 
-export async function planDestroy(
+export async function planRemoveTeam(
   ctx: AppContext,
-  input: DestroyInput,
+  input: RemoveTeamInput,
   registry?: ProcessRegistry,
-): Promise<Result<DestroyPlan>> {
+): Promise<Result<RemoveTeamPlan>> {
   const teamCheck = validateName(input.team, "team");
   if (!teamCheck.ok) return teamCheck as Result<never>;
 
@@ -51,9 +51,9 @@ export async function planDestroy(
   return ok({ team: input.team, activeAgents, inboxes });
 }
 
-export async function executeDestroy(
+export async function executeRemoveTeam(
   ctx: AppContext,
-  plan: DestroyPlan,
+  plan: RemoveTeamPlan,
   registry?: ProcessRegistry,
 ): Promise<Result<void>> {
   // 1. Kill active agents

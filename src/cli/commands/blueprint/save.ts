@@ -11,7 +11,7 @@ import { renderError } from "../../errors.ts";
 
 export default defineCommand({
   meta: {
-    name: "save",
+    name: "export",
     description: "Export a running team as a blueprint",
   },
   args: {

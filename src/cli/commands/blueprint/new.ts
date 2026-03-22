@@ -13,7 +13,7 @@ import { renderError } from "../../errors.ts";
 
 export default defineCommand({
   meta: {
-    name: "new",
+    name: "create",
     description: "Create a new blueprint in $EDITOR",
   },
   args: {

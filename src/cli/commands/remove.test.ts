@@ -16,13 +16,13 @@ describe("CLI remove command", () => {
     expect(cmd.args?.team?.required).toBe(true);
   });
 
-  test("remove command defines --name as required arg", async () => {
+  test("remove command defines --name as optional arg (agent mode)", async () => {
     const mod = await import("./remove.ts");
     const cmd = mod.default as {
       args?: Record<string, { required?: boolean }>;
     };
     expect(cmd.args?.name).toBeDefined();
-    expect(cmd.args?.name?.required).toBe(true);
+    expect(cmd.args?.name?.required).toBeFalsy();
   });
 
   test("remove command defines --force as optional boolean arg", async () => {

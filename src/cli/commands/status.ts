@@ -55,7 +55,7 @@ export default defineCommand({
       const home = process.env.HOME ?? "";
       for (const m of detail.members) {
         const alive = liveAgentIds.has(m.agentId);
-        const status = alive ? pc.green("live") : pc.dim("gone");
+        const status = alive ? pc.green("alive") : pc.dim("dead");
         table.push([
           m.name,
           status,

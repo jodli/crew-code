@@ -4,12 +4,12 @@ import type { AppContext } from "../types/context.ts";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
 
-export interface RemoveInput {
+export interface RemoveAgentInput {
   team: string;
   name: string;
 }
 
-export interface RemovePlan {
+export interface RemoveAgentPlan {
   team: string;
   name: string;
   agentId: string;
@@ -17,11 +17,11 @@ export interface RemovePlan {
   hasInbox: boolean;
 }
 
-export async function planRemove(
+export async function planRemoveAgent(
   ctx: AppContext,
-  input: RemoveInput,
+  input: RemoveAgentInput,
   registry?: ProcessRegistry,
-): Promise<Result<RemovePlan>> {
+): Promise<Result<RemoveAgentPlan>> {
   const teamCheck = validateName(input.team, "team");
   if (!teamCheck.ok) return teamCheck as Result<never>;
   const agentCheck = validateName(input.name, "agent");
@@ -57,9 +57,9 @@ export async function planRemove(
   });
 }
 
-export async function executeRemove(
+export async function executeRemoveAgent(
   ctx: AppContext,
-  plan: RemovePlan,
+  plan: RemoveAgentPlan,
   registry?: ProcessRegistry,
 ): Promise<Result<void>> {
   if (plan.isAlive && registry) {

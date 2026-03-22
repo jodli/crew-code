@@ -173,15 +173,15 @@ describe("navReducer", () => {
     });
   });
 
-  describe("confirm-destroy-team", () => {
-    test("open_confirm_destroy switches to confirm-destroy view", () => {
-      const s = navReducer(initialNavState, { type: "open_confirm_destroy" });
+  describe("confirm-remove-team-team", () => {
+    test("open_confirm_remove_team switches to confirm-remove-team view", () => {
+      const s = navReducer(initialNavState, { type: "open_confirm_remove_team" });
       if (s === "quit") return;
-      expect(s.view.screen).toBe("confirm-destroy");
+      expect(s.view.screen).toBe("confirm-remove-team");
     });
 
-    test("close_overlay returns to dashboard from confirm-destroy", () => {
-      const state: NavState = { ...initialNavState, view: { screen: "confirm-destroy" } };
+    test("close_overlay returns to dashboard from confirm-remove-team", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "confirm-remove-team" } };
       const s = navReducer(state, { type: "close_overlay" });
       if (s === "quit") return;
       expect(s.view.screen).toBe("dashboard");

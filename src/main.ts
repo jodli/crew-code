@@ -3,7 +3,7 @@ import pkg from "../package.json";
 import attach from "./cli/commands/attach.ts";
 import blueprint from "./cli/commands/blueprint.ts";
 import create from "./cli/commands/create.ts";
-import destroy from "./cli/commands/destroy.ts";
+
 import doctor from "./cli/commands/doctor.ts";
 import inbox from "./cli/commands/inbox.ts";
 import messages from "./cli/commands/messages.ts";
@@ -27,7 +27,6 @@ const main = defineCommand({
     spawn,
     status,
     send,
-    destroy,
     doctor,
     inbox,
     remove,

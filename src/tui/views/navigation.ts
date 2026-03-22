@@ -3,8 +3,8 @@ export type View =
   | { screen: "create-team" }
   | { screen: "spawn-agent" }
   | { screen: "confirm-kill" }
-  | { screen: "confirm-destroy" }
-  | { screen: "confirm-remove" }
+  | { screen: "confirm-remove-team" }
+  | { screen: "confirm-remove-agent" }
   | { screen: "inbox" }
   | { screen: "send-message" }
   | { screen: "help" }
@@ -39,8 +39,8 @@ export type NavAction =
   | { type: "open_create_team" }
   | { type: "open_spawn_agent" }
   | { type: "open_confirm_kill" }
-  | { type: "open_confirm_destroy" }
-  | { type: "open_confirm_remove" }
+  | { type: "open_confirm_remove_team" }
+  | { type: "open_confirm_remove_agent" }
   | { type: "open_inbox" }
   | { type: "open_send_message" }
   | { type: "open_attach_form" }
@@ -90,11 +90,11 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
     case "open_confirm_kill":
       return { ...state, view: { screen: "confirm-kill" } };
 
-    case "open_confirm_destroy":
-      return { ...state, view: { screen: "confirm-destroy" } };
+    case "open_confirm_remove_team":
+      return { ...state, view: { screen: "confirm-remove-team" } };
 
-    case "open_confirm_remove":
-      return { ...state, view: { screen: "confirm-remove" } };
+    case "open_confirm_remove_agent":
+      return { ...state, view: { screen: "confirm-remove-agent" } };
 
     case "open_inbox":
       return { ...state, view: { screen: "inbox" } };

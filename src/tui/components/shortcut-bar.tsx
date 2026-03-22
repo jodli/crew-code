@@ -16,21 +16,21 @@ const globalShortcuts: Shortcut[] = [
 
 const teamShortcuts: Shortcut[] = [
   { key: "j/k", label: "navigate" },
-  { key: "n", label: "new" },
+  { key: "n", label: "create" },
   { key: "b", label: "blueprint" },
-  { key: "e", label: "edit" },
-  { key: "d", label: "destroy" },
+  { key: "e", label: "update" },
+  { key: "d", label: "remove" },
 ];
 
 const agentShortcuts: Shortcut[] = [
   { key: "j/k", label: "navigate" },
   { key: "s", label: "spawn" },
   { key: "a", label: "attach" },
-  { key: "e", label: "edit" },
+  { key: "e", label: "update" },
   { key: "x", label: "kill" },
   { key: "r", label: "remove" },
   { key: "i", label: "inbox" },
-  { key: "m", label: "msg" },
+  { key: "m", label: "send" },
 ];
 
 export function ShortcutBar({ panel }: ShortcutBarProps) {

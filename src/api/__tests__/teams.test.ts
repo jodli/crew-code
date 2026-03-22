@@ -110,7 +110,7 @@ describe("PATCH /api/teams/:name", () => {
 });
 
 describe("DELETE /api/teams/:name", () => {
-  test("destroys a team", async () => {
+  test("removes a team", async () => {
     await app.request("/api/teams", json({ name: "alpha" }));
     const res = await app.request("/api/teams/alpha", { method: "DELETE" });
     expect(res.status).toBe(200);

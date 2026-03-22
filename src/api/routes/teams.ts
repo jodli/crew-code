@@ -3,9 +3,9 @@ import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { createTeam } from "../../actions/create-team.ts";
-import { destroyTeam } from "../../actions/destroy-team.ts";
 import { getTeamDetail } from "../../actions/get-team-detail.ts";
 import { listTeams } from "../../actions/list-teams.ts";
+import { removeTeam } from "../../actions/remove-team.ts";
 import { updateTeam } from "../../actions/update-team.ts";
 import { claudeInboxesDir, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
 import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
@@ -60,12 +60,12 @@ export function teamRoutes() {
   r.delete("/teams/:name", async (c) => {
     const ctx = c.get("ctx");
     const name = c.req.param("name");
-    const result = await destroyTeam(ctx, { team: name });
+    const result = await removeTeam(ctx, { team: name });
     if (!result.ok) return errorResponse(c, result.error);
     return c.json(result.value);
   });
 
-  r.get("/teams/:name/events", async (c) => {
+  r.get("/teams/:name/stream", async (c) => {
     const ctx = c.get("ctx");
     const name = c.req.param("name");
     let lastJson = "";

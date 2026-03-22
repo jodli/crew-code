@@ -3,7 +3,7 @@ import type { ProcessRegistry, RegistryEntry } from "../ports/process-registry.t
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { err, ok } from "../types/result.ts";
-import { type DestroyPlan, executeDestroy, planDestroy } from "./destroy.ts";
+import { executeRemoveTeam, planRemoveTeam, type RemoveTeamPlan } from "./remove-team.ts";
 
 const sampleConfig: TeamConfig = {
   name: "my-team",
@@ -100,12 +100,12 @@ function resetTracking() {
   deletedTeams = [];
 }
 
-describe("core/destroy", () => {
-  describe("planDestroy()", () => {
+describe("core/remove-team", () => {
+  describe("planRemoveTeam()", () => {
     test("returns error if team doesn't exist", async () => {
       resetTracking();
       const ctx = makeCtx(sampleConfig);
-      const result = await planDestroy(ctx, { team: "no-such-team" });
+      const result = await planRemoveTeam(ctx, { team: "no-such-team" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.kind).toBe("team_not_found");
@@ -120,7 +120,7 @@ describe("core/destroy", () => {
       ]);
       const ctx = makeCtx(sampleConfig);
 
-      const result = await planDestroy(ctx, { team: "my-team" }, registry);
+      const result = await planRemoveTeam(ctx, { team: "my-team" }, registry);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value.activeAgents).toHaveLength(2);
@@ -133,7 +133,7 @@ describe("core/destroy", () => {
       const registry = makeMockRegistry([{ agentId: "team-lead@my-team", pid: 111, activatedAt: Date.now() }]);
       const ctx = makeCtx(sampleConfig);
 
-      const result = await planDestroy(ctx, { team: "my-team" }, registry);
+      const result = await planRemoveTeam(ctx, { team: "my-team" }, registry);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value.activeAgents).toHaveLength(1);
@@ -145,7 +145,7 @@ describe("core/destroy", () => {
       resetTracking();
       const ctx = makeCtx(sampleConfig);
 
-      const result = await planDestroy(ctx, { team: "my-team" });
+      const result = await planRemoveTeam(ctx, { team: "my-team" });
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value.activeAgents).toHaveLength(0);
@@ -153,12 +153,12 @@ describe("core/destroy", () => {
     });
   });
 
-  describe("executeDestroy()", () => {
+  describe("executeRemoveTeam()", () => {
     test("kills agents via registry", async () => {
       resetTracking();
       const registry = makeMockRegistry();
       const ctx = makeCtx(sampleConfig);
-      const plan: DestroyPlan = {
+      const plan: RemoveTeamPlan = {
         team: "my-team",
         activeAgents: [
           { name: "team-lead", agentId: "team-lead@my-team", pid: 111 },
@@ -167,7 +167,7 @@ describe("core/destroy", () => {
         inboxes: ["team-lead", "scout"],
       };
 
-      const result = await executeDestroy(ctx, plan, registry);
+      const result = await executeRemoveTeam(ctx, plan, registry);
       expect(result.ok).toBe(true);
       expect(registry.killed).toEqual(["team-lead@my-team", "scout@my-team"]);
     });
@@ -175,13 +175,13 @@ describe("core/destroy", () => {
     test("deletes all inbox files", async () => {
       resetTracking();
       const ctx = makeCtx(sampleConfig);
-      const plan: DestroyPlan = {
+      const plan: RemoveTeamPlan = {
         team: "my-team",
         activeAgents: [],
         inboxes: ["team-lead", "scout"],
       };
 
-      const result = await executeDestroy(ctx, plan);
+      const result = await executeRemoveTeam(ctx, plan);
       expect(result.ok).toBe(true);
       expect(deletedInboxes).toHaveLength(2);
       expect(deletedInboxes.map((d) => d.agent).sort()).toEqual(["scout", "team-lead"]);
@@ -190,13 +190,13 @@ describe("core/destroy", () => {
     test("deletes team config", async () => {
       resetTracking();
       const ctx = makeCtx(sampleConfig);
-      const plan: DestroyPlan = {
+      const plan: RemoveTeamPlan = {
         team: "my-team",
         activeAgents: [],
         inboxes: [],
       };
 
-      const result = await executeDestroy(ctx, plan);
+      const result = await executeRemoveTeam(ctx, plan);
       expect(result.ok).toBe(true);
       expect(deletedTeams).toEqual(["my-team"]);
     });
@@ -205,19 +205,19 @@ describe("core/destroy", () => {
       resetTracking();
       const registry = makeMockRegistry();
       const ctx = makeCtx(sampleConfig);
-      const plan: DestroyPlan = {
+      const plan: RemoveTeamPlan = {
         team: "my-team",
         activeAgents: [],
         inboxes: [],
       };
 
-      const result = await executeDestroy(ctx, plan, registry);
+      const result = await executeRemoveTeam(ctx, plan, registry);
       expect(result.ok).toBe(true);
       expect(registry.cleaned).toEqual(["my-team"]);
     });
   });
 
-  test("planDestroy maps config_not_found to team_not_found", async () => {
+  test("planRemoveTeam maps config_not_found to team_not_found", async () => {
     const ctx: AppContext = {
       ...makeCtx(sampleConfig),
       configStore: {
@@ -225,7 +225,7 @@ describe("core/destroy", () => {
         getTeam: async () => err({ kind: "config_not_found", path: "/fake/path" }),
       },
     };
-    const result = await planDestroy(ctx, { team: "no-team" });
+    const result = await planRemoveTeam(ctx, { team: "no-team" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

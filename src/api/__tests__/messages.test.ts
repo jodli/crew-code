@@ -48,20 +48,20 @@ async function seedCrewInbox(messages: unknown[]) {
   await writeFile(join(inboxDir, `${CREW_SENDER}.json`), JSON.stringify(messages, null, 2));
 }
 
-describe("POST /api/teams/:name/agents/:agent/messages", () => {
+describe("POST /api/teams/:name/agents/:agent/inbox", () => {
   test("sends a message", async () => {
     await setupTeamWithAgent();
-    const res = await app.request("/api/teams/alpha/agents/coder/messages", json({ message: "Hello!", from: "api" }));
+    const res = await app.request("/api/teams/alpha/agents/coder/inbox", json({ message: "Hello!", from: "api" }));
     expect(res.status).toBe(201);
   });
 });
 
-describe("GET /api/teams/:name/agents/:agent/messages", () => {
+describe("GET /api/teams/:name/agents/:agent/inbox", () => {
   test("returns inbox with sent messages", async () => {
     await setupTeamWithAgent();
-    await app.request("/api/teams/alpha/agents/coder/messages", json({ message: "Hello!", from: "api" }));
+    await app.request("/api/teams/alpha/agents/coder/inbox", json({ message: "Hello!", from: "api" }));
 
-    const res = await app.request("/api/teams/alpha/agents/coder/messages");
+    const res = await app.request("/api/teams/alpha/agents/coder/inbox");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       messages: Array<Record<string, unknown>>;
@@ -75,9 +75,9 @@ describe("GET /api/teams/:name/agents/:agent/messages", () => {
 
   test("filters unread with ?status=unread", async () => {
     await setupTeamWithAgent();
-    await app.request("/api/teams/alpha/agents/coder/messages", json({ message: "Hello!", from: "api" }));
+    await app.request("/api/teams/alpha/agents/coder/inbox", json({ message: "Hello!", from: "api" }));
 
-    const res = await app.request("/api/teams/alpha/agents/coder/messages?status=unread");
+    const res = await app.request("/api/teams/alpha/agents/coder/inbox?status=unread");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       messages: Array<Record<string, unknown>>;
@@ -89,7 +89,7 @@ describe("GET /api/teams/:name/agents/:agent/messages", () => {
 
   test("returns empty inbox for agent with no messages", async () => {
     await setupTeamWithAgent();
-    const res = await app.request("/api/teams/alpha/agents/coder/messages");
+    const res = await app.request("/api/teams/alpha/agents/coder/inbox");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       messages: Array<Record<string, unknown>>;

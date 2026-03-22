@@ -20,7 +20,7 @@ const SendMessageBody = z.object({
 export function messageRoutes() {
   const r = new Hono<Env>();
 
-  r.get("/teams/:name/agents/:agent/messages", async (c) => {
+  r.get("/teams/:name/agents/:agent/inbox", async (c) => {
     const ctx = c.get("ctx");
     const name = c.req.param("name");
     const agent = c.req.param("agent");
@@ -31,7 +31,7 @@ export function messageRoutes() {
     return c.json(result.value);
   });
 
-  r.post("/teams/:name/agents/:agent/messages", zValidator("json", SendMessageBody), async (c) => {
+  r.post("/teams/:name/agents/:agent/inbox", zValidator("json", SendMessageBody), async (c) => {
     const ctx = c.get("ctx");
     const name = c.req.param("name");
     const agent = c.req.param("agent");
