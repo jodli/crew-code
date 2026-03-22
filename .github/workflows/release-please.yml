@@ -46,7 +46,7 @@ jobs:
       - run: bun run typecheck
       - run: bun test
       - name: Build ${{ matrix.target }}
-        run: bun build --compile --minify --bytecode --target=${{ matrix.target }} src/main.ts --outfile ${{ matrix.outfile }}
+        run: bun build --compile --minify --bytecode --format=esm --target=${{ matrix.target }} src/main.ts --outfile ${{ matrix.outfile }}
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.outfile }}
