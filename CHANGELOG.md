@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2](https://github.com/jodli/crew-code/compare/v0.1.1...v0.1.2) (2026-03-22)
+
+
+### Features
+
+* add release pipeline, changelog, and install script ([3274e40](https://github.com/jodli/crew-code/commit/3274e401e2388ddd2ff8dd7ddcd702bb043701d4))
+
+
+### Bug Fixes
+
+* remove component prefix from release tags ([f259443](https://github.com/jodli/crew-code/commit/f25944396a20e6b060ec77ef99d8f768e1c45da1))
+
 ## [0.1.1](https://github.com/jodli/crew-code/compare/crew-v0.1.0...crew-v0.1.1) (2026-03-22)
 
 
