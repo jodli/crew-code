@@ -1,24 +1,23 @@
-export function buildSpawnCommand(
-  team: string,
-  opts: { name?: string; agentType?: string; prompt?: string; model?: string; extraArgs?: string[] },
-): string[] {
-  const args = ["crew", "spawn", "--team", team];
-  if (opts.name) args.push("--name", opts.name);
-  if (opts.agentType) args.push("--agent-type", opts.agentType);
-  if (opts.prompt) args.push("--prompt", opts.prompt);
-  if (opts.model) args.push("--model", opts.model);
-  if (opts.extraArgs?.length) args.push("--", ...opts.extraArgs);
-  return args;
+/**
+ * Returns the command prefix to invoke the crew CLI.
+ * Handles both compiled binary (`dist/crew`) and dev mode (`bun run src/main.ts`).
+ */
+function crewBin(): string[] {
+  const isCompiled = Bun.main.startsWith("/$bunfs/");
+  if (isCompiled) {
+    return [process.execPath];
+  }
+  return [process.execPath, "run", Bun.main];
 }
 
 export function buildCreateCommand(name: string, extraArgs?: string[]): string[] {
-  const args = ["crew", "create", "--name", name];
+  const args = [...crewBin(), "team", "create", name];
   if (extraArgs?.length) args.push("--", ...extraArgs);
   return args;
 }
 
 export function buildAttachCommand(team: string, agentName: string, extraArgs?: string[]): string[] {
-  const args = ["crew", "attach", "--team", team, "--name", agentName];
+  const args = [...crewBin(), "agent", "attach", team, "--name", agentName];
   if (extraArgs?.length) args.push("--", ...extraArgs);
   return args;
 }

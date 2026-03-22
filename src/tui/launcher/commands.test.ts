@@ -1,103 +1,43 @@
 import { describe, expect, test } from "bun:test";
-import { buildAttachCommand, buildCreateCommand, buildSpawnCommand } from "./commands.ts";
+import { buildAttachCommand, buildCreateCommand } from "./commands.ts";
 
-describe("buildSpawnCommand", () => {
-  test("minimal: team only", () => {
-    expect(buildSpawnCommand("my-team", {})).toEqual(["crew", "spawn", "--team", "my-team"]);
-  });
-
-  test("with all options", () => {
-    expect(
-      buildSpawnCommand("my-team", {
-        name: "coder",
-        prompt: "Implement auth",
-        model: "opus",
-      }),
-    ).toEqual([
-      "crew",
-      "spawn",
-      "--team",
-      "my-team",
-      "--name",
-      "coder",
-      "--prompt",
-      "Implement auth",
-      "--model",
-      "opus",
-    ]);
-  });
-
-  test("skips empty strings", () => {
-    expect(buildSpawnCommand("t", { name: "", prompt: "do stuff", model: "" })).toEqual([
-      "crew",
-      "spawn",
-      "--team",
-      "t",
-      "--prompt",
-      "do stuff",
-    ]);
-  });
-
-  test("appends -- and extra args when provided", () => {
-    expect(buildSpawnCommand("my-team", { name: "coder", extraArgs: ["--verbose"] })).toEqual([
-      "crew",
-      "spawn",
-      "--team",
-      "my-team",
-      "--name",
-      "coder",
-      "--",
-      "--verbose",
-    ]);
-  });
-
-  test("omits -- when extraArgs is empty", () => {
-    expect(buildSpawnCommand("my-team", { extraArgs: [] })).toEqual(["crew", "spawn", "--team", "my-team"]);
-  });
-});
+// In test context, crewBin() returns ["bun", "run", "<test-script>"]
+// We just verify the crew-specific args after the prefix
+function stripPrefix(cmd: string[]): string[] {
+  const crewIdx = cmd.findIndex((a) => a === "team" || a === "agent");
+  return crewIdx >= 0 ? cmd.slice(crewIdx) : cmd;
+}
 
 describe("buildCreateCommand", () => {
-  test("builds create command", () => {
-    expect(buildCreateCommand("alpha")).toEqual(["crew", "create", "--name", "alpha"]);
+  test("builds team create command with correct args", () => {
+    const cmd = buildCreateCommand("alpha");
+    expect(stripPrefix(cmd)).toEqual(["team", "create", "alpha"]);
   });
 
   test("appends -- and extra args when provided", () => {
-    expect(buildCreateCommand("alpha", ["--verbose", "--effort", "high"])).toEqual([
-      "crew",
-      "create",
-      "--name",
-      "alpha",
-      "--",
-      "--verbose",
-      "--effort",
-      "high",
-    ]);
+    const cmd = buildCreateCommand("alpha", ["--verbose", "--effort", "high"]);
+    expect(stripPrefix(cmd)).toEqual(["team", "create", "alpha", "--", "--verbose", "--effort", "high"]);
   });
 
   test("omits -- when extra args is empty", () => {
-    expect(buildCreateCommand("alpha", [])).toEqual(["crew", "create", "--name", "alpha"]);
+    const cmd = buildCreateCommand("alpha", []);
+    expect(stripPrefix(cmd)).toEqual(["team", "create", "alpha"]);
   });
 });
 
 describe("buildAttachCommand", () => {
-  test("builds attach command", () => {
-    expect(buildAttachCommand("alpha", "coder")).toEqual(["crew", "attach", "--team", "alpha", "--name", "coder"]);
+  test("builds agent attach command with correct args", () => {
+    const cmd = buildAttachCommand("alpha", "coder");
+    expect(stripPrefix(cmd)).toEqual(["agent", "attach", "alpha", "--name", "coder"]);
   });
 
   test("appends -- and extra args when provided", () => {
-    expect(buildAttachCommand("alpha", "coder", ["--verbose"])).toEqual([
-      "crew",
-      "attach",
-      "--team",
-      "alpha",
-      "--name",
-      "coder",
-      "--",
-      "--verbose",
-    ]);
+    const cmd = buildAttachCommand("alpha", "coder", ["--verbose"]);
+    expect(stripPrefix(cmd)).toEqual(["agent", "attach", "alpha", "--name", "coder", "--", "--verbose"]);
   });
 
   test("omits -- when extra args is empty", () => {
-    expect(buildAttachCommand("alpha", "coder", [])).toEqual(["crew", "attach", "--team", "alpha", "--name", "coder"]);
+    const cmd = buildAttachCommand("alpha", "coder", []);
+    expect(stripPrefix(cmd)).toEqual(["agent", "attach", "alpha", "--name", "coder"]);
   });
 });
