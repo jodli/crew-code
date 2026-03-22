@@ -5,9 +5,9 @@ import type { TeamConfig } from "../types/domain.ts";
 import { err, ok } from "../types/result.ts";
 import { executeRemoveAgent, planRemoveAgent } from "./remove.ts";
 
-function makeMockRegistry(aliveAgentIds: string[] = []) {
+function makeMockRegistry(runningAgentIds: string[] = []) {
   return makeProcessRegistry({
-    isAlive: async (_team, agentId) => aliveAgentIds.includes(agentId),
+    isRunning: async (_team, agentId) => runningAgentIds.includes(agentId),
   });
 }
 
@@ -94,7 +94,7 @@ describe("core/remove-agent", () => {
       }
     });
 
-    test("returns plan with isAlive: false when no registry provided", async () => {
+    test("returns plan with isRunning: false when no registry provided", async () => {
       const ctx = makeCtx({
         configStore: makeConfigStore({
           getTeam: async () => ok(baseConfig),
@@ -108,11 +108,11 @@ describe("core/remove-agent", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.isAlive).toBe(false);
+        expect(result.value.isRunning).toBe(false);
       }
     });
 
-    test("returns plan with isAlive: true when agent is alive in registry", async () => {
+    test("returns plan with isRunning: true when agent is alive in registry", async () => {
       const registry = makeMockRegistry(["worker@my-team"]);
       const ctx = makeCtx({
         configStore: makeConfigStore({
@@ -127,7 +127,7 @@ describe("core/remove-agent", () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.value.isAlive).toBe(true);
+        expect(result.value.isRunning).toBe(true);
       }
     });
 
@@ -204,7 +204,7 @@ describe("core/remove-agent", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        isAlive: false,
+        isRunning: false,
         hasInbox: false,
       });
 
@@ -229,7 +229,7 @@ describe("core/remove-agent", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        isAlive: false,
+        isRunning: false,
         hasInbox: true,
       });
 
@@ -251,7 +251,7 @@ describe("core/remove-agent", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        isAlive: false,
+        isRunning: false,
         hasInbox: false,
       });
 
@@ -264,7 +264,7 @@ describe("core/remove-agent", () => {
         team: "my-team",
         name: "worker",
         agentId: "worker@my-team",
-        isAlive: false,
+        isRunning: false,
         hasInbox: false,
       });
 

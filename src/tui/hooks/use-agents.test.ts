@@ -13,25 +13,25 @@ function makeMember(overrides: Partial<MemberDetail> & { name: string }): Member
 }
 
 describe("useAgents — data layer", () => {
-  test("returns dead status when agent is not in live set", () => {
+  test("returns stopped status when agent is not in running set", () => {
     const members: MemberDetail[] = [makeMember({ name: "team-lead" }), makeMember({ name: "coder" })];
 
-    const liveAgentIds = new Set<string>();
-    const agents = members.map((m) => toAgentSummary(m, liveAgentIds));
+    const runningAgentIds = new Set<string>();
+    const agents = members.map((m) => toAgentSummary(m, runningAgentIds));
     expect(agents).toHaveLength(2);
-    expect(agents[0].status).toBe("dead");
-    expect(agents[1].status).toBe("dead");
+    expect(agents[0].status).toBe("stopped");
+    expect(agents[1].status).toBe("stopped");
   });
 
-  test("returns alive status when agent is in live set", () => {
+  test("returns running status when agent is in running set", () => {
     const members: MemberDetail[] = [
       makeMember({ name: "team-lead", agentId: "team-lead@test", processId: process.pid, sessionId: "sess-123" }),
     ];
 
-    const liveAgentIds = new Set(["team-lead@test"]);
-    const agents = members.map((m) => toAgentSummary(m, liveAgentIds));
+    const runningAgentIds = new Set(["team-lead@test"]);
+    const agents = members.map((m) => toAgentSummary(m, runningAgentIds));
     expect(agents).toHaveLength(1);
-    expect(agents[0].status).toBe("alive");
+    expect(agents[0].status).toBe("running");
     expect(agents[0].sessionId).toBe("sess-123");
     expect(agents[0].cwd).toBe("/tmp/project");
   });
@@ -53,7 +53,7 @@ describe("useAgents — data layer", () => {
       name: "writer",
       agentId: "writer@gamma",
       agentType: "team-lead",
-      status: "dead",
+      status: "stopped",
       sessionId: "sess-w",
       model: "claude-sonnet-4-6",
       prompt: "Write docs",

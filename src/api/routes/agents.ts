@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createAgent } from "../../actions/create-agent.ts";
 import { listAgents } from "../../actions/list-agents.ts";
 import { removeAgent } from "../../actions/remove-agent.ts";
+import { stopAgent } from "../../actions/stop-agent.ts";
 import { updateAgent } from "../../actions/update-agent.ts";
 import { errorResponse } from "../errors.ts";
 import type { Env } from "../server.ts";
@@ -52,6 +53,26 @@ export function agentRoutes() {
     const result = await updateAgent(ctx, { team: name, name: agent, ...body });
     if (!result.ok) return errorResponse(c, result.error);
     return c.json(result.value);
+  });
+
+  r.post("/teams/:name/agents/:agent/stop", async (c) => {
+    const ctx = c.get("ctx");
+    const name = c.req.param("name");
+    const agent = c.req.param("agent");
+
+    const teamResult = await ctx.configStore.getTeam(name);
+    if (!teamResult.ok) return errorResponse(c, teamResult.error);
+
+    const config = teamResult.value;
+    const member = config.members.find((m) => m.name === agent);
+    if (!member) {
+      return errorResponse(c, { kind: "agent_not_found", agent, team: name });
+    }
+
+    const result = await stopAgent(ctx.processRegistry, name, member.agentId);
+    if (!result.ok) return errorResponse(c, result.error);
+
+    return c.json({ stopped: result.value });
   });
 
   r.delete("/teams/:name/agents/:agent", async (c) => {

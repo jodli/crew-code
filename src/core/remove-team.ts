@@ -56,10 +56,10 @@ export async function executeRemoveTeam(
   plan: RemoveTeamPlan,
   registry?: ProcessRegistry,
 ): Promise<Result<void>> {
-  // 1. Kill active agents
+  // 1. Stop active agents
   if (registry) {
     for (const agent of plan.activeAgents) {
-      await registry.kill(plan.team, agent.agentId);
+      await registry.stop(plan.team, agent.agentId);
     }
   }
 

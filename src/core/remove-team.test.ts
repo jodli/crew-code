@@ -34,11 +34,11 @@ const sampleConfig: TeamConfig = {
 let deletedInboxes: { team: string; agent: string }[] = [];
 let deletedTeams: string[] = [];
 
-function makeMockRegistry(entries: RegistryEntry[] = []): ProcessRegistry & { killed: string[]; cleaned: string[] } {
-  const killed: string[] = [];
+function makeMockRegistry(entries: RegistryEntry[] = []): ProcessRegistry & { stopped: string[]; cleaned: string[] } {
+  const stopped: string[] = [];
   const cleaned: string[] = [];
   return {
-    killed,
+    stopped,
     cleaned,
     async activate() {
       return ok(undefined);
@@ -46,11 +46,11 @@ function makeMockRegistry(entries: RegistryEntry[] = []): ProcessRegistry & { ki
     async deactivate() {
       return ok(undefined);
     },
-    async isAlive(_team, agentId) {
+    async isRunning(_team, agentId) {
       return entries.some((e) => e.agentId === agentId);
     },
-    async kill(_team, agentId) {
-      killed.push(agentId);
+    async stop(_team, agentId) {
+      stopped.push(agentId);
       return ok(true);
     },
     async listActive() {
@@ -154,7 +154,7 @@ describe("core/remove-team", () => {
   });
 
   describe("executeRemoveTeam()", () => {
-    test("kills agents via registry", async () => {
+    test("stops agents via registry", async () => {
       resetTracking();
       const registry = makeMockRegistry();
       const ctx = makeCtx(sampleConfig);
@@ -169,7 +169,7 @@ describe("core/remove-team", () => {
 
       const result = await executeRemoveTeam(ctx, plan, registry);
       expect(result.ok).toBe(true);
-      expect(registry.killed).toEqual(["team-lead@my-team", "scout@my-team"]);
+      expect(registry.stopped).toEqual(["team-lead@my-team", "scout@my-team"]);
     });
 
     test("deletes all inbox files", async () => {

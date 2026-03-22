@@ -39,16 +39,16 @@ export function TeamListPanel({ teams, selectedIndex, focused }: TeamListPanelPr
       {teams.map((team, i) => {
         const isSelected = i === selectedIndex;
         const prefix = isSelected && focused ? ">" : " ";
-        const aliveColor =
-          team.aliveCount === team.agentCount
-            ? "#9ece6a" // all alive = green
-            : team.aliveCount > 0
-              ? "#e0af68" // some alive = yellow
-              : "#565f89"; // none alive = dim
+        const runningColor =
+          team.runningCount === team.agentCount
+            ? "#9ece6a" // all running = green
+            : team.runningCount > 0
+              ? "#e0af68" // some running = yellow
+              : "#565f89"; // none running = dim
 
-        const label = `${prefix} ${team.name} (${team.aliveCount}/${team.agentCount})`;
+        const label = `${prefix} ${team.name} (${team.runningCount}/${team.agentCount})`;
 
-        return <text key={team.name} content={label} fg={isSelected ? "#c0caf5" : aliveColor} />;
+        return <text key={team.name} content={label} fg={isSelected ? "#c0caf5" : runningColor} />;
       })}
     </box>
   );

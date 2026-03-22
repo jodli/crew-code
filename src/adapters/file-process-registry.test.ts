@@ -82,41 +82,41 @@ describe("FileProcessRegistry", () => {
     });
   });
 
-  describe("isAlive()", () => {
+  describe("isRunning()", () => {
     test("returns true for current process PID", async () => {
       await registry.activate("team-a", "self@team-a", process.pid);
-      const alive = await registry.isAlive("team-a", "self@team-a");
+      const alive = await registry.isRunning("team-a", "self@team-a");
       expect(alive).toBe(true);
     });
 
     test("returns false for non-existent agent", async () => {
-      const alive = await registry.isAlive("team-a", "ghost@team-a");
+      const alive = await registry.isRunning("team-a", "ghost@team-a");
       expect(alive).toBe(false);
     });
 
     test("returns false for dead PID (self-healing)", async () => {
       await registry.activate("team-a", "dead@team-a", 99999999);
-      const alive = await registry.isAlive("team-a", "dead@team-a");
+      const alive = await registry.isRunning("team-a", "dead@team-a");
       expect(alive).toBe(false);
     });
   });
 
-  describe("kill()", () => {
+  describe("stop()", () => {
     test("returns false when agent not in registry", async () => {
-      const result = await registry.kill("team-a", "ghost@team-a");
+      const result = await registry.stop("team-a", "ghost@team-a");
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value).toBe(false);
       }
     });
 
-    test("removes entry from registry after kill", async () => {
+    test("removes entry from registry after stop", async () => {
       // Use a dead PID so we don't actually kill anything
       await registry.activate("team-a", "dead@team-a", 99999999);
-      const result = await registry.kill("team-a", "dead@team-a");
+      const result = await registry.stop("team-a", "dead@team-a");
       expect(result.ok).toBe(true);
 
-      const alive = await registry.isAlive("team-a", "dead@team-a");
+      const alive = await registry.isRunning("team-a", "dead@team-a");
       expect(alive).toBe(false);
     });
   });

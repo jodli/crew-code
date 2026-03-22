@@ -35,11 +35,11 @@ export default defineCommand({
     }
 
     // Get live agent IDs from registry
-    const liveAgentIds = new Set<string>();
+    const runningAgentIds = new Set<string>();
     const activeResult = await processRegistry.listActive(args.team);
     if (activeResult.ok) {
       for (const entry of activeResult.value) {
-        liveAgentIds.add(entry.agentId);
+        runningAgentIds.add(entry.agentId);
       }
     }
 
@@ -53,8 +53,8 @@ export default defineCommand({
 
     const home = process.env.HOME ?? "";
     for (const m of detail.members) {
-      const alive = liveAgentIds.has(m.agentId);
-      const status = alive ? pc.green("alive") : pc.dim("dead");
+      const running = runningAgentIds.has(m.agentId);
+      const status = running ? pc.green("running") : pc.dim("stopped");
       table.push([
         m.name,
         status,

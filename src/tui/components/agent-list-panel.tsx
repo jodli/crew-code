@@ -62,7 +62,7 @@ export function AgentListPanel({ agents, selectedIndex, focused, teamName }: Age
         {agents.map((agent, i) => {
           const isSelected = i === selectedIndex;
           const prefix = isSelected && focused ? ">" : " ";
-          const statusIcon = agent.status === "alive" ? "*" : ".";
+          const statusIcon = agent.status === "running" ? "*" : ".";
           const inbox = agent.unreadCount > 0 ? `${agent.unreadCount} unread` : "-";
 
           const line = `${prefix} ${agent.name.padEnd(16)} ${statusIcon} ${agent.status.padEnd(6)} ${inbox}`;

@@ -18,7 +18,7 @@ const helpText = [
   "  n           Create agent",
   "  a / Enter   Attach to agent",
   "  e           Update agent properties",
-  "  x           Kill agent",
+  "  x           Stop agent",
   "  r           Remove agent",
   "  i           Open inbox",
   "  m           Send message",

@@ -67,7 +67,7 @@ describe("useTeams — data layer", () => {
       .map((r) => ({
         name: r.value.name,
         agentCount: r.value.members.length,
-        aliveCount: 0, // no registry, so all dead
+        runningCount: 0, // no registry, so all stopped
         createdAt: r.value.createdAt,
       }));
 
@@ -78,7 +78,7 @@ describe("useTeams — data layer", () => {
     expect(beta?.agentCount).toBe(1);
   });
 
-  test("agents with no PID are counted as dead", async () => {
+  test("agents with no PID are counted as stopped", async () => {
     const team = makeTeam("gamma", 2);
     // processId is now resolved from ProcessRegistry, not stored on AgentMember
     await store.createTeam(team);
@@ -87,12 +87,12 @@ describe("useTeams — data layer", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    // Without a registry, aliveCount is 0
-    const aliveCount = 0;
-    expect(aliveCount).toBe(0);
+    // Without a registry, runningCount is 0
+    const runningCount = 0;
+    expect(runningCount).toBe(0);
   });
 
-  test("agents in live set are counted as alive", async () => {
+  test("agents in running set are counted as running", async () => {
     const team = makeTeam("delta", 1);
     await store.createTeam(team);
 
@@ -101,9 +101,9 @@ describe("useTeams — data layer", () => {
     if (!result.ok) return;
 
     // Simulate a live agent via a set
-    const liveAgentIds = new Set(["agent-0@delta"]);
-    const aliveCount = result.value.members.filter((m) => liveAgentIds.has(m.agentId)).length;
+    const runningAgentIds = new Set(["agent-0@delta"]);
+    const runningCount = result.value.members.filter((m) => runningAgentIds.has(m.agentId)).length;
 
-    expect(aliveCount).toBe(1);
+    expect(runningCount).toBe(1);
   });
 });

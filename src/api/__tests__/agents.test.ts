@@ -98,6 +98,28 @@ describe("PATCH /api/teams/:name/agents/:agent", () => {
   });
 });
 
+describe("POST /api/teams/:name/agents/:agent/stop", () => {
+  test("returns stopped: false when agent is not running", async () => {
+    await createTeam("alpha");
+    await app.request("/api/teams/alpha/agents", json({ name: "coder" }));
+    const res = await app.request("/api/teams/alpha/agents/coder/stop", { method: "POST" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.stopped).toBe(false);
+  });
+
+  test("returns 404 for missing team", async () => {
+    const res = await app.request("/api/teams/nope/agents/coder/stop", { method: "POST" });
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 404 for missing agent", async () => {
+    await createTeam("alpha");
+    const res = await app.request("/api/teams/alpha/agents/nope/stop", { method: "POST" });
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("DELETE /api/teams/:name/agents/:agent", () => {
   test("removes an agent", async () => {
     await createTeam("alpha");

@@ -9,18 +9,18 @@ export interface TeamSummary {
   name: string;
   description?: string;
   agentCount: number;
-  aliveCount: number;
+  runningCount: number;
   createdAt: number;
 }
 
-function summarizeTeam(config: TeamConfig, liveAgentIds: Set<string>): TeamSummary {
-  const aliveCount = config.members.filter((m) => liveAgentIds.has(m.agentId)).length;
+function summarizeTeam(config: TeamConfig, runningAgentIds: Set<string>): TeamSummary {
+  const runningCount = config.members.filter((m) => runningAgentIds.has(m.agentId)).length;
 
   return {
     name: config.name,
     description: config.description,
     agentCount: config.members.length,
-    aliveCount,
+    runningCount,
     createdAt: config.createdAt,
   };
 }
@@ -37,19 +37,19 @@ export function useTeams(configStore: ConfigStore, processRegistry?: ProcessRegi
     const validConfigs = configs.filter((r) => r.ok).map((r) => r.value);
 
     // Collect live agent IDs from registry for all teams
-    const liveAgentIds = new Set<string>();
+    const runningAgentIds = new Set<string>();
     if (processRegistry) {
       for (const config of validConfigs) {
         const activeResult = await processRegistry.listActive(config.name);
         if (activeResult.ok) {
           for (const entry of activeResult.value) {
-            liveAgentIds.add(entry.agentId);
+            runningAgentIds.add(entry.agentId);
           }
         }
       }
     }
 
-    setTeams(validConfigs.map((c) => summarizeTeam(c, liveAgentIds)));
+    setTeams(validConfigs.map((c) => summarizeTeam(c, runningAgentIds)));
   }, [configStore, processRegistry]);
 
   const debouncedRefresh = useMemo(() => debounce(refresh, 200), [refresh]);

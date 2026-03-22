@@ -6,7 +6,7 @@ import { applyFixes, diagnose } from "./doctor.ts";
 
 function makeMockRegistry(activeEntries: { agentId: string; pid: number }[] = []) {
   return makeProcessRegistry({
-    isAlive: async (_team, agentId) => activeEntries.some((e) => e.agentId === agentId),
+    isRunning: async (_team, agentId) => activeEntries.some((e) => e.agentId === agentId),
     listActive: async () => ok(activeEntries.map((e) => ({ ...e, activatedAt: Date.now() }))),
   });
 }

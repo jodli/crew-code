@@ -29,7 +29,7 @@ const defaultDeps: ProcessRegistryDeps = {
   registryDir: defaultRegistryDir,
 };
 
-function isProcessAlive(pid: number): boolean {
+function isProcessRunning(pid: number): boolean {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
     process.kill(pid, 0);
@@ -107,14 +107,14 @@ export class FileProcessRegistry implements ProcessRegistry {
     return lockResult.value;
   }
 
-  async isAlive(teamName: string, agentId: string): Promise<boolean> {
+  async isRunning(teamName: string, agentId: string): Promise<boolean> {
     const entries = await this.readEntriesHealed(teamName);
     const entry = entries.find((e) => e.agentId === agentId);
     return entry !== undefined;
   }
 
-  async kill(teamName: string, agentId: string): Promise<Result<boolean>> {
-    debug("registry", "kill", { team: teamName, agentId });
+  async stop(teamName: string, agentId: string): Promise<Result<boolean>> {
+    debug("registry", "stop", { team: teamName, agentId });
     const path = this.deps.registryPath(teamName);
     if (!existsSync(path)) return ok(false);
 
@@ -172,7 +172,7 @@ export class FileProcessRegistry implements ProcessRegistry {
     if (!existsSync(path)) return [];
 
     const entries = await this.readEntries(teamName);
-    const alive = entries.filter((e) => isProcessAlive(e.pid));
+    const alive = entries.filter((e) => isProcessRunning(e.pid));
 
     if (alive.length !== entries.length) {
       debug("registry", "healing stale entries", {

@@ -38,8 +38,8 @@ export function makeProcessRegistry(overrides: Partial<ProcessRegistry> = {}): P
   return {
     activate: async () => ok(undefined),
     deactivate: async () => ok(undefined),
-    isAlive: async () => false,
-    kill: async () => ok(true),
+    isRunning: async () => false,
+    stop: async () => ok(true),
     listActive: async () => ok([]),
     cleanup: async () => ok(undefined),
     ...overrides,

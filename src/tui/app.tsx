@@ -4,10 +4,10 @@ import { useCallback, useEffect, useReducer, useState } from "react";
 import { attachAgent } from "../actions/attach-agent.ts";
 import { createAgent } from "../actions/create-agent.ts";
 import { createTeam } from "../actions/create-team.ts";
-import { killAgent } from "../actions/kill-agent.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
 import { removeTeam } from "../actions/remove-team.ts";
 import { sendMessage } from "../actions/send-message.ts";
+import { stopAgent } from "../actions/stop-agent.ts";
 import { updateAgent } from "../actions/update-agent.ts";
 import { updateTeam } from "../actions/update-team.ts";
 import { FileProcessRegistry } from "../adapters/file-process-registry.ts";
@@ -97,7 +97,7 @@ export function App({ launcher }: AppProps) {
   const isOverlay = nav !== "quit" && nav.view.screen !== "dashboard";
   const isConfirm =
     nav !== "quit" &&
-    (nav.view.screen === "confirm-kill" ||
+    (nav.view.screen === "confirm-stop" ||
       nav.view.screen === "confirm-remove-team" ||
       nav.view.screen === "confirm-remove-agent");
   // Views that handle all their own keyboard input
@@ -166,7 +166,7 @@ export function App({ launcher }: AppProps) {
             dispatch({ type: "open_attach_form" });
           }
         } else if (key.name === "x" && nav.panel === "agents" && selectedAgent) {
-          dispatch({ type: "open_confirm_kill" });
+          dispatch({ type: "open_confirm_stop" });
         } else if (key.name === "r" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_confirm_remove_agent" });
         } else if (key.name === "e" && nav.panel === "teams" && selectedTeamName) {
@@ -224,11 +224,11 @@ export function App({ launcher }: AppProps) {
     [selectedTeamName],
   );
 
-  const handleConfirmKill = useCallback(() => {
+  const handleConfirmStop = useCallback(() => {
     if (nav === "quit") return;
     const agent = agents[nav.agentIndex];
     if (agent) {
-      killAgent(ctx.processRegistry, selectedTeamName ?? "", agent.agentId);
+      stopAgent(ctx.processRegistry, selectedTeamName ?? "", agent.agentId);
     }
     dispatch({ type: "close_overlay" });
   }, [nav, agents, selectedTeamName]);
@@ -387,13 +387,13 @@ export function App({ launcher }: AppProps) {
   }
 
   // Build confirm messages
-  const killMessage = selectedAgent ? `Kill agent "${selectedAgent.name}"?` : "";
+  const stopMessage = selectedAgent ? `Stop agent "${selectedAgent.name}"?` : "";
   const removeTeamMessage = selectedTeamName
-    ? `Remove team "${selectedTeamName}"? Kills ${agents.filter((a) => a.status === "alive").length} agent(s).`
+    ? `Remove team "${selectedTeamName}"? Stops ${agents.filter((a) => a.status === "running").length} agent(s).`
     : "";
   const removeAgentMessage = selectedAgent
-    ? selectedAgent.status === "alive"
-      ? `Remove "${selectedAgent.name}"? Kills process, deletes inbox, removes from config.`
+    ? selectedAgent.status === "running"
+      ? `Remove "${selectedAgent.name}"? Stops process, deletes inbox, removes from config.`
       : `Remove "${selectedAgent.name}"? Deletes inbox, removes from config.`
     : "";
 
@@ -417,8 +417,8 @@ export function App({ launcher }: AppProps) {
       </box>
 
       {/* Bottom bar — either shortcut bar or confirm bar */}
-      {nav.view.screen === "confirm-kill" ? (
-        <ConfirmBar message={killMessage} onConfirm={handleConfirmKill} onCancel={handleCancelOverlay} />
+      {nav.view.screen === "confirm-stop" ? (
+        <ConfirmBar message={stopMessage} onConfirm={handleConfirmStop} onCancel={handleCancelOverlay} />
       ) : nav.view.screen === "confirm-remove-team" ? (
         <ConfirmBar message={removeTeamMessage} onConfirm={handleConfirmRemoveTeam} onCancel={handleCancelOverlay} />
       ) : nav.view.screen === "confirm-remove-agent" ? (

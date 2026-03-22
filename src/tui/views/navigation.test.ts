@@ -157,16 +157,16 @@ describe("navReducer", () => {
     });
   });
 
-  describe("confirm-kill-agent", () => {
-    test("open_confirm_kill switches to confirm-kill view", () => {
+  describe("confirm-stop-agent", () => {
+    test("open_confirm_stop switches to confirm-stop view", () => {
       const state: NavState = { ...initialNavState, panel: "agents" };
-      const s = navReducer(state, { type: "open_confirm_kill" });
+      const s = navReducer(state, { type: "open_confirm_stop" });
       if (s === "quit") return;
-      expect(s.view.screen).toBe("confirm-kill");
+      expect(s.view.screen).toBe("confirm-stop");
     });
 
-    test("close_overlay returns to dashboard from confirm-kill", () => {
-      const state: NavState = { ...initialNavState, view: { screen: "confirm-kill" } };
+    test("close_overlay returns to dashboard from confirm-stop", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "confirm-stop" } };
       const s = navReducer(state, { type: "close_overlay" });
       if (s === "quit") return;
       expect(s.view.screen).toBe("dashboard");

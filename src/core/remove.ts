@@ -13,7 +13,7 @@ export interface RemoveAgentPlan {
   team: string;
   name: string;
   agentId: string;
-  isAlive: boolean;
+  isRunning: boolean;
   hasInbox: boolean;
 }
 
@@ -42,7 +42,7 @@ export async function planRemoveAgent(
     return err({ kind: "agent_not_found", agent: input.name, team: input.team });
   }
 
-  const isAlive = registry ? await registry.isAlive(input.team, member.agentId) : false;
+  const isRunning = registry ? await registry.isRunning(input.team, member.agentId) : false;
 
   const inboxResult = await ctx.inboxStore.listInboxes(input.team);
   const inboxes = inboxResult.ok ? inboxResult.value : [];
@@ -52,7 +52,7 @@ export async function planRemoveAgent(
     team: input.team,
     name: input.name,
     agentId: member.agentId,
-    isAlive,
+    isRunning,
     hasInbox,
   });
 }
@@ -62,8 +62,8 @@ export async function executeRemoveAgent(
   plan: RemoveAgentPlan,
   registry?: ProcessRegistry,
 ): Promise<Result<void>> {
-  if (plan.isAlive && registry) {
-    await registry.kill(plan.team, plan.agentId);
+  if (plan.isRunning && registry) {
+    await registry.stop(plan.team, plan.agentId);
   }
 
   if (plan.hasInbox) {

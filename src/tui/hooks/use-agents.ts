@@ -9,7 +9,7 @@ export interface AgentSummary {
   name: string;
   agentId: string;
   agentType: string;
-  status: "alive" | "dead";
+  status: "running" | "stopped";
   processId?: number;
   sessionId?: string;
   model?: string;
@@ -20,10 +20,10 @@ export interface AgentSummary {
   extraArgs?: string[];
 }
 
-export function toAgentSummary(member: MemberDetail, liveAgentIds: Set<string>): AgentSummary {
+export function toAgentSummary(member: MemberDetail, runningAgentIds: Set<string>): AgentSummary {
   return {
     ...member,
-    status: liveAgentIds.has(member.agentId) ? "alive" : "dead",
+    status: runningAgentIds.has(member.agentId) ? "running" : "stopped",
   };
 }
 
@@ -43,15 +43,15 @@ export function useAgents(ctx: AppContext, teamName: string | null) {
     }
 
     // Get live agent IDs from registry if available
-    let liveAgentIds = new Set<string>();
+    let runningAgentIds = new Set<string>();
     if (ctx.processRegistry) {
       const activeResult = await ctx.processRegistry.listActive(teamName);
       if (activeResult.ok) {
-        liveAgentIds = new Set(activeResult.value.map((e) => e.agentId));
+        runningAgentIds = new Set(activeResult.value.map((e) => e.agentId));
       }
     }
 
-    setAgents(result.value.map((m) => toAgentSummary(m, liveAgentIds)));
+    setAgents(result.value.map((m) => toAgentSummary(m, runningAgentIds)));
   }, [ctx, teamName]);
 
   const debouncedRefresh = useMemo(() => debounce(refresh, 200), [refresh]);
