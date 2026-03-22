@@ -4,6 +4,7 @@
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
   "bootstrap-sha": "c43d055051685ac04034a254d0a5fa3bd750cf25",
+  "include-component-in-tag": false,
   "pull-request-title-pattern": "chore: release ${version}",
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
