@@ -4,7 +4,7 @@ import { makeConfigStore as makeBaseConfigStore, makeInboxStore } from "../test/
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { err, ok } from "../types/result.ts";
-import { attachAgent } from "./attach.ts";
+import { startAgent } from "./start-agent.ts";
 
 const baseConfig: TeamConfig = {
   name: "test-team",
@@ -55,10 +55,10 @@ function makeCtx(overrides?: { configStore?: ConfigStore }): AppContext {
   };
 }
 
-describe("core/attach", () => {
+describe("core/start-agent", () => {
   test("returns launchOptions for existing team-lead", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, { team: "test-team" });
+    const result = await startAgent(ctx, { team: "test-team" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -75,7 +75,7 @@ describe("core/attach", () => {
 
   test("defaults name to team-lead when not provided", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, { team: "test-team" });
+    const result = await startAgent(ctx, { team: "test-team" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -85,7 +85,7 @@ describe("core/attach", () => {
 
   test("returns launchOptions for a spawned agent with parentSessionId", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, {
+    const result = await startAgent(ctx, {
       team: "test-team",
       name: "scout",
     });
@@ -102,7 +102,7 @@ describe("core/attach", () => {
 
   test("does NOT set parentSessionId for team-lead", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, { team: "test-team" });
+    const result = await startAgent(ctx, { team: "test-team" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -112,7 +112,7 @@ describe("core/attach", () => {
 
   test("fails with team_not_found for missing team", async () => {
     const ctx = makeCtx({ configStore: makeConfigStore(null) });
-    const result = await attachAgent(ctx, { team: "no-team" });
+    const result = await startAgent(ctx, { team: "no-team" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -122,7 +122,7 @@ describe("core/attach", () => {
 
   test("fails with agent_not_found for missing agent name", async () => {
     const ctx = makeCtx();
-    const result = await attachAgent(ctx, {
+    const result = await startAgent(ctx, {
       team: "test-team",
       name: "nonexistent",
     });
@@ -149,7 +149,7 @@ describe("core/attach", () => {
       ],
     };
     const ctx = makeCtx({ configStore: makeConfigStore(configWithoutSession) });
-    const result = await attachAgent(ctx, { team: "test-team" });
+    const result = await startAgent(ctx, { team: "test-team" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

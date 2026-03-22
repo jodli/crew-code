@@ -2,14 +2,14 @@ import type { InputRenderable, KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-interface AttachFormProps {
+interface StartFormProps {
   agentName: string;
   storedArgs: string[];
   onSubmit: (extraArgs: string[]) => void;
   onCancel: () => void;
 }
 
-export function AttachForm({ agentName, storedArgs, onSubmit, onCancel }: AttachFormProps) {
+export function StartForm({ agentName, storedArgs, onSubmit, onCancel }: StartFormProps) {
   const initialValue = storedArgs.join(" ");
   const [args, setArgs] = useState(initialValue);
   const inputRef = useRef<InputRenderable>(null);
@@ -48,7 +48,7 @@ export function AttachForm({ agentName, storedArgs, onSubmit, onCancel }: Attach
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
-      title={` Attach: ${agentName} `}
+      title={` Start: ${agentName} `}
       backgroundColor="#1a1b26"
       padding={1}
       flexDirection="column"
@@ -66,7 +66,7 @@ export function AttachForm({ agentName, storedArgs, onSubmit, onCancel }: Attach
         />
       </box>
       <text content="" />
-      <text content="  [Enter] attach   [Esc] cancel" fg="#565f89" />
+      <text content="  [Enter] start   [Esc] cancel" fg="#565f89" />
     </box>
   );
 }

@@ -75,7 +75,7 @@ export default defineCommand({
     }
     console.error(`\nAttach to agents:`);
     for (const opts of result.value.launchOptions) {
-      console.error(`  crew agent attach ${result.value.teamName} --name ${opts.agentName}`);
+      console.error(`  crew agent start ${result.value.teamName} --name ${opts.agentName}`);
     }
   },
 });

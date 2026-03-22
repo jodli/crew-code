@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildAttachCommand, buildCreateCommand } from "./commands.ts";
+import { buildCreateCommand, buildStartCommand } from "./commands.ts";
 
 // In test context, crewBin() returns ["bun", "run", "<test-script>"]
 // We just verify the crew-specific args after the prefix
@@ -25,19 +25,19 @@ describe("buildCreateCommand", () => {
   });
 });
 
-describe("buildAttachCommand", () => {
-  test("builds agent attach command with correct args", () => {
-    const cmd = buildAttachCommand("alpha", "coder");
-    expect(stripPrefix(cmd)).toEqual(["agent", "attach", "alpha", "--name", "coder"]);
+describe("buildStartCommand", () => {
+  test("builds agent start command with correct args", () => {
+    const cmd = buildStartCommand("alpha", "coder");
+    expect(stripPrefix(cmd)).toEqual(["agent", "start", "alpha", "--name", "coder"]);
   });
 
   test("appends -- and extra args when provided", () => {
-    const cmd = buildAttachCommand("alpha", "coder", ["--verbose"]);
-    expect(stripPrefix(cmd)).toEqual(["agent", "attach", "alpha", "--name", "coder", "--", "--verbose"]);
+    const cmd = buildStartCommand("alpha", "coder", ["--verbose"]);
+    expect(stripPrefix(cmd)).toEqual(["agent", "start", "alpha", "--name", "coder", "--", "--verbose"]);
   });
 
   test("omits -- when extra args is empty", () => {
-    const cmd = buildAttachCommand("alpha", "coder", []);
-    expect(stripPrefix(cmd)).toEqual(["agent", "attach", "alpha", "--name", "coder"]);
+    const cmd = buildStartCommand("alpha", "coder", []);
+    expect(stripPrefix(cmd)).toEqual(["agent", "start", "alpha", "--name", "coder"]);
   });
 });

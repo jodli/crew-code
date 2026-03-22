@@ -120,6 +120,19 @@ describe("POST /api/teams/:name/agents/:agent/stop", () => {
   });
 });
 
+describe("POST /api/teams/:name/agents/:agent/start", () => {
+  test("returns 404 for missing team", async () => {
+    const res = await app.request("/api/teams/nope/agents/coder/start", { method: "POST" });
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 404 for missing agent", async () => {
+    await createTeam("alpha");
+    const res = await app.request("/api/teams/alpha/agents/nope/start", { method: "POST" });
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("DELETE /api/teams/:name/agents/:agent", () => {
   test("removes an agent", async () => {
     await createTeam("alpha");

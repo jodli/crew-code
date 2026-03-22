@@ -16,8 +16,8 @@ export function buildCreateCommand(name: string, extraArgs?: string[]): string[]
   return args;
 }
 
-export function buildAttachCommand(team: string, agentName: string, extraArgs?: string[]): string[] {
-  const args = [...crewBin(), "agent", "attach", team, "--name", agentName];
+export function buildStartCommand(team: string, agentName: string, extraArgs?: string[]): string[] {
+  const args = [...crewBin(), "agent", "start", team, "--name", agentName];
   if (extraArgs?.length) args.push("--", ...extraArgs);
   return args;
 }

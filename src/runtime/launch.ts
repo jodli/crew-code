@@ -24,11 +24,25 @@ export function selectLaunchMode(
   return info.sessionId && checkSession(info.cwd, info.sessionId) ? "resume" : "new";
 }
 
-export function launchAgent(info: AgentLaunchInfo, deps: Partial<LaunchDeps> = {}): LaunchResult {
-  const { checkSession } = { ...defaultDeps, ...deps };
+export interface LaunchOptions extends Partial<LaunchDeps> {
+  headless?: boolean;
+}
+
+export function launchAgent(info: AgentLaunchInfo, options: LaunchOptions = {}): LaunchResult {
+  const { headless, ...depsOverrides } = options;
+  const { checkSession } = { ...defaultDeps, ...depsOverrides };
   const mode = selectLaunchMode(info, checkSession);
 
   const args = buildClaudeArgs(info, mode);
+
+  if (headless) {
+    return launchHeadless(info, args);
+  }
+
+  return launchInteractive(info, args, mode);
+}
+
+function launchInteractive(info: AgentLaunchInfo, args: string[], mode: LaunchMode): LaunchResult {
   const proc = Bun.spawn(["claude", ...args], {
     stdin: "inherit",
     stdout: "inherit",
@@ -50,4 +64,66 @@ export function launchAgent(info: AgentLaunchInfo, deps: Partial<LaunchDeps> = {
   });
 
   return { pid: proc.pid, exited: proc.exited };
+}
+
+function launchHeadless(info: AgentLaunchInfo, args: string[]): LaunchResult {
+  const sessionName = `crew_${info.teamName}_${info.agentName}`;
+
+  // Kill stale tmux session if it exists but the process is dead
+  const hasSession = Bun.spawnSync(["tmux", "has-session", "-t", sessionName], { stdout: "pipe", stderr: "pipe" });
+  if (hasSession.exitCode === 0) {
+    throw new Error(`tmux session "${sessionName}" already exists. Stop the agent first or run: tmux kill-session -t ${sessionName}`);
+  }
+
+  const tmuxProc = Bun.spawnSync(
+    [
+      "tmux",
+      "new-session",
+      "-d",
+      "-s",
+      sessionName,
+      "-x",
+      "200",
+      "-y",
+      "50",
+      "-E",
+      "--",
+      "env",
+      `${CLAUDE_TEAMS_ENV_VAR}=1`,
+      "claude",
+      ...args,
+    ],
+    {
+      stdout: "pipe",
+      stderr: "pipe",
+      cwd: info.cwd,
+      env: { ...process.env, [CLAUDE_TEAMS_ENV_VAR]: "1" },
+    },
+  );
+
+  if (tmuxProc.exitCode !== 0) {
+    const stderr = tmuxProc.stderr.toString().trim();
+    throw new Error(`Failed to create tmux session "${sessionName}": ${stderr}`);
+  }
+
+  // Get the actual Claude PID from tmux
+  const pidProc = Bun.spawnSync(["tmux", "list-panes", "-t", sessionName, "-F", "#{pane_pid}"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  const pidStr = pidProc.stdout.toString().trim();
+  const claudePid = Number.parseInt(pidStr, 10);
+
+  if (Number.isNaN(claudePid)) {
+    throw new Error(`Failed to get PID from tmux session "${sessionName}": ${pidStr}`);
+  }
+
+  debug("launch", `started ${info.agentName} headless`, {
+    team: info.teamName,
+    pid: claudePid,
+    tmuxSession: sessionName,
+  });
+
+  return { pid: claudePid, exited: new Promise(() => {}) };
 }

@@ -16,7 +16,7 @@ const helpText = [
   "",
   "Agents Panel",
   "  n           Create agent",
-  "  a / Enter   Attach to agent",
+  "  a / Enter   Start agent",
   "  e           Update agent properties",
   "  x           Stop agent",
   "  r           Remove agent",

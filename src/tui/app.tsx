@@ -1,12 +1,12 @@
 import type { KeyEvent } from "@opentui/core";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { attachAgent } from "../actions/attach-agent.ts";
 import { createAgent } from "../actions/create-agent.ts";
 import { createTeam } from "../actions/create-team.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
 import { removeTeam } from "../actions/remove-team.ts";
 import { sendMessage } from "../actions/send-message.ts";
+import { startAgent } from "../actions/start-agent.ts";
 import { stopAgent } from "../actions/stop-agent.ts";
 import { updateAgent } from "../actions/update-agent.ts";
 import { updateTeam } from "../actions/update-team.ts";
@@ -20,7 +20,6 @@ import { executeLoad, planLoad } from "../core/blueprint-load.ts";
 import { CREW_SENDER } from "../types/constants.ts";
 import type { CrewError } from "../types/errors.ts";
 import { AgentListPanel } from "./components/agent-list-panel.tsx";
-import { AttachForm } from "./components/attach-form.tsx";
 import { BlueprintDeployForm } from "./components/blueprint-deploy-form.tsx";
 import { BlueprintLoadForm } from "./components/blueprint-load-form.tsx";
 import { ConfirmBar } from "./components/confirm-bar.tsx";
@@ -33,10 +32,11 @@ import { HelpOverlay } from "./components/help-overlay.tsx";
 import { InboxView } from "./components/inbox-view.tsx";
 import { SendMessageForm } from "./components/send-message-form.tsx";
 import { ShortcutBar } from "./components/shortcut-bar.tsx";
+import { StartForm } from "./components/start-form.tsx";
 import { TeamListPanel } from "./components/team-list-panel.tsx";
 import { useAgents } from "./hooks/use-agents.ts";
 import { useTeams } from "./hooks/use-teams.ts";
-import { buildAttachCommand } from "./launcher/commands.ts";
+import { buildStartCommand } from "./launcher/commands.ts";
 import type { Launcher } from "./launcher/port.ts";
 import { initialNavState, type NavAction, type NavState, navReducer } from "./views/navigation.ts";
 
@@ -107,7 +107,7 @@ export function App({ launcher }: AppProps) {
       nav.view.screen === "create-agent" ||
       nav.view.screen === "send-message" ||
       nav.view.screen === "inbox" ||
-      nav.view.screen === "attach-form" ||
+      nav.view.screen === "start-form" ||
       nav.view.screen === "load-blueprint" ||
       nav.view.screen === "deploy-blueprint" ||
       nav.view.screen === "edit-team" ||
@@ -163,7 +163,7 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_create_agent" });
         } else if ((key.name === "a" || key.name === "return") && nav.panel === "agents") {
           if (selectedAgent && selectedTeamName) {
-            dispatch({ type: "open_attach_form" });
+            dispatch({ type: "open_start_form" });
           }
         } else if (key.name === "x" && nav.panel === "agents" && selectedAgent) {
           dispatch({ type: "open_confirm_stop" });
@@ -271,17 +271,17 @@ export function App({ launcher }: AppProps) {
   const handleAttach = useCallback(
     async (extraArgs: string[]) => {
       if (!selectedTeamName || !selectedAgent) return;
-      const result = await attachAgent(ctx, { team: selectedTeamName, name: selectedAgent.name });
+      const result = await startAgent(ctx, { team: selectedTeamName, name: selectedAgent.name });
       if (!result.ok) {
         setError(tuiErrorMessage(result.error));
         dispatch({ type: "close_overlay" });
         return;
       }
-      const args = buildAttachCommand(selectedTeamName, selectedAgent.name, extraArgs);
+      const args = buildStartCommand(selectedTeamName, selectedAgent.name, extraArgs);
       try {
         await launcher.openTerminal(args, selectedAgent.cwd, `crew:${selectedAgent.name}`);
       } catch (e: unknown) {
-        setError(`Failed to attach: ${e instanceof Error ? e.message : String(e)}`);
+        setError(`Failed to start: ${e instanceof Error ? e.message : String(e)}`);
       }
       dispatch({ type: "close_overlay" });
     },
@@ -312,7 +312,7 @@ export function App({ launcher }: AppProps) {
       }
 
       for (const opts of result.value.launchOptions) {
-        const cmd = buildAttachCommand(result.value.teamName, opts.agentName, opts.extraArgs);
+        const cmd = buildStartCommand(result.value.teamName, opts.agentName, opts.extraArgs);
         try {
           await launcher.openTerminal(cmd, opts.cwd, `crew:${opts.agentName}`);
         } catch (e: unknown) {
@@ -440,8 +440,8 @@ export function App({ launcher }: AppProps) {
           onCancel={handleCancelOverlay}
         />
       )}
-      {nav.view.screen === "attach-form" && selectedTeamName && selectedAgent && (
-        <AttachForm
+      {nav.view.screen === "start-form" && selectedTeamName && selectedAgent && (
+        <StartForm
           agentName={selectedAgent.name}
           storedArgs={selectedAgent.extraArgs ?? []}
           onSubmit={handleAttach}

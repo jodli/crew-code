@@ -3,19 +3,19 @@ import type { AgentLaunchInfo } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
 
-export interface AttachInput {
+export interface StartAgentInput {
   team: string;
   name?: string;
 }
 
-export interface AttachOutput {
+export interface StartAgentOutput {
   agentId: string;
   name: string;
   team: string;
   launchOptions: AgentLaunchInfo;
 }
 
-export async function attachAgent(ctx: AppContext, input: AttachInput): Promise<Result<AttachOutput>> {
+export async function startAgent(ctx: AppContext, input: StartAgentInput): Promise<Result<StartAgentOutput>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) {
     if (teamResult.error.kind === "config_not_found") {

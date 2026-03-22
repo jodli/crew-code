@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { AgentLaunchInfo } from "../types/domain.ts";
-import { selectLaunchMode } from "./launch.ts";
+import { type LaunchOptions, selectLaunchMode } from "./launch.ts";
 
 const base: AgentLaunchInfo = {
   agentId: "scout@my-team",
@@ -34,5 +34,26 @@ describe("runtime/selectLaunchMode", () => {
     });
     expect(calledWith![0]).toBe("/home/user/repos");
     expect(calledWith![1]).toBe("abc-def-123");
+  });
+});
+
+describe("LaunchOptions", () => {
+  test("headless option is typed correctly", () => {
+    const opts: LaunchOptions = { headless: true };
+    expect(opts.headless).toBe(true);
+  });
+
+  test("headless defaults to undefined when not set", () => {
+    const opts: LaunchOptions = {};
+    expect(opts.headless).toBeUndefined();
+  });
+
+  test("can combine headless with checkSession", () => {
+    const opts: LaunchOptions = {
+      headless: true,
+      checkSession: () => true,
+    };
+    expect(opts.headless).toBe(true);
+    expect(typeof opts.checkSession).toBe("function");
   });
 });

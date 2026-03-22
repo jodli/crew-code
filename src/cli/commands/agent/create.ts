@@ -75,6 +75,6 @@ export default defineCommand({
 
     console.error(`Agent ${pc.bold(result.value.name)} created in team ${pc.bold(args.team)}`);
     console.error(`\n  Attach to it:`);
-    console.error(`  ${pc.cyan(`crew agent attach ${args.team} --name ${result.value.name}`)}\n`);
+    console.error(`  ${pc.cyan(`crew agent start ${args.team} --name ${result.value.name}`)}\n`);
   },
 });

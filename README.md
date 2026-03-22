@@ -48,7 +48,7 @@ crew team list
 crew agent list my-team
 
 # Re-attach to an agent after terminal restart
-crew agent attach my-team --name coder
+crew agent start my-team --name coder
 
 # Forward args to the underlying Claude process (persisted per agent)
 crew agent spawn my-team --name coder -- --dangerously-skip-permissions
