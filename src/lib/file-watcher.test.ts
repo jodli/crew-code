@@ -27,12 +27,12 @@ describe("watchFile", () => {
     try {
       await Bun.sleep(100);
       await writeFile(filePath, '[{"msg": "hello"}]');
-      await Bun.sleep(6000); // wait for heartbeat fallback
+      await Bun.sleep(500);
       expect(callCount).toBeGreaterThanOrEqual(1);
     } finally {
       cleanup();
     }
-  }, 10000);
+  });
 
   test("fires callback when file is created", async () => {
     const filePath = join(tmpDir, "new-file.json");
@@ -45,12 +45,12 @@ describe("watchFile", () => {
     try {
       await Bun.sleep(100);
       await writeFile(filePath, "[]");
-      await Bun.sleep(6000);
+      await Bun.sleep(500);
       expect(callCount).toBeGreaterThanOrEqual(1);
     } finally {
       cleanup();
     }
-  }, 10000);
+  });
 
   test("cleanup stops watcher", async () => {
     const filePath = join(tmpDir, "test.json");
@@ -63,9 +63,9 @@ describe("watchFile", () => {
 
     cleanup();
     await writeFile(filePath, '[{"msg": "after cleanup"}]');
-    await Bun.sleep(6000);
+    await Bun.sleep(500);
     expect(callCount).toBe(0);
-  }, 10000);
+  });
 });
 
 describe("watchDir", () => {
@@ -81,13 +81,13 @@ describe("watchDir", () => {
     try {
       await Bun.sleep(100);
       await writeFile(filePath, '[{"msg": "hello"}]');
-      await Bun.sleep(6000);
+      await Bun.sleep(500);
       expect(changed.length).toBeGreaterThanOrEqual(1);
       expect(changed).toContain("agent.json");
     } finally {
       cleanup();
     }
-  }, 10000);
+  });
 });
 
 describe("debounce", () => {
