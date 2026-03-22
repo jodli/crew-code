@@ -11,10 +11,14 @@ CLI tool for managing [Claude Code](https://claude.ai/code) agent teams from the
 git clone git@github.com:jodli/crew-code.git
 cd crew-code && bun install
 
-# Create a team and spawn agents
+# Create a team and agents
 crew team create my-team
-crew agent spawn my-team --name coder
-crew agent spawn my-team --name reviewer --model claude-sonnet-4-6
+crew agent create my-team --name coder --agent-type team-lead
+crew agent create my-team --name reviewer --model claude-sonnet-4-6
+
+# Start agents
+crew agent start my-team --name coder
+crew agent start my-team --name reviewer --headless
 
 # Send a message, read responses
 crew agent send my-team --name coder --message "Implement the auth module"
@@ -28,6 +32,8 @@ crew tui
 
 - [Bun](https://bun.sh) runtime
 - [Claude Code](https://claude.ai/code) CLI installed
+- Linux or macOS (Windows is not supported)
+- [tmux](https://github.com/tmux/tmux) for headless mode (`--headless`) and TUI tmux backend
 
 ## Install
 
@@ -47,11 +53,14 @@ Or run directly: `bun run src/main.ts <command>`
 crew team list
 crew agent list my-team
 
-# Re-attach to an agent after terminal restart
+# Start an agent interactively
 crew agent start my-team --name coder
 
+# Start an agent in the background (tmux)
+crew agent start my-team --name coder --headless
+
 # Forward args to the underlying Claude process (persisted per agent)
-crew agent spawn my-team --name coder -- --dangerously-skip-permissions
+crew agent create my-team --name coder -- --dangerously-skip-permissions
 
 # Save a team as a reusable blueprint, deploy later
 crew blueprint export my-team
@@ -70,7 +79,7 @@ Use `crew --help` and `crew <command> --help` for all available options.
 
 `crew tui` launches a dashboard with live agent status. Auto-detects tmux (opens panes) or standalone terminals (ghostty, alacritty). Override with `--backend tmux|terminal`.
 
-Keybindings: `n` create, `s` spawn, `a` attach, `i` inbox, `m` send, `x` kill, `r` remove, `d` remove team, `b` blueprint, `?` help, `Tab` switch panels, `q` quit.
+Keybindings: `n` create, `a` start, `i` inbox, `m` send, `x` stop, `r` remove, `d` remove team, `b` blueprint, `?` help, `Tab` switch panels, `q` quit.
 
 ## Environment Variables
 
