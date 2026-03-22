@@ -16,6 +16,7 @@ export interface DiagnosticResult {
 
 export interface DiagnoseInput {
   team?: string;
+  checkClaudeInstalled?: () => Promise<boolean>;
 }
 
 export interface FixResult {
@@ -27,24 +28,15 @@ export async function diagnose(ctx: AppContext, input: DiagnoseInput): Promise<R
   const results: DiagnosticResult[] = [];
 
   // Check 1: claude CLI installed
+  const checkInstalled = input.checkClaudeInstalled ?? defaultCheckClaudeInstalled;
   try {
-    const proc = Bun.spawn(["which", "claude"], { stdout: "pipe", stderr: "pipe" });
-    const exitCode = await proc.exited;
-    if (exitCode !== 0) {
-      results.push({
-        checkId: "claude-installed",
-        status: "error",
-        message: "Claude Code CLI is not installed",
-        fixable: false,
-      });
-    } else {
-      results.push({
-        checkId: "claude-installed",
-        status: "ok",
-        message: "Claude Code CLI is available",
-        fixable: false,
-      });
-    }
+    const installed = await checkInstalled();
+    results.push({
+      checkId: "claude-installed",
+      status: installed ? "ok" : "error",
+      message: installed ? "Claude Code CLI is available" : "Claude Code CLI is not installed",
+      fixable: false,
+    });
   } catch {
     results.push({
       checkId: "claude-installed",
@@ -158,6 +150,11 @@ export async function diagnose(ctx: AppContext, input: DiagnoseInput): Promise<R
   }
 
   return ok(results);
+}
+
+async function defaultCheckClaudeInstalled(): Promise<boolean> {
+  const proc = Bun.spawn(["which", "claude"], { stdout: "pipe", stderr: "pipe" });
+  return (await proc.exited) === 0;
 }
 
 export async function applyFixes(ctx: AppContext, diagnostics: DiagnosticResult[]): Promise<Result<FixResult[]>> {

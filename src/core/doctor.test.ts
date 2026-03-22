@@ -51,7 +51,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const results = await diagnose(ctx, {});
+      const results = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
@@ -76,7 +76,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const results = await diagnose(ctx, {});
+      const results = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
@@ -104,7 +104,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const results = await diagnose(ctx, {});
+      const results = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
@@ -126,7 +126,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const results = await diagnose(ctx, {});
+      const results = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
@@ -158,7 +158,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const results = await diagnose(ctx, {});
+      const results = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
@@ -182,7 +182,7 @@ describe("doctor core", () => {
         processRegistry: registry,
       });
 
-      const results = await diagnose(ctx, {});
+      const results = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
@@ -209,7 +209,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const results = await diagnose(ctx, { team: "team-a" });
+      const results = await diagnose(ctx, { team: "team-a", checkClaudeInstalled: async () => true });
       expect(results.ok).toBe(true);
       if (!results.ok) return;
 
@@ -241,7 +241,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const diagResult = await diagnose(ctx, {});
+      const diagResult = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(diagResult.ok).toBe(true);
       if (!diagResult.ok) return;
 
@@ -262,7 +262,7 @@ describe("doctor core", () => {
         }),
       });
 
-      const diagResult = await diagnose(ctx, {});
+      const diagResult = await diagnose(ctx, { checkClaudeInstalled: async () => true });
       expect(diagResult.ok).toBe(true);
       if (!diagResult.ok) return;
 
