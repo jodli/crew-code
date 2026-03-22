@@ -15,7 +15,7 @@ const helpText = [
   "  d           Remove team",
   "",
   "Agents Panel",
-  "  s           Spawn new agent",
+  "  n           Create agent",
   "  a / Enter   Attach to agent",
   "  e           Update agent properties",
   "  x           Kill agent",

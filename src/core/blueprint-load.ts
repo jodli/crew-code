@@ -6,7 +6,7 @@ import type { AgentLaunchInfo } from "../types/domain.ts";
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
 import { type CreatePlan, executeCreate, planCreate } from "./create.ts";
-import { executeSpawn, type SpawnPlan } from "./spawn.ts";
+import { type CreateAgentPlan, executeCreateAgent } from "./create-agent.ts";
 
 export interface LoadInput {
   nameOrPath: string;
@@ -19,7 +19,7 @@ export interface LoadPlan {
   blueprint: Blueprint;
   teamName: string;
   createPlan: CreatePlan;
-  spawnPlans: SpawnPlan[];
+  createAgentPlans: CreateAgentPlan[];
   hasLead: boolean;
 }
 
@@ -52,8 +52,8 @@ export async function planLoad(ctx: AppContext, input: LoadInput): Promise<Resul
   const createPlan = createResult.value;
   const cwd = input.cwd ?? process.cwd();
 
-  // Pre-validate all spawn plans
-  const spawnPlans: SpawnPlan[] = [];
+  // Pre-validate all create-agent plans
+  const createAgentPlans: CreateAgentPlan[] = [];
   const seenNames = new Set<string>();
   let hasLead = false;
 
@@ -74,7 +74,7 @@ export async function planLoad(ctx: AppContext, input: LoadInput): Promise<Resul
       hasLead = true;
     }
 
-    spawnPlans.push({
+    createAgentPlans.push({
       team: resolvedName,
       agentName: agent.name,
       agentId: `${agent.name}@${resolvedName}`,
@@ -89,7 +89,7 @@ export async function planLoad(ctx: AppContext, input: LoadInput): Promise<Resul
     });
   }
 
-  return ok({ blueprint, teamName: resolvedName, createPlan, spawnPlans, hasLead });
+  return ok({ blueprint, teamName: resolvedName, createPlan, createAgentPlans, hasLead });
 }
 
 export async function executeLoad(ctx: AppContext, plan: LoadPlan): Promise<Result<LoadOutput>> {
@@ -98,14 +98,14 @@ export async function executeLoad(ctx: AppContext, plan: LoadPlan): Promise<Resu
 
   const launchOptions: AgentLaunchInfo[] = [];
 
-  for (const spawnPlan of plan.spawnPlans) {
-    const spawnResult = await executeSpawn(ctx, spawnPlan);
-    if (!spawnResult.ok) {
+  for (const agentPlan of plan.createAgentPlans) {
+    const agentResult = await executeCreateAgent(ctx, agentPlan);
+    if (!agentResult.ok) {
       // Rollback: delete the partially created team
       await ctx.configStore.deleteTeam(plan.teamName).catch(() => {});
-      return spawnResult as Result<never>;
+      return agentResult as Result<never>;
     }
-    launchOptions.push(spawnResult.value.launchOptions);
+    launchOptions.push(agentResult.value.launchOptions);
   }
 
   return ok({ teamName: plan.teamName, launchOptions, hasLead: plan.hasLead });

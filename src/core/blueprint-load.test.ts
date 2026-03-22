@@ -235,7 +235,7 @@ describe("planLoad with teamName override", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      for (const sp of result.value.spawnPlans) {
+      for (const sp of result.value.createAgentPlans) {
         expect(sp.agentId).toContain("@custom-team");
         expect(sp.team).toBe("custom-team");
       }

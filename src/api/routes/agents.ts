@@ -1,9 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import { createAgent } from "../../actions/create-agent.ts";
 import { listAgents } from "../../actions/list-agents.ts";
 import { removeAgent } from "../../actions/remove-agent.ts";
-import { spawnAgent } from "../../actions/spawn-agent.ts";
 import { updateAgent } from "../../actions/update-agent.ts";
 import { errorResponse } from "../errors.ts";
 import type { Env } from "../server.ts";
@@ -39,7 +39,7 @@ export function agentRoutes() {
     const ctx = c.get("ctx");
     const name = c.req.param("name");
     const body = c.req.valid("json");
-    const result = await spawnAgent(ctx, { team: name, ...body });
+    const result = await createAgent(ctx, { team: name, ...body });
     if (!result.ok) return errorResponse(c, result.error);
     return c.json(result.value, 201);
   });

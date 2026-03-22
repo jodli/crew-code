@@ -1,7 +1,7 @@
 export type View =
   | { screen: "dashboard" }
   | { screen: "create-team" }
-  | { screen: "spawn-agent" }
+  | { screen: "create-agent" }
   | { screen: "confirm-kill" }
   | { screen: "confirm-remove-team" }
   | { screen: "confirm-remove-agent" }
@@ -37,7 +37,7 @@ export type NavAction =
   | { type: "focus_teams" }
   | { type: "focus_agents" }
   | { type: "open_create_team" }
-  | { type: "open_spawn_agent" }
+  | { type: "open_create_agent" }
   | { type: "open_confirm_kill" }
   | { type: "open_confirm_remove_team" }
   | { type: "open_confirm_remove_agent" }
@@ -84,8 +84,8 @@ export function navReducer(state: NavState, action: NavAction): NavState | "quit
     case "open_create_team":
       return { ...state, view: { screen: "create-team" } };
 
-    case "open_spawn_agent":
-      return { ...state, view: { screen: "spawn-agent" } };
+    case "open_create_agent":
+      return { ...state, view: { screen: "create-agent" } };
 
     case "open_confirm_kill":
       return { ...state, view: { screen: "confirm-kill" } };

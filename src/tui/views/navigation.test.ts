@@ -141,16 +141,16 @@ describe("navReducer", () => {
     });
   });
 
-  describe("spawn-agent overlay", () => {
-    test("open_spawn_agent switches to spawn-agent view", () => {
+  describe("create-agent overlay", () => {
+    test("open_create_agent switches to create-agent view", () => {
       const state: NavState = { ...initialNavState, panel: "agents" };
-      const s = navReducer(state, { type: "open_spawn_agent" });
+      const s = navReducer(state, { type: "open_create_agent" });
       if (s === "quit") return;
-      expect(s.view.screen).toBe("spawn-agent");
+      expect(s.view.screen).toBe("create-agent");
     });
 
-    test("close_overlay returns to dashboard from spawn-agent", () => {
-      const state: NavState = { ...initialNavState, view: { screen: "spawn-agent" } };
+    test("close_overlay returns to dashboard from create-agent", () => {
+      const state: NavState = { ...initialNavState, view: { screen: "create-agent" } };
       const s = navReducer(state, { type: "close_overlay" });
       if (s === "quit") return;
       expect(s.view.screen).toBe("dashboard");

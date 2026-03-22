@@ -70,12 +70,12 @@ export default defineCommand({
     if (!result.value.hasLead) {
       console.error(`\n  ${pc.yellow("Warning:")} No team-lead agent in blueprint. Spawn one for permission requests:`);
       console.error(
-        `  ${pc.cyan(`crew spawn --team ${result.value.teamName} --agent-type team-lead --name team-lead`)}`,
+        `  ${pc.cyan(`crew agent create ${result.value.teamName} --agent-type team-lead --name team-lead`)}`,
       );
     }
     console.error(`\nAttach to agents:`);
     for (const opts of result.value.launchOptions) {
-      console.error(`  crew attach --team ${result.value.teamName} --name ${opts.agentName}`);
+      console.error(`  crew agent attach ${result.value.teamName} --name ${opts.agentName}`);
     }
   },
 });

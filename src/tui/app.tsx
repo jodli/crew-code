@@ -2,12 +2,12 @@ import type { KeyEvent } from "@opentui/core";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { attachAgent } from "../actions/attach-agent.ts";
+import { createAgent } from "../actions/create-agent.ts";
 import { createTeam } from "../actions/create-team.ts";
 import { killAgent } from "../actions/kill-agent.ts";
 import { removeAgent } from "../actions/remove-agent.ts";
 import { removeTeam } from "../actions/remove-team.ts";
 import { sendMessage } from "../actions/send-message.ts";
-import { planSpawn } from "../actions/spawn-agent.ts";
 import { updateAgent } from "../actions/update-agent.ts";
 import { updateTeam } from "../actions/update-team.ts";
 import { FileProcessRegistry } from "../adapters/file-process-registry.ts";
@@ -24,6 +24,7 @@ import { AttachForm } from "./components/attach-form.tsx";
 import { BlueprintDeployForm } from "./components/blueprint-deploy-form.tsx";
 import { BlueprintLoadForm } from "./components/blueprint-load-form.tsx";
 import { ConfirmBar } from "./components/confirm-bar.tsx";
+import { CreateAgentForm } from "./components/create-agent-form.tsx";
 import { CreateTeamForm } from "./components/create-team-form.tsx";
 import { EditAgentForm } from "./components/edit-agent-form.tsx";
 import { EditTeamForm } from "./components/edit-team-form.tsx";
@@ -32,11 +33,10 @@ import { HelpOverlay } from "./components/help-overlay.tsx";
 import { InboxView } from "./components/inbox-view.tsx";
 import { SendMessageForm } from "./components/send-message-form.tsx";
 import { ShortcutBar } from "./components/shortcut-bar.tsx";
-import { SpawnAgentForm } from "./components/spawn-agent-form.tsx";
 import { TeamListPanel } from "./components/team-list-panel.tsx";
 import { useAgents } from "./hooks/use-agents.ts";
 import { useTeams } from "./hooks/use-teams.ts";
-import { buildAttachCommand, buildSpawnCommand } from "./launcher/commands.ts";
+import { buildAttachCommand } from "./launcher/commands.ts";
 import type { Launcher } from "./launcher/port.ts";
 import { initialNavState, type NavAction, type NavState, navReducer } from "./views/navigation.ts";
 
@@ -104,7 +104,7 @@ export function App({ launcher }: AppProps) {
   const isDelegatedView =
     nav !== "quit" &&
     (nav.view.screen === "create-team" ||
-      nav.view.screen === "spawn-agent" ||
+      nav.view.screen === "create-agent" ||
       nav.view.screen === "send-message" ||
       nav.view.screen === "inbox" ||
       nav.view.screen === "attach-form" ||
@@ -159,8 +159,8 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_load_blueprint" });
         } else if (key.name === "n" && nav.panel === "teams") {
           dispatch({ type: "open_create_team" });
-        } else if (key.name === "s" && nav.panel === "agents" && selectedTeamName) {
-          dispatch({ type: "open_spawn_agent" });
+        } else if (key.name === "n" && nav.panel === "agents" && selectedTeamName) {
+          dispatch({ type: "open_create_agent" });
         } else if ((key.name === "a" || key.name === "return") && nav.panel === "agents") {
           if (selectedAgent && selectedTeamName) {
             dispatch({ type: "open_attach_form" });
@@ -198,7 +198,7 @@ export function App({ launcher }: AppProps) {
     dispatch({ type: "close_overlay" });
   }, []);
 
-  const handleSpawnAgent = useCallback(
+  const handleCreateAgent = useCallback(
     async (opts: {
       name: string;
       agentType: string;
@@ -208,24 +208,20 @@ export function App({ launcher }: AppProps) {
       extraArgs: string[];
     }) => {
       if (!selectedTeamName) return;
-      const validation = await planSpawn(ctx, {
+      const result = await createAgent(ctx, {
         team: selectedTeamName,
         name: opts.name || undefined,
+        agentType: opts.agentType,
+        prompt: opts.prompt || undefined,
+        model: opts.model || undefined,
+        extraArgs: opts.extraArgs.length > 0 ? opts.extraArgs : undefined,
       });
-      if (!validation.ok) {
-        setError(tuiErrorMessage(validation.error));
-        dispatch({ type: "close_overlay" });
-        return;
-      }
-      const args = buildSpawnCommand(selectedTeamName, opts);
-      try {
-        await launcher.openTerminal(args, opts.cwd, `crew:${opts.name || "agent"}`);
-      } catch (e: unknown) {
-        setError(`Failed to spawn: ${e instanceof Error ? e.message : String(e)}`);
+      if (!result.ok) {
+        setError(tuiErrorMessage(result.error));
       }
       dispatch({ type: "close_overlay" });
     },
-    [launcher, selectedTeamName],
+    [selectedTeamName],
   );
 
   const handleConfirmKill = useCallback(() => {
@@ -436,11 +432,11 @@ export function App({ launcher }: AppProps) {
       {nav.view.screen === "create-team" && (
         <CreateTeamForm onSubmit={handleCreateTeam} onCancel={handleCancelOverlay} />
       )}
-      {nav.view.screen === "spawn-agent" && selectedTeamName && (
-        <SpawnAgentForm
+      {nav.view.screen === "create-agent" && selectedTeamName && (
+        <CreateAgentForm
           teamName={selectedTeamName}
           defaultCwd={process.cwd()}
-          onSubmit={handleSpawnAgent}
+          onSubmit={handleCreateAgent}
           onCancel={handleCancelOverlay}
         />
       )}

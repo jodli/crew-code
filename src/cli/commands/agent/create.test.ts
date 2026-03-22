@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-describe("CLI agent spawn command", () => {
+describe("CLI agent create command", () => {
   test("exports a citty command definition", async () => {
-    const mod = await import("./spawn.ts");
+    const mod = await import("./create.ts");
     expect(mod.default).toBeDefined();
     expect(typeof mod.default).toBe("object");
   });
 
   test("defines team as positional required arg", async () => {
-    const mod = await import("./spawn.ts");
+    const mod = await import("./create.ts");
     const cmd = mod.default as { args?: Record<string, { type?: string; required?: boolean }> };
     expect(cmd.args?.team).toBeDefined();
     expect(cmd.args?.team?.type).toBe("positional");
@@ -16,7 +16,7 @@ describe("CLI agent spawn command", () => {
   });
 
   test("defines name as optional string flag", async () => {
-    const mod = await import("./spawn.ts");
+    const mod = await import("./create.ts");
     const cmd = mod.default as { args?: Record<string, { type?: string; required?: boolean }> };
     expect(cmd.args?.name).toBeDefined();
     expect(cmd.args?.name?.type).toBe("string");
@@ -24,7 +24,7 @@ describe("CLI agent spawn command", () => {
   });
 
   test("defines prompt as optional string flag", async () => {
-    const mod = await import("./spawn.ts");
+    const mod = await import("./create.ts");
     const cmd = mod.default as { args?: Record<string, { type?: string; required?: boolean }> };
     expect(cmd.args?.prompt).toBeDefined();
     expect(cmd.args?.prompt?.type).toBe("string");
@@ -32,7 +32,7 @@ describe("CLI agent spawn command", () => {
   });
 
   test("defines model as optional string flag", async () => {
-    const mod = await import("./spawn.ts");
+    const mod = await import("./create.ts");
     const cmd = mod.default as { args?: Record<string, { type?: string; required?: boolean }> };
     expect(cmd.args?.model).toBeDefined();
     expect(cmd.args?.model?.type).toBe("string");
@@ -40,7 +40,7 @@ describe("CLI agent spawn command", () => {
   });
 
   test("defines color as optional string flag", async () => {
-    const mod = await import("./spawn.ts");
+    const mod = await import("./create.ts");
     const cmd = mod.default as { args?: Record<string, { type?: string; required?: boolean }> };
     expect(cmd.args?.color).toBeDefined();
     expect(cmd.args?.color?.type).toBe("string");
@@ -48,7 +48,7 @@ describe("CLI agent spawn command", () => {
   });
 
   test("defines agent-type as optional string flag", async () => {
-    const mod = await import("./spawn.ts");
+    const mod = await import("./create.ts");
     const cmd = mod.default as {
       args?: Record<string, { type?: string; required?: boolean }>;
     };

@@ -5,7 +5,7 @@ import type { AgentLaunchInfo, AgentMember, InboxMessage } from "../types/domain
 import type { Result } from "../types/result.ts";
 import { err, ok } from "../types/result.ts";
 
-export interface SpawnInput {
+export interface CreateAgentInput {
   team: string;
   prompt?: string;
   name?: string;
@@ -15,7 +15,7 @@ export interface SpawnInput {
   extraArgs?: string[];
 }
 
-export interface SpawnPlan {
+export interface CreateAgentPlan {
   team: string;
   agentName: string;
   agentId: string;
@@ -29,7 +29,7 @@ export interface SpawnPlan {
   extraArgs?: string[];
 }
 
-export interface SpawnOutput {
+export interface CreateAgentOutput {
   agentId: string;
   name: string;
   team: string;
@@ -45,7 +45,7 @@ function nextAgentName(members: AgentMember[]): string {
   return `agent-${max + 1}`;
 }
 
-export async function planSpawn(ctx: AppContext, input: SpawnInput): Promise<Result<SpawnPlan>> {
+export async function planCreateAgent(ctx: AppContext, input: CreateAgentInput): Promise<Result<CreateAgentPlan>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) {
     if (teamResult.error.kind === "config_not_found") {
@@ -93,7 +93,7 @@ export async function planSpawn(ctx: AppContext, input: SpawnInput): Promise<Res
   });
 }
 
-export async function executeSpawn(ctx: AppContext, plan: SpawnPlan): Promise<Result<SpawnOutput>> {
+export async function executeCreateAgent(ctx: AppContext, plan: CreateAgentPlan): Promise<Result<CreateAgentOutput>> {
   const isLead = plan.agentType === "team-lead";
 
   const newMember: AgentMember = {

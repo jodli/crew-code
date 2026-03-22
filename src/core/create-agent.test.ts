@@ -4,7 +4,7 @@ import type { InboxStore } from "../ports/inbox-store.ts";
 import type { AppContext } from "../types/context.ts";
 import type { InboxMessage, TeamConfig } from "../types/domain.ts";
 import { err, ok } from "../types/result.ts";
-import { executeSpawn, planSpawn, type SpawnPlan } from "./spawn.ts";
+import { type CreateAgentPlan, executeCreateAgent, planCreateAgent } from "./create-agent.ts";
 
 const baseConfig: TeamConfig = {
   name: "test-team",
@@ -96,10 +96,10 @@ function makeCtx(overrides?: { configStore?: ConfigStore; inboxStore?: InboxStor
   };
 }
 
-describe("core/planSpawn", () => {
+describe("core/planCreateAgent", () => {
   test("returns team_not_found if team doesn't exist", async () => {
     const ctx = makeCtx({ configStore: makeConfigStore(null) });
-    const result = await planSpawn(ctx, { team: "no-team", prompt: "work" });
+    const result = await planCreateAgent(ctx, { team: "no-team", prompt: "work" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -109,7 +109,7 @@ describe("core/planSpawn", () => {
 
   test("returns agent_already_exists for duplicate name", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, {
+    const result = await planCreateAgent(ctx, {
       team: "test-team",
       name: "team-lead",
       prompt: "work",
@@ -123,7 +123,7 @@ describe("core/planSpawn", () => {
 
   test("auto-generates name if not provided", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", prompt: "work" });
+    const result = await planCreateAgent(ctx, { team: "test-team", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -149,7 +149,7 @@ describe("core/planSpawn", () => {
       ],
     };
     const ctx = makeCtx({ configStore: makeConfigStore(configWithAgent3) });
-    const result = await planSpawn(ctx, { team: "test-team", prompt: "work" });
+    const result = await planCreateAgent(ctx, { team: "test-team", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -159,7 +159,7 @@ describe("core/planSpawn", () => {
 
   test("generates sessionId as UUID", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", name: "scout", prompt: "work" });
+    const result = await planCreateAgent(ctx, { team: "test-team", name: "scout", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -170,7 +170,7 @@ describe("core/planSpawn", () => {
 
   test("includes parentSessionId from team config", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, { team: "test-team", name: "scout", prompt: "work" });
+    const result = await planCreateAgent(ctx, { team: "test-team", name: "scout", prompt: "work" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -180,7 +180,7 @@ describe("core/planSpawn", () => {
 
   test("carries model and color through", async () => {
     const ctx = makeCtx();
-    const result = await planSpawn(ctx, {
+    const result = await planCreateAgent(ctx, {
       team: "test-team",
       name: "scout",
       model: "opus",
@@ -195,8 +195,8 @@ describe("core/planSpawn", () => {
   });
 });
 
-describe("core/executeSpawn", () => {
-  const basePlan: SpawnPlan = {
+describe("core/executeCreateAgent", () => {
+  const basePlan: CreateAgentPlan = {
     team: "test-team",
     agentName: "scout",
     agentId: "scout@test-team",
@@ -210,7 +210,7 @@ describe("core/executeSpawn", () => {
   test("adds member to config", async () => {
     const configStore = makeConfigStore();
     const ctx = makeCtx({ configStore });
-    const result = await executeSpawn(ctx, basePlan);
+    const result = await executeCreateAgent(ctx, basePlan);
 
     expect(result.ok).toBe(true);
     expect(configStore.lastUpdated?.members).toHaveLength(2);
@@ -222,7 +222,7 @@ describe("core/executeSpawn", () => {
   test("persists prompt in config member", async () => {
     const configStore = makeConfigStore();
     const ctx = makeCtx({ configStore });
-    await executeSpawn(ctx, basePlan);
+    await executeCreateAgent(ctx, basePlan);
 
     const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
     expect(scout?.prompt).toBe("do stuff");
@@ -231,7 +231,7 @@ describe("core/executeSpawn", () => {
   test("seeds inbox with prompt message", async () => {
     const inboxStore = makeInboxStore();
     const ctx = makeCtx({ inboxStore });
-    await executeSpawn(ctx, basePlan);
+    await executeCreateAgent(ctx, basePlan);
 
     expect(inboxStore.created).toHaveLength(1);
     expect(inboxStore.created[0].team).toBe("test-team");
@@ -244,14 +244,14 @@ describe("core/executeSpawn", () => {
   test("does not seed inbox when no prompt", async () => {
     const inboxStore = makeInboxStore();
     const ctx = makeCtx({ inboxStore });
-    await executeSpawn(ctx, { ...basePlan, prompt: undefined });
+    await executeCreateAgent(ctx, { ...basePlan, prompt: undefined });
 
     expect(inboxStore.created[0].messages).toHaveLength(0);
   });
 
   test("returns launchOptions with correct fields", async () => {
     const ctx = makeCtx();
-    const result = await executeSpawn(ctx, { ...basePlan, model: "opus", color: "blue" });
+    const result = await executeCreateAgent(ctx, { ...basePlan, model: "opus", color: "blue" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -288,7 +288,7 @@ describe("core/executeSpawn", () => {
       },
     };
     const ctx = makeCtx({ configStore, inboxStore });
-    const result = await executeSpawn(ctx, basePlan);
+    const result = await executeCreateAgent(ctx, basePlan);
 
     expect(result.ok).toBe(false);
     expect(configStore.lastUpdated?.members).toHaveLength(1);

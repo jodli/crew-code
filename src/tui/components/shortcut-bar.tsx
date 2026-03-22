@@ -24,7 +24,7 @@ const teamShortcuts: Shortcut[] = [
 
 const agentShortcuts: Shortcut[] = [
   { key: "j/k", label: "navigate" },
-  { key: "s", label: "spawn" },
+  { key: "n", label: "create" },
   { key: "a", label: "attach" },
   { key: "e", label: "update" },
   { key: "x", label: "kill" },

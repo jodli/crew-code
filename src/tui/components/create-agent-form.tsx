@@ -2,7 +2,7 @@ import type { KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { useCallback, useState } from "react";
 
-export interface SpawnAgentResult {
+export interface CreateAgentResult {
   name: string;
   agentType: string;
   prompt: string;
@@ -11,10 +11,10 @@ export interface SpawnAgentResult {
   extraArgs: string[];
 }
 
-interface SpawnAgentFormProps {
+interface CreateAgentFormProps {
   teamName: string;
   defaultCwd: string;
-  onSubmit: (opts: SpawnAgentResult) => void;
+  onSubmit: (opts: CreateAgentResult) => void;
   onCancel: () => void;
 }
 
@@ -25,7 +25,7 @@ const MODEL_OPTIONS = ["(default)", "claude-sonnet-4-6", "claude-opus-4-6", "cla
 type Field = "name" | "agentType" | "prompt" | "model" | "cwd" | "args";
 const fields: Field[] = ["name", "agentType", "prompt", "model", "cwd", "args"];
 
-export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: SpawnAgentFormProps) {
+export function CreateAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: CreateAgentFormProps) {
   const [name, setName] = useState("");
   const [agentTypeIndex, setAgentTypeIndex] = useState(0);
   const [prompt, setPrompt] = useState("");
@@ -133,7 +133,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
       border
       borderStyle="rounded"
       borderColor="#7aa2f7"
-      title={` Spawn Agent into: ${teamName} `}
+      title={` Create Agent in: ${teamName} `}
       backgroundColor="#1a1b26"
       padding={1}
       flexDirection="column"
@@ -157,7 +157,7 @@ export function SpawnAgentForm({ teamName, defaultCwd, onSubmit, onCancel }: Spa
           <text content="" />
         </>
       ) : null}
-      <text content="  [Enter] spawn   [Tab] next field   [Esc] cancel" fg="#565f89" />
+      <text content="  [Enter] create   [Tab] next field   [Esc] cancel" fg="#565f89" />
     </box>
   );
 }

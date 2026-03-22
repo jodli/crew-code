@@ -3,7 +3,7 @@ import { makeConfigStore, makeInboxStore } from "../test/helpers.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { ok } from "../types/result.ts";
-import { planSpawn, spawnAgent } from "./spawn-agent.ts";
+import { createAgent, planCreateAgent } from "./create-agent.ts";
 
 const baseConfig: TeamConfig = {
   name: "t",
@@ -32,14 +32,14 @@ function makeCtx(overrides: Partial<AppContext> = {}): AppContext {
   };
 }
 
-describe("actions/spawn-agent", () => {
-  test("re-exports planSpawn for pre-validation", () => {
-    expect(typeof planSpawn).toBe("function");
+describe("actions/create-agent", () => {
+  test("re-exports planCreateAgent for pre-validation", () => {
+    expect(typeof planCreateAgent).toBe("function");
   });
 
-  test("spawnAgent propagates plan error", async () => {
+  test("createAgent propagates plan error", async () => {
     const ctx = makeCtx();
-    const result = await spawnAgent(ctx, { team: "no-team" });
+    const result = await createAgent(ctx, { team: "no-team" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -47,7 +47,7 @@ describe("actions/spawn-agent", () => {
     }
   });
 
-  test("spawnAgent returns ok on success", async () => {
+  test("createAgent returns ok on success", async () => {
     const ctx = makeCtx({
       configStore: makeConfigStore({
         getTeam: async () => ok(baseConfig),
@@ -55,7 +55,7 @@ describe("actions/spawn-agent", () => {
       }),
     });
 
-    const result = await spawnAgent(ctx, { team: "t", name: "worker" });
+    const result = await createAgent(ctx, { team: "t", name: "worker" });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.name).toBe("worker");
