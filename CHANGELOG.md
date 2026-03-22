@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/jodli/crew-code/compare/v0.1.0...v0.1.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* combine release-please and CD into single workflow ([b9a68e8](https://github.com/jodli/crew-code/commit/b9a68e85b266d12ba97479668b5cab7173af5b09))
+
 ## [0.1.0](https://github.com/jodli/crew-code/releases/tag/v0.1.0) (2026-03-22)
 
 Initial release.
