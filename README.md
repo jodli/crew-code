@@ -8,8 +8,7 @@ CLI tool for managing [Claude Code](https://claude.ai/code) agent teams from the
 
 ```bash
 # Install
-git clone git@github.com:jodli/crew-code.git
-cd crew-code && bun install
+curl -fsSL https://raw.githubusercontent.com/jodli/crew-code/main/install.sh | bash
 
 # Create a team and agents
 crew team create my-team
@@ -30,7 +29,6 @@ crew tui
 
 ## Requirements
 
-- [Bun](https://bun.sh) runtime
 - [Claude Code](https://claude.ai/code) CLI installed
 - Linux or macOS (Windows is not supported)
 - [tmux](https://github.com/tmux/tmux) for headless mode (`--headless`) and TUI tmux backend
@@ -38,13 +36,17 @@ crew tui
 ## Install
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/jodli/crew-code/main/install.sh | bash
+```
+
+Or build from source ([Bun](https://bun.sh) required):
+
+```bash
 git clone git@github.com:jodli/crew-code.git
 cd crew-code
 bun install
 bun run build   # outputs standalone binary to dist/crew
 ```
-
-Or run directly: `bun run src/main.ts <command>`
 
 ## Usage
 
@@ -88,14 +90,17 @@ Keybindings: `n` create, `a` start, `i` inbox, `m` send, `x` stop, `r` remove, `
 | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Set to `1` to enable agent teams (required) |
 | `CREW_TEAMS_DIR` | Override default teams directory (`~/.claude/teams/`) |
 | `CREW_DEBUG` | Set to `1` to enable debug logging to stderr |
+| `PORT` | Port for `crew serve` (default: 3117) |
+| `HOST` | Host for `crew serve` (default: localhost) |
 
 ## Development
 
 ```bash
+bun install
 bun test
 bun run typecheck
 bun run lint
-CREW_DEBUG=1 crew team list   # verbose output for debugging
+CREW_DEBUG=1 bun run src/main.ts team list   # verbose output for debugging
 ```
 
 ## License
