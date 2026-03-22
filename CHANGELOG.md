@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/jodli/crew-code/compare/v0.1.2...v0.1.3) (2026-03-22)
+
+
+### Bug Fixes
+
+* add --format=esm to bytecode build for TLA compatibility ([04dfbd1](https://github.com/jodli/crew-code/commit/04dfbd15a7815599032432e8722f0c769f1c98be))
+* combine release-please and CD into single workflow ([b9a68e8](https://github.com/jodli/crew-code/commit/b9a68e85b266d12ba97479668b5cab7173af5b09))
+
 ## [0.1.2](https://github.com/jodli/crew-code/compare/v0.1.1...v0.1.2) (2026-03-22)
 
 
