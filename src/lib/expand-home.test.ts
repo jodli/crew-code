@@ -1,5 +1,5 @@
-import { homedir } from "node:os";
 import { describe, expect, test } from "bun:test";
+import { homedir } from "node:os";
 import { expandHome } from "./expand-home.ts";
 
 describe("expandHome", () => {
