@@ -7,6 +7,7 @@ export function teamToBlueprint(config: TeamConfig): Blueprint {
     if (m.prompt) agent.prompt = m.prompt;
     if (m.model) agent.model = m.model;
     if (m.color) agent.color = m.color;
+    if (m.cwd) agent.cwd = m.cwd;
     if (m.extraArgs?.length) agent.extraArgs = m.extraArgs;
     return agent;
   });

@@ -10,6 +10,7 @@ export interface CreateAgentInput {
   prompt?: string;
   name?: string;
   agentType?: string;
+  cwd?: string;
   model?: string;
   color?: string;
   extraArgs?: string[];
@@ -83,7 +84,7 @@ export async function planCreateAgent(ctx: AppContext, input: CreateAgentInput):
     agentName,
     agentId,
     agentType,
-    cwd: process.cwd(),
+    cwd: input.cwd ?? process.cwd(),
     sessionId: isLead ? config.leadSessionId : randomUUID(),
     model: input.model,
     color: input.color,

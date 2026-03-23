@@ -56,4 +56,15 @@ describe("BlueprintSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  test("accepts agent with cwd", () => {
+    const result = BlueprintSchema.safeParse({
+      name: "with-cwd",
+      agents: [{ name: "worker", cwd: "~/repos/my-project" }],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.agents[0].cwd).toBe("~/repos/my-project");
+    }
+  });
 });

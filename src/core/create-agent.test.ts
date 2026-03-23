@@ -193,6 +193,33 @@ describe("core/planCreateAgent", () => {
       expect(result.value.color).toBe("blue");
     }
   });
+
+  test("uses provided cwd instead of process.cwd()", async () => {
+    const ctx = makeCtx();
+    const result = await planCreateAgent(ctx, {
+      team: "test-team",
+      name: "scout",
+      cwd: "/custom/working/dir",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.cwd).toBe("/custom/working/dir");
+    }
+  });
+
+  test("falls back to process.cwd() when cwd not provided", async () => {
+    const ctx = makeCtx();
+    const result = await planCreateAgent(ctx, {
+      team: "test-team",
+      name: "scout",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.cwd).toBe(process.cwd());
+    }
+  });
 });
 
 describe("core/executeCreateAgent", () => {
@@ -263,6 +290,22 @@ describe("core/executeCreateAgent", () => {
       expect(result.value.launchOptions.model).toBe("opus");
       expect(result.value.launchOptions.color).toBe("blue");
     }
+  });
+
+  test("persists custom cwd in config and launchOptions", async () => {
+    const configStore = makeConfigStore();
+    const ctx = makeCtx({ configStore });
+    const plan: CreateAgentPlan = { ...basePlan, cwd: "/home/user/repos/frontend" };
+    const result = await executeCreateAgent(ctx, plan);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // cwd lands in launchOptions
+      expect(result.value.launchOptions.cwd).toBe("/home/user/repos/frontend");
+    }
+    // cwd is persisted in the config member
+    const scout = configStore.lastUpdated?.members.find((m) => m.name === "scout");
+    expect(scout?.cwd).toBe("/home/user/repos/frontend");
   });
 
   test("rolls back config if inbox creation fails", async () => {

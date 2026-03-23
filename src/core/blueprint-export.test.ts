@@ -63,6 +63,7 @@ describe("teamToBlueprint", () => {
       prompt: "Review code for issues",
       model: "claude-opus-4-6",
       color: "red",
+      cwd: "/tmp",
       extraArgs: ["--verbose"],
     });
   });
@@ -74,6 +75,7 @@ describe("teamToBlueprint", () => {
       name: "checker",
       agentType: "general-purpose",
       prompt: "Check style",
+      cwd: "/tmp",
     });
     expect(checker).not.toHaveProperty("model");
     expect(checker).not.toHaveProperty("color");
@@ -99,8 +101,13 @@ describe("teamToBlueprint", () => {
       expect(agent).not.toHaveProperty("sessionId");
       expect(agent).not.toHaveProperty("isActive");
       expect(agent).not.toHaveProperty("joinedAt");
-      expect(agent).not.toHaveProperty("cwd");
       expect(agent).not.toHaveProperty("agentId");
     }
+  });
+
+  test("exports cwd for agents", () => {
+    const bp = teamToBlueprint(baseConfig);
+    const reviewer = bp.agents.find((a) => a.name === "reviewer");
+    expect(reviewer?.cwd).toBe("/tmp");
   });
 });

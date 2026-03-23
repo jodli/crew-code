@@ -6,6 +6,7 @@ export const BlueprintAgentSchema = z.object({
   prompt: z.string().optional(),
   model: z.string().optional(),
   color: z.string().optional(),
+  cwd: z.string().optional(),
   extraArgs: z.array(z.string()).optional(),
 });
 

@@ -253,3 +253,47 @@ describe("planLoad with teamName override", () => {
     }
   });
 });
+
+describe("planLoad with per-agent cwd", () => {
+  test("uses per-agent cwd from blueprint when specified", async () => {
+    const bpWithCwd: Blueprint = {
+      name: "cwd-team",
+      agents: [
+        { name: "team-lead", agentType: "team-lead" },
+        { name: "frontend", cwd: "/home/user/repos/frontend" },
+        { name: "backend", cwd: "/home/user/repos/backend" },
+      ],
+    };
+    const ctx = makeCtx(bpWithCwd);
+    const result = await planLoad(ctx, { nameOrPath: "cwd-team" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const plans = result.value.createAgentPlans;
+      // team-lead has no cwd in blueprint → falls back to process.cwd()
+      expect(plans[0].cwd).toBe(process.cwd());
+      // agents with explicit cwd use their own
+      expect(plans[1].cwd).toBe("/home/user/repos/frontend");
+      expect(plans[2].cwd).toBe("/home/user/repos/backend");
+    }
+  });
+
+  test("global cwd input overrides process.cwd() for agents without per-agent cwd", async () => {
+    const bpMixed: Blueprint = {
+      name: "mixed-team",
+      agents: [
+        { name: "team-lead", agentType: "team-lead" },
+        { name: "worker", cwd: "/specific/path" },
+      ],
+    };
+    const ctx = makeCtx(bpMixed);
+    const result = await planLoad(ctx, { nameOrPath: "mixed-team", cwd: "/global/path" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const plans = result.value.createAgentPlans;
+      expect(plans[0].cwd).toBe("/global/path");
+      expect(plans[1].cwd).toBe("/specific/path");
+    }
+  });
+});

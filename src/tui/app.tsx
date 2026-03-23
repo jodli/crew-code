@@ -217,6 +217,7 @@ export function App({ launcher }: AppProps) {
         name: opts.name || undefined,
         agentType: opts.agentType,
         prompt: opts.prompt || undefined,
+        cwd: opts.cwd || undefined,
         model: opts.model || undefined,
         extraArgs: opts.extraArgs.length > 0 ? opts.extraArgs : undefined,
       });

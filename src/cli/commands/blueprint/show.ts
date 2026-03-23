@@ -44,6 +44,9 @@ export default defineCommand({
       const model = agent.model ? ` model=${agent.model}` : "";
       const color = agent.color ? ` color=${agent.color}` : "";
       console.error(`  - ${pc.cyan(agent.name)} [${type}]${model}${color}`);
+      if (agent.cwd) {
+        console.error(`    cwd: ${agent.cwd}`);
+      }
       if (agent.prompt) {
         console.error(`    prompt: ${agent.prompt}`);
       }

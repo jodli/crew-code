@@ -16,6 +16,7 @@ agents:
       The agent will wait for instructions after receiving this prompt.
     # model: claude-sonnet-4-6
     # color: blue
+    # cwd: ~/repos/my-project
     # extraArgs: ["--verbose"]
 
   # - name: agent-2

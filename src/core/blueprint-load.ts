@@ -79,7 +79,7 @@ export async function planLoad(ctx: AppContext, input: LoadInput): Promise<Resul
       agentName: agent.name,
       agentId: `${agent.name}@${resolvedName}`,
       agentType,
-      cwd,
+      cwd: agent.cwd ?? cwd,
       sessionId: isLead ? createPlan.leadSessionId : randomUUID(),
       parentSessionId: isLead ? undefined : createPlan.leadSessionId,
       prompt: agent.prompt,
