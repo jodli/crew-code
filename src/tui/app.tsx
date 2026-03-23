@@ -16,6 +16,7 @@ import { JsonFileInboxStore } from "../adapters/json-file-inbox-store.ts";
 import { YamlBlueprintStore } from "../adapters/yaml-blueprint-store.ts";
 import { renderError } from "../cli/errors.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
+import { expandHome } from "../lib/expand-home.ts";
 import { executeLoad, planLoad } from "../core/blueprint-load.ts";
 import { CREW_SENDER } from "../types/constants.ts";
 import type { CrewError } from "../types/errors.ts";
@@ -284,7 +285,7 @@ export function App({ launcher }: AppProps) {
       }
       const args = buildStartCommand(selectedTeamName, selectedAgent.name, extraArgs);
       try {
-        await launcher.openTerminal(args, selectedAgent.cwd, `crew:${selectedAgent.name}`);
+        await launcher.openTerminal(args, expandHome(selectedAgent.cwd), `crew:${selectedAgent.name}`);
       } catch (e: unknown) {
         setError(`Failed to start: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -319,7 +320,7 @@ export function App({ launcher }: AppProps) {
       for (const opts of result.value.launchOptions) {
         const cmd = buildStartCommand(result.value.teamName, opts.agentName, opts.extraArgs);
         try {
-          await launcher.openTerminal(cmd, opts.cwd, `crew:${opts.agentName}`);
+          await launcher.openTerminal(cmd, expandHome(opts.cwd), `crew:${opts.agentName}`);
         } catch (e: unknown) {
           setError(`Failed to launch ${opts.agentName}: ${e instanceof Error ? e.message : String(e)}`);
           break;

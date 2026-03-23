@@ -1,3 +1,4 @@
+import { expandHome } from "../lib/expand-home.ts";
 import { debug, warn } from "../lib/logger.ts";
 import type { AgentLaunchInfo } from "../types/domain.ts";
 import type { LaunchMode } from "./claude-args.ts";
@@ -29,17 +30,18 @@ export interface LaunchOptions extends Partial<LaunchDeps> {
 }
 
 export function launchAgent(info: AgentLaunchInfo, options: LaunchOptions = {}): LaunchResult {
+  const resolved = { ...info, cwd: expandHome(info.cwd) };
   const { headless, ...depsOverrides } = options;
   const { checkSession } = { ...defaultDeps, ...depsOverrides };
-  const mode = selectLaunchMode(info, checkSession);
+  const mode = selectLaunchMode(resolved, checkSession);
 
-  const args = buildClaudeArgs(info, mode);
+  const args = buildClaudeArgs(resolved, mode);
 
   if (headless) {
-    return launchHeadless(info, args);
+    return launchHeadless(resolved, args);
   }
 
-  return launchInteractive(info, args, mode);
+  return launchInteractive(resolved, args, mode);
 }
 
 function launchInteractive(info: AgentLaunchInfo, args: string[], mode: LaunchMode): LaunchResult {
