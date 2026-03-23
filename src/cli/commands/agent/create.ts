@@ -3,11 +3,10 @@ import pc from "picocolors";
 import { createAgent } from "../../../actions/create-agent.ts";
 import { JsonFileConfigStore } from "../../../adapters/json-file-config-store.ts";
 import { JsonFileInboxStore } from "../../../adapters/json-file-inbox-store.ts";
+import { discoverAgentTypes } from "../../../lib/discover-agent-types.ts";
 import { parsePassthroughArgs } from "../../../lib/parse-passthrough-args.ts";
 import type { AppContext } from "../../../types/context.ts";
 import { renderError } from "../../errors.ts";
-
-const ALLOWED_AGENT_TYPES = ["team-lead", "general-purpose"];
 
 export default defineCommand({
   meta: {
@@ -42,14 +41,15 @@ export default defineCommand({
     },
     "agent-type": {
       type: "string",
-      description: "Agent type (team-lead, general-purpose)",
+      description: "Agent type (built-ins + discovered from ~/.claude/agents/)",
       required: false,
     },
   },
   async run({ args, rawArgs }) {
     const agentType = args["agent-type"] || "general-purpose";
-    if (!ALLOWED_AGENT_TYPES.includes(agentType)) {
-      console.error(`Invalid agent type "${agentType}". Allowed: ${ALLOWED_AGENT_TYPES.join(", ")}`);
+    const allowedTypes = await discoverAgentTypes();
+    if (!allowedTypes.includes(agentType)) {
+      console.error(`Invalid agent type "${agentType}". Allowed: ${allowedTypes.join(", ")}`);
       process.exit(1);
     }
 

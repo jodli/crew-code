@@ -16,8 +16,10 @@ import { JsonFileInboxStore } from "../adapters/json-file-inbox-store.ts";
 import { YamlBlueprintStore } from "../adapters/yaml-blueprint-store.ts";
 import { renderError } from "../cli/errors.ts";
 import type { Blueprint } from "../config/blueprint-schema.ts";
-import { expandHome } from "../lib/expand-home.ts";
 import { executeLoad, planLoad } from "../core/blueprint-load.ts";
+import { discoverAgentTypes } from "../lib/discover-agent-types.ts";
+import { expandHome } from "../lib/expand-home.ts";
+import { MODEL_OPTIONS } from "../lib/model-options.ts";
 import { CREW_SENDER } from "../types/constants.ts";
 import type { CrewError } from "../types/errors.ts";
 import { AgentListPanel } from "./components/agent-list-panel.tsx";
@@ -64,6 +66,10 @@ interface AppProps {
 
 export function App({ launcher }: AppProps) {
   const { width, height } = useTerminalDimensions();
+  const [agentTypeOptions, setAgentTypeOptions] = useState<string[]>(["general-purpose", "team-lead"]);
+  useEffect(() => {
+    discoverAgentTypes().then(setAgentTypeOptions);
+  }, []);
   const teams = useTeams(ctx.configStore, ctx.processRegistry);
   const [nav, dispatch] = useReducer(
     navReducer as (state: NavState | "quit", action: NavAction) => NavState | "quit",
@@ -442,6 +448,8 @@ export function App({ launcher }: AppProps) {
         <CreateAgentForm
           teamName={selectedTeamName}
           defaultCwd={process.cwd()}
+          agentTypeOptions={agentTypeOptions}
+          modelOptions={MODEL_OPTIONS}
           onSubmit={handleCreateAgent}
           onCancel={handleCancelOverlay}
         />
@@ -476,6 +484,7 @@ export function App({ launcher }: AppProps) {
         <EditAgentForm
           teamName={selectedTeamName}
           agent={selectedAgent}
+          modelOptions={MODEL_OPTIONS}
           onSubmit={handleEditAgent}
           onCancel={handleCancelOverlay}
         />

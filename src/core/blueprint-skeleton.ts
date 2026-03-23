@@ -14,7 +14,7 @@ agents:
     prompt: |
       Describe this agent's role in the team.
       The agent will wait for instructions after receiving this prompt.
-    # model: claude-sonnet-4-6
+    # model: sonnet
     # color: blue
     # cwd: ~/repos/my-project
     # extraArgs: ["--verbose"]
@@ -23,7 +23,7 @@ agents:
   #   agentType: general-purpose
   #   prompt: |
   #     Another agent's role description.
-  #   model: claude-opus-4-6
+  #   model: opus
   #   color: red
 `;
 }

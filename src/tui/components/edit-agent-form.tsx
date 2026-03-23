@@ -1,41 +1,58 @@
 import type { InputRenderable, KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AgentSummary } from "../hooks/use-agents.ts";
 
 interface EditAgentFormProps {
   teamName: string;
   agent: AgentSummary;
+  modelOptions: readonly string[];
   onSubmit: (updates: { model?: string; prompt?: string; color?: string; extraArgs?: string[] }) => void;
   onCancel: () => void;
 }
 
-const MODEL_OPTIONS = ["(default)", "claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001"] as const;
+const CUSTOM_MODEL_LABEL = "custom...";
 
 type Field = "model" | "prompt" | "color" | "args";
 const fields: Field[] = ["model", "prompt", "color", "args"];
 
-export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }: EditAgentFormProps) {
-  const initialModelIndex = agent.model ? MODEL_OPTIONS.indexOf(agent.model as (typeof MODEL_OPTIONS)[number]) : 0;
+export function EditAgentForm({ teamName: _teamName, agent, modelOptions, onSubmit, onCancel }: EditAgentFormProps) {
+  const allModelOptions = useMemo(() => [...modelOptions, CUSTOM_MODEL_LABEL], [modelOptions]);
 
-  const [modelIndex, setModelIndex] = useState(initialModelIndex >= 0 ? initialModelIndex : 0);
+  const initialModelIndex = agent.model ? allModelOptions.indexOf(agent.model) : 0;
+  const isInitialCustom = agent.model ? initialModelIndex < 0 : false;
+
+  const [modelIndex, setModelIndex] = useState(
+    isInitialCustom ? allModelOptions.length - 1 : Math.max(0, initialModelIndex),
+  );
+  const [customModel, setCustomModel] = useState(isInitialCustom ? (agent.model ?? "") : "");
   const [prompt, setPrompt] = useState(agent.prompt ?? "");
   const [color, setColor] = useState(agent.color ?? "");
   const [args, setArgs] = useState((agent.extraArgs ?? []).join(" "));
   const [activeField, setActiveField] = useState<Field>("model");
 
+  const isCustomModel = modelIndex === allModelOptions.length - 1;
+
   const promptRef = useRef<InputRenderable>(null);
   const colorRef = useRef<InputRenderable>(null);
   const argsRef = useRef<InputRenderable>(null);
+  const customModelRef = useRef<InputRenderable>(null);
 
   useEffect(() => {
     if (promptRef.current && agent.prompt) promptRef.current.value = agent.prompt;
     if (colorRef.current && agent.color) colorRef.current.value = agent.color;
     if (argsRef.current && agent.extraArgs?.length) argsRef.current.value = agent.extraArgs.join(" ");
-  }, [agent.color, agent.extraArgs?.join, agent.extraArgs?.length, agent.prompt]);
+    if (customModelRef.current && isInitialCustom && agent.model) customModelRef.current.value = agent.model;
+  }, [agent.color, agent.extraArgs?.join, agent.extraArgs?.length, agent.prompt, agent.model, isInitialCustom]);
 
   const handleSubmit = useCallback(() => {
-    const selectedModel = modelIndex === 0 ? undefined : MODEL_OPTIONS[modelIndex];
+    let selectedModel: string | undefined;
+    if (isCustomModel) {
+      const val = customModelRef.current?.value ?? customModel;
+      selectedModel = val.trim() || undefined;
+    } else {
+      selectedModel = modelIndex === 0 ? undefined : allModelOptions[modelIndex];
+    }
     const promptVal = promptRef.current?.value ?? prompt;
     const colorVal = colorRef.current?.value ?? color;
     const argsVal = argsRef.current?.value ?? args;
@@ -46,12 +63,17 @@ export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }
       color: colorVal.trim() || undefined,
       extraArgs: extraArgs.length > 0 ? extraArgs : undefined,
     });
-  }, [modelIndex, prompt, color, args, onSubmit]);
+  }, [modelIndex, isCustomModel, customModel, allModelOptions, prompt, color, args, onSubmit]);
 
   useKeyboard(
     useCallback(
       (key: KeyEvent) => {
         if (key.name === "escape") {
+          if (isCustomModel && activeField === "model") {
+            setModelIndex(0);
+            setCustomModel("");
+            return;
+          }
           onCancel();
           return;
         }
@@ -65,17 +87,17 @@ export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }
           return;
         }
 
-        if (activeField === "model") {
+        if (activeField === "model" && !isCustomModel) {
           if (key.name === "left" || key.name === "h") {
-            setModelIndex((i) => (i - 1 + MODEL_OPTIONS.length) % MODEL_OPTIONS.length);
+            setModelIndex((i) => (i - 1 + allModelOptions.length) % allModelOptions.length);
           } else if (key.name === "right" || key.name === "l") {
-            setModelIndex((i) => (i + 1) % MODEL_OPTIONS.length);
+            setModelIndex((i) => (i + 1) % allModelOptions.length);
           } else if (key.name === "return") {
             handleSubmit();
           }
         }
       },
-      [activeField, onCancel, handleSubmit],
+      [activeField, onCancel, handleSubmit, allModelOptions.length, isCustomModel],
     ),
   );
 
@@ -104,8 +126,15 @@ export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }
   };
 
   const modelActive = activeField === "model";
-  const modelPrefix = modelActive ? "> " : "  ";
-  const modelHint = modelActive ? "  <-/-> to change" : "";
+
+  const modelField = isCustomModel ? (
+    textInputRow("model", " Model: ", "e.g. claude-opus-4-6[1m]", customModelRef, setCustomModel)
+  ) : (
+    <text
+      content={`${modelActive ? "> " : "  "} Model: ${allModelOptions[modelIndex]}${modelActive ? "  <-/-> to change" : ""}`}
+      fg={modelActive ? "#c0caf5" : "#a9b1d6"}
+    />
+  );
 
   return (
     <box
@@ -123,10 +152,7 @@ export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }
       flexDirection="column"
       zIndex={10}
     >
-      <text
-        content={`${modelPrefix} Model: ${MODEL_OPTIONS[modelIndex]}${modelHint}`}
-        fg={modelActive ? "#c0caf5" : "#a9b1d6"}
-      />
+      {modelField}
       <text content="" />
       {textInputRow("prompt", " Prompt: ", "system prompt", promptRef, setPrompt)}
       <text content="" />
@@ -134,7 +160,14 @@ export function EditAgentForm({ teamName: _teamName, agent, onSubmit, onCancel }
       <text content="" />
       {textInputRow("args", " Args:   ", "e.g. --verbose --effort high", argsRef, setArgs)}
       <text content="" />
-      <text content="  [Enter] save   [Tab] next field   [Esc] cancel" fg="#565f89" />
+      <text
+        content={
+          isCustomModel && activeField === "model"
+            ? "  [Enter] save   [Tab] next field   [Esc] back to selector"
+            : "  [Enter] save   [Tab] next field   [Esc] cancel"
+        }
+        fg="#565f89"
+      />
     </box>
   );
 }
