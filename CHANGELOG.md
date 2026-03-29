@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.6](https://github.com/jodli/crew-code/compare/v0.1.5...v0.1.6) (2026-03-29)
+
+
+### Features
+
+* dynamic agent type discovery and model picker ([aa0eee7](https://github.com/jodli/crew-code/commit/aa0eee75cbebcac3928daa2d55e35c24bc54beac))
+
+
+### Bug Fixes
+
+* expand tilde in cwd before spawning agent processes ([c995140](https://github.com/jodli/crew-code/commit/c995140116bfdd4e149153661a423e050d3d5ee0))
+* restore per-agent cwd support in blueprints and create-agent ([2f162f8](https://github.com/jodli/crew-code/commit/2f162f8c59359d5c060f4e7b042c40e81b6d6bf8))
+* sort imports in expand-home test ([eee533e](https://github.com/jodli/crew-code/commit/eee533e58ba20436a4888570a4eeeae85aef11f5))
+
 ## [0.1.5](https://github.com/jodli/crew-code/compare/v0.1.4...v0.1.5) (2026-03-22)
 
 
