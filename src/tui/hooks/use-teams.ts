@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { claudeTeamsDir } from "../../config/paths.ts";
-import { debounce, watchDir } from "../../lib/file-watcher.ts";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { claudeTeamsDir, processRegistryPath } from "../../config/paths.ts";
+import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
 import type { ConfigStore } from "../../ports/config-store.ts";
 import type { ProcessRegistry } from "../../ports/process-registry.ts";
 import type { TeamConfig } from "../../types/domain.ts";
@@ -53,6 +53,8 @@ export function useTeams(configStore: ConfigStore, processRegistry?: ProcessRegi
   }, [configStore, processRegistry]);
 
   const debouncedRefresh = useMemo(() => debounce(refresh, 200), [refresh]);
+  const watchedTeams = useRef(new Set<string>());
+  const registryCleanups = useRef<(() => void)[]>([]);
 
   useEffect(() => {
     refresh();
@@ -64,8 +66,23 @@ export function useTeams(configStore: ConfigStore, processRegistry?: ProcessRegi
     }
     return () => {
       for (const c of cleanups) c();
+      for (const c of registryCleanups.current) c();
+      registryCleanups.current = [];
+      watchedTeams.current.clear();
     };
   }, [refresh, debouncedRefresh]);
+
+  // Add registry watchers for newly discovered teams (additive, no teardown cycle)
+  for (const team of teams) {
+    if (!watchedTeams.current.has(team.name)) {
+      watchedTeams.current.add(team.name);
+      try {
+        registryCleanups.current.push(watchFile(processRegistryPath(team.name), () => debouncedRefresh()));
+      } catch {
+        /* file may not exist yet */
+      }
+    }
+  }
 
   return teams;
 }
