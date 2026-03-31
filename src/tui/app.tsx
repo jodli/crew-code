@@ -7,6 +7,7 @@ import { removeAgent } from "../actions/remove-agent.ts";
 import { removeTeam } from "../actions/remove-team.ts";
 import { sendMessage } from "../actions/send-message.ts";
 import { startAgent } from "../actions/start-agent.ts";
+import { startTeam } from "../actions/start-team.ts";
 import { stopAgent } from "../actions/stop-agent.ts";
 import { updateAgent } from "../actions/update-agent.ts";
 import { updateTeam } from "../actions/update-team.ts";
@@ -20,6 +21,7 @@ import { executeLoad, planLoad } from "../core/blueprint-load.ts";
 import { discoverAgentTypes } from "../lib/discover-agent-types.ts";
 import { expandHome } from "../lib/expand-home.ts";
 import { MODEL_OPTIONS } from "../lib/model-options.ts";
+import { launchAgent } from "../runtime/launch.ts";
 import { CREW_SENDER } from "../types/constants.ts";
 import type { CrewError } from "../types/errors.ts";
 import { AgentListPanel } from "./components/agent-list-panel.tsx";
@@ -39,7 +41,7 @@ import { StartForm } from "./components/start-form.tsx";
 import { TeamListPanel } from "./components/team-list-panel.tsx";
 import { useAgents } from "./hooks/use-agents.ts";
 import { useTeams } from "./hooks/use-teams.ts";
-import { buildStartCommand } from "./launcher/commands.ts";
+import { buildAttachCommand, buildStartCommand } from "./launcher/commands.ts";
 import type { Launcher } from "./launcher/port.ts";
 import { initialNavState, type NavAction, type NavState, navReducer } from "./views/navigation.ts";
 
@@ -120,6 +122,47 @@ export function App({ launcher }: AppProps) {
       nav.view.screen === "edit-team" ||
       nav.view.screen === "edit-agent");
 
+  const handleStartTeam = useCallback(async () => {
+    if (!selectedTeamName) return;
+    const result = await startTeam(ctx, { team: selectedTeamName });
+    if (!result.ok) {
+      setError(tuiErrorMessage(result.error));
+      return;
+    }
+    if (result.value.agents.length === 0) {
+      setError("No agents to start.");
+      return;
+    }
+
+    const activeResult = await processRegistry.listActive(selectedTeamName);
+    const activeIds = new Set(activeResult.ok ? activeResult.value.map((e) => e.agentId) : []);
+
+    let started = 0;
+    for (const agent of result.value.agents) {
+      if (activeIds.has(agent.agentId)) continue;
+      try {
+        const { pid } = launchAgent(agent.launchOptions, { headless: true });
+        await processRegistry.activate(selectedTeamName, agent.agentId, pid, "headless");
+        started++;
+      } catch {
+        setError(`Failed to start agent "${agent.name}".`);
+        return;
+      }
+    }
+
+    if (started === 0) {
+      setError("All agents are already running.");
+      return;
+    }
+
+    try {
+      const attachCmd = buildAttachCommand(selectedTeamName);
+      await launcher.openTerminal(attachCmd, process.cwd(), `crew:${selectedTeamName}`);
+    } catch (e: unknown) {
+      setError(`Failed to attach: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }, [launcher, selectedTeamName]);
+
   const handleKey = useCallback(
     (key: KeyEvent) => {
       if (exiting || nav === "quit") return;
@@ -184,6 +227,8 @@ export function App({ launcher }: AppProps) {
           dispatch({ type: "open_edit_team" });
         } else if (key.name === "e" && nav.panel === "agents" && selectedAgent && selectedTeamName) {
           dispatch({ type: "open_edit_agent" });
+        } else if (key.name === "s" && nav.panel === "teams" && selectedTeamName) {
+          handleStartTeam();
         } else if (key.name === "d" && nav.panel === "teams" && selectedTeamName) {
           dispatch({ type: "open_confirm_remove_team" });
         } else if (key.name === "i" && nav.panel === "agents" && selectedAgent) {
@@ -193,7 +238,17 @@ export function App({ launcher }: AppProps) {
         }
       }
     },
-    [nav, teams.length, agents.length, exiting, isDelegatedView, isConfirm, selectedTeamName, selectedAgent],
+    [
+      nav,
+      teams.length,
+      agents.length,
+      exiting,
+      isDelegatedView,
+      isConfirm,
+      selectedTeamName,
+      selectedAgent,
+      handleStartTeam,
+    ],
   );
 
   useKeyboard(handleKey);

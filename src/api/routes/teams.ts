@@ -6,10 +6,12 @@ import { createTeam } from "../../actions/create-team.ts";
 import { getTeamDetail } from "../../actions/get-team-detail.ts";
 import { listTeams } from "../../actions/list-teams.ts";
 import { removeTeam } from "../../actions/remove-team.ts";
+import { startTeam } from "../../actions/start-team.ts";
 import { updateTeam } from "../../actions/update-team.ts";
 import { claudeInboxesDir, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
 import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
 import { debug } from "../../lib/logger.ts";
+import { launchAgent } from "../../runtime/launch.ts";
 import { errorResponse } from "../errors.ts";
 import type { Env } from "../server.ts";
 
@@ -63,6 +65,44 @@ export function teamRoutes() {
     const result = await removeTeam(ctx, { team: name });
     if (!result.ok) return errorResponse(c, result.error);
     return c.json(result.value);
+  });
+
+  r.post("/teams/:name/start", async (c) => {
+    const ctx = c.get("ctx");
+    const name = c.req.param("name");
+
+    const result = await startTeam(ctx, { team: name });
+    if (!result.ok) return errorResponse(c, result.error);
+
+    const activeResult = ctx.processRegistry ? await ctx.processRegistry.listActive(name) : { ok: true, value: [] };
+    const activeIds = new Set(
+      activeResult.ok ? (activeResult.value as Array<{ agentId: string }>).map((e) => e.agentId) : [],
+    );
+
+    const started: Array<{ name: string; pid: number }> = [];
+    const skipped: Array<{ name: string; reason: string }> = [];
+
+    for (const agent of result.value.agents) {
+      if (activeIds.has(agent.agentId)) {
+        skipped.push({ name: agent.name, reason: "already running" });
+        continue;
+      }
+      try {
+        const { pid } = launchAgent(agent.launchOptions, { headless: true });
+        if (ctx.processRegistry) {
+          await ctx.processRegistry.activate(name, agent.agentId, pid, "headless");
+        }
+        started.push({ name: agent.name, pid });
+      } catch (e: unknown) {
+        skipped.push({ name: agent.name, reason: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
+    for (const s of result.value.skipped) {
+      skipped.push(s);
+    }
+
+    return c.json({ started, skipped, tmuxSession: `crew_${name}` });
   });
 
   r.get("/teams/:name/stream", async (c) => {

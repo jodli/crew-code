@@ -21,3 +21,7 @@ export function buildStartCommand(team: string, agentName: string, extraArgs?: s
   if (extraArgs?.length) args.push("--", ...extraArgs);
   return args;
 }
+
+export function buildAttachCommand(teamName: string): string[] {
+  return ["tmux", "attach", "-t", `=crew_${teamName}`];
+}

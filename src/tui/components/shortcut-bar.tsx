@@ -17,6 +17,7 @@ const globalShortcuts: Shortcut[] = [
 const teamShortcuts: Shortcut[] = [
   { key: "j/k", label: "navigate" },
   { key: "n", label: "create" },
+  { key: "s", label: "start all" },
   { key: "b", label: "blueprint" },
   { key: "e", label: "update" },
   { key: "d", label: "remove" },
