@@ -20,6 +20,7 @@ import type { Blueprint } from "../config/blueprint-schema.ts";
 import { executeLoad, planLoad } from "../core/blueprint-load.ts";
 import { discoverAgentTypes } from "../lib/discover-agent-types.ts";
 import { expandHome } from "../lib/expand-home.ts";
+import { warn } from "../lib/logger.ts";
 import { MODEL_OPTIONS } from "../lib/model-options.ts";
 import { launchAgent } from "../runtime/launch.ts";
 import { CREW_SENDER } from "../types/constants.ts";
@@ -144,8 +145,10 @@ export function App({ launcher }: AppProps) {
         const { pid } = launchAgent(agent.launchOptions, { headless: true });
         await processRegistry.activate(selectedTeamName, agent.agentId, pid, "headless");
         started++;
-      } catch {
-        setError(`Failed to start agent "${agent.name}".`);
+      } catch (e: unknown) {
+        const detail = e instanceof Error ? e.message : String(e);
+        warn("tui", `failed to start agent "${agent.name}"`, { team: selectedTeamName, error: detail });
+        setError(`Failed to start agent "${agent.name}": ${detail}`);
         return;
       }
     }
