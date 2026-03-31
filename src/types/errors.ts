@@ -20,4 +20,5 @@ export type CrewError =
   | { kind: "blueprint_not_found"; name: string }
   | { kind: "blueprint_invalid"; name: string; detail: string }
   | { kind: "blueprint_already_exists"; name: string }
-  | { kind: "invalid_name"; name: string; label: string };
+  | { kind: "invalid_name"; name: string; label: string }
+  | { kind: "tmux_not_found" };

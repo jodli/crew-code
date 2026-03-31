@@ -59,7 +59,7 @@ export default defineCommand({
       console.error(`Agent "${result.value.name}" is already running.`);
       console.error(`  Stop first:  crew agent stop ${args.team} --name ${result.value.name}`);
       if (activeEntry.mode === "headless") {
-        console.error(`  Or connect:  tmux attach -t crew_${args.team}_${result.value.name}`);
+        console.error(`  Or connect:  tmux attach -t crew_${args.team}`);
       }
       process.exit(1);
     }
@@ -89,7 +89,7 @@ export default defineCommand({
           `Warning: failed to register process: ${"detail" in activateResult.error ? activateResult.error.detail : activateResult.error.kind}`,
         );
       }
-      const tmuxSession = `crew_${args.team}_${result.value.name}`;
+      const tmuxSession = `crew_${args.team}`;
       console.error(`Agent "${result.value.name}" started in background (PID: ${pid}).`);
       console.error(`  tmux attach -t ${tmuxSession}`);
       return;

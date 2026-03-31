@@ -60,6 +60,7 @@ const messages: Record<string, (e: CrewError) => string> = {
     const { name, label } = e as { name: string; label: string };
     return `Invalid ${label} name "${name}". Only letters, digits, hyphens and underscores allowed (1-64 chars).`;
   },
+  tmux_not_found: () => "tmux is required but was not found on PATH. Install: https://github.com/tmux/tmux",
 };
 
 export function renderError(e: CrewError): string {
