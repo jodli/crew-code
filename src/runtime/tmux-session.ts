@@ -20,7 +20,9 @@ export function isTmuxAvailable(deps: TmuxDeps = defaultDeps): boolean {
 
 export function teamSessionExists(teamName: string, deps: TmuxDeps = defaultDeps): boolean {
   const session = teamSessionName(teamName);
-  const result = deps.spawnSync(["tmux", "has-session", "-t", session], { stdout: "pipe", stderr: "pipe" });
+  // Use "=" prefix for exact match — without it, tmux treats -t as prefix match
+  // (e.g. "crew_live" would match "crew_live-1")
+  const result = deps.spawnSync(["tmux", "has-session", "-t", `=${session}`], { stdout: "pipe", stderr: "pipe" });
   return result.exitCode === 0;
 }
 
@@ -73,7 +75,19 @@ function createSession(session: string, options: AddPaneOptions, deps: TmuxDeps)
 
 function splitIntoSession(session: string, options: AddPaneOptions, deps: TmuxDeps): AddPaneResult {
   const splitResult = deps.spawnSync(
-    ["tmux", "split-window", "-t", session, "-c", options.cwd, "-P", "-F", "#{pane_id}", "--", ...options.command],
+    [
+      "tmux",
+      "split-window",
+      "-t",
+      `=${session}`,
+      "-c",
+      options.cwd,
+      "-P",
+      "-F",
+      "#{pane_id}",
+      "--",
+      ...options.command,
+    ],
     { stdout: "pipe", stderr: "pipe" },
   );
 
@@ -93,16 +107,16 @@ function splitIntoSession(session: string, options: AddPaneOptions, deps: TmuxDe
 }
 
 function setPaneTitle(session: string, paneId: string | undefined, title: string, deps: TmuxDeps): void {
-  const target = paneId ?? session;
+  const target = paneId ?? `=${session}`;
   deps.spawnSync(["tmux", "select-pane", "-t", target, "-T", title], { stdout: "pipe", stderr: "pipe" });
 }
 
 function applyLayout(session: string, deps: TmuxDeps): void {
-  deps.spawnSync(["tmux", "select-layout", "-t", session, "tiled"], { stdout: "pipe", stderr: "pipe" });
+  deps.spawnSync(["tmux", "select-layout", "-t", `=${session}`, "tiled"], { stdout: "pipe", stderr: "pipe" });
 }
 
 function getSessionPid(session: string, deps: TmuxDeps): number {
-  const result = deps.spawnSync(["tmux", "list-panes", "-t", session, "-F", "#{pane_pid}"], {
+  const result = deps.spawnSync(["tmux", "list-panes", "-t", `=${session}`, "-F", "#{pane_pid}"], {
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -114,7 +128,7 @@ function getSessionPid(session: string, deps: TmuxDeps): number {
 }
 
 function getPanePid(session: string, paneId: string, deps: TmuxDeps): number {
-  const result = deps.spawnSync(["tmux", "list-panes", "-t", session, "-F", "#{pane_id} #{pane_pid}"], {
+  const result = deps.spawnSync(["tmux", "list-panes", "-t", `=${session}`, "-F", "#{pane_id} #{pane_pid}"], {
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -131,7 +145,7 @@ function getPanePid(session: string, paneId: string, deps: TmuxDeps): number {
 
 export async function attachToTeamSession(teamName: string): Promise<number> {
   const session = teamSessionName(teamName);
-  const proc = Bun.spawn(["tmux", "attach", "-t", session], {
+  const proc = Bun.spawn(["tmux", "attach", "-t", `=${session}`], {
     stdin: "inherit",
     stdout: "inherit",
     stderr: "inherit",
