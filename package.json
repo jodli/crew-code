@@ -17,8 +17,8 @@
   "dependencies": {
     "@clack/prompts": "^1.1.0",
     "@hono/zod-validator": "^0.7.6",
-    "@opentui/core": "^0.1.87",
-    "@opentui/react": "^0.1.87",
+    "@opentui/core": "^0.1.94",
+    "@opentui/react": "^0.1.94",
     "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
     "env-paths": "^3.0.0",
