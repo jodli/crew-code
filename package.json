@@ -9,16 +9,20 @@
   "scripts": {
     "start": "bun run src/main.ts",
     "build": "bun build --compile src/main.ts --outfile dist/crew",
-    "test": "bun test",
+    "test": "bun test src/actions src/adapters src/api src/cli src/config src/core src/lib src/runtime src/tui src/types",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
-    "format": "biome check --write src/"
+    "format": "biome check --write src/",
+    "web:dev": "vite --config src/web/vite.config.ts",
+    "web:build": "vite build --config src/web/vite.config.ts",
+    "web:test": "vitest --config src/web/vitest.config.ts"
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
     "@hono/zod-validator": "^0.7.6",
     "@opentui/core": "^0.1.94",
     "@opentui/react": "^0.1.94",
+    "@tanstack/react-query": "^5.96.2",
     "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
     "env-paths": "^3.0.0",
@@ -27,12 +31,24 @@
     "picocolors": "^1.1.1",
     "proper-lockfile": "^4.1.2",
     "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "yaml": "^2.8.2",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
+    "@tailwindcss/vite": "^4.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bun": "^1.2.4",
-    "@types/react": "^19.2.14"
+    "@types/react": "^19.2.14",
+    "@vitejs/plugin-react": "^6.0.1",
+    "happy-dom": "^20.8.9",
+    "msw": "^2.12.14",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2",
+    "wouter": "^3.9.0"
   }
 }
