@@ -9,7 +9,7 @@
   "scripts": {
     "start": "bun run src/main.ts",
     "build": "bun build --compile src/main.ts --outfile dist/crew",
-    "test": "bun test src/actions src/adapters src/api src/cli src/config src/core src/lib src/runtime src/tui src/types",
+    "test": "bun test src/{actions,adapters,api,cli,config,core,lib,runtime,tui,types}",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "format": "biome check --write src/",
