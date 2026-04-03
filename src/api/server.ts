@@ -7,6 +7,7 @@ import { agentRoutes } from "./routes/agents.ts";
 import { blueprintRoutes } from "./routes/blueprints.ts";
 import { doctorRoutes } from "./routes/doctor.ts";
 import { messageRoutes } from "./routes/messages.ts";
+import { metaRoutes } from "./routes/meta.ts";
 import { teamRoutes } from "./routes/teams.ts";
 
 export type Env = {
@@ -48,6 +49,7 @@ export function createApp(ctx: AppContext) {
   app.route("/api", messageRoutes());
   app.route("/api", doctorRoutes());
   app.route("/api", blueprintRoutes());
+  app.route("/api", metaRoutes());
 
   return app;
 }
