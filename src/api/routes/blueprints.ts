@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createBlueprint } from "../../actions/create-blueprint.ts";
 import { exportTeamAsBlueprint } from "../../actions/export-team-as-blueprint.ts";
 import { getBlueprint } from "../../actions/get-blueprint.ts";
-import { listBlueprints } from "../../actions/list-blueprints.ts";
+import { listBlueprintsDetailed } from "../../actions/list-blueprints.ts";
 import { executeLoad, planLoad } from "../../actions/load-blueprint.ts";
 import { updateBlueprint } from "../../actions/update-blueprint.ts";
 import { BlueprintSchema } from "../../config/blueprint-schema.ts";
@@ -28,7 +28,7 @@ export function blueprintRoutes() {
 
   r.get("/blueprints", async (c) => {
     const ctx = c.get("ctx");
-    const result = await listBlueprints(ctx);
+    const result = await listBlueprintsDetailed(ctx);
     if (!result.ok) return errorResponse(c, result.error);
     return c.json(result.value);
   });

@@ -4,7 +4,14 @@ import type { BlueprintStore } from "../ports/blueprint-store.ts";
 import type { AppContext } from "../types/context.ts";
 import type { TeamConfig } from "../types/domain.ts";
 import { err, ok } from "../types/result.ts";
-import { createBlueprint, exportTeamAsBlueprint, getBlueprint, listBlueprints, updateBlueprint } from "./blueprint.ts";
+import {
+  createBlueprint,
+  exportTeamAsBlueprint,
+  getBlueprint,
+  listBlueprints,
+  listBlueprintsDetailed,
+  updateBlueprint,
+} from "./blueprint.ts";
 
 const sampleBlueprint: Blueprint = {
   name: "review-team",
@@ -79,6 +86,53 @@ describe("listBlueprints", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.kind).toBe("launch_failed");
+    }
+  });
+});
+
+describe("listBlueprintsDetailed", () => {
+  test("returns full blueprint objects", async () => {
+    const second: Blueprint = {
+      name: "deploy-team",
+      agents: [{ name: "deployer" }],
+    };
+    const ctx = makeCtx([sampleBlueprint, second]);
+    const result = await listBlueprintsDetailed(ctx);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toHaveLength(2);
+      expect(result.value[0].name).toBe("review-team");
+      expect(result.value[0].agents).toHaveLength(2);
+      expect(result.value[1].name).toBe("deploy-team");
+    }
+  });
+
+  test("returns empty array when no blueprints exist", async () => {
+    const ctx = makeCtx();
+    const result = await listBlueprintsDetailed(ctx);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual([]);
+    }
+  });
+
+  test("skips blueprints that fail to load", async () => {
+    const ctx = makeCtx([sampleBlueprint]);
+    const store = ctx.blueprintStore!;
+    const origList = store.list.bind(store);
+    store.list = async () => {
+      const result = await origList();
+      if (result.ok) result.value.push("broken");
+      return result;
+    };
+
+    const result = await listBlueprintsDetailed(ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toHaveLength(1);
+      expect(result.value[0].name).toBe("review-team");
     }
   });
 });

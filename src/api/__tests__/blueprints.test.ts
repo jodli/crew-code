@@ -53,6 +53,17 @@ describe("GET /api/blueprints", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([]);
   });
+
+  test("returns full blueprint details after creation", async () => {
+    await app.request("/api/blueprints", json(sampleBlueprint));
+    const res = await app.request("/api/blueprints");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>[];
+    expect(body).toHaveLength(1);
+    expect(body[0].name).toBe("review-team");
+    expect(body[0].description).toBe("Code review");
+    expect(body[0].agents).toHaveLength(2);
+  });
 });
 
 describe("POST /api/blueprints", () => {
@@ -61,13 +72,6 @@ describe("POST /api/blueprints", () => {
     expect(res.status).toBe(201);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.name).toBe("review-team");
-  });
-
-  test("lists blueprint after creation", async () => {
-    await app.request("/api/blueprints", json(sampleBlueprint));
-    const res = await app.request("/api/blueprints");
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual(["review-team"]);
   });
 
   test("returns 409 for duplicate blueprint", async () => {

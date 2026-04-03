@@ -1,1 +1,1 @@
-export { listBlueprints } from "../core/blueprint.ts";
+export { listBlueprints, listBlueprintsDetailed } from "../core/blueprint.ts";

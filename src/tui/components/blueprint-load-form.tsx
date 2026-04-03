@@ -1,8 +1,7 @@
 import type { KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { useCallback, useEffect, useState } from "react";
-import { getBlueprint } from "../../actions/get-blueprint.ts";
-import { listBlueprints } from "../../actions/list-blueprints.ts";
+import { listBlueprintsDetailed } from "../../actions/list-blueprints.ts";
 import type { Blueprint } from "../../config/blueprint-schema.ts";
 import type { AppContext } from "../../types/context.ts";
 
@@ -20,19 +19,13 @@ export function BlueprintLoadForm({ ctx, onSubmit, onCancel }: BlueprintLoadForm
 
   useEffect(() => {
     (async () => {
-      const namesResult = await listBlueprints(ctx);
-      if (!namesResult.ok) {
+      const result = await listBlueprintsDetailed(ctx);
+      if (!result.ok) {
         setError("Failed to list blueprints");
         setLoading(false);
         return;
       }
-
-      const loaded: Blueprint[] = [];
-      for (const name of namesResult.value) {
-        const bp = await getBlueprint(ctx, name);
-        if (bp.ok) loaded.push(bp.value);
-      }
-      setBlueprints(loaded);
+      setBlueprints(result.value);
       setLoading(false);
     })();
   }, [ctx]);

@@ -18,6 +18,22 @@ export async function listBlueprints(ctx: AppContext): Promise<Result<string[]>>
   return storeResult.value.list();
 }
 
+export async function listBlueprintsDetailed(ctx: AppContext): Promise<Result<Blueprint[]>> {
+  const storeResult = requireBlueprintStore(ctx);
+  if (!storeResult.ok) return storeResult;
+  const store = storeResult.value;
+
+  const namesResult = await store.list();
+  if (!namesResult.ok) return namesResult;
+
+  const blueprints: Blueprint[] = [];
+  for (const name of namesResult.value) {
+    const bp = await store.load(name);
+    if (bp.ok) blueprints.push(bp.value);
+  }
+  return ok(blueprints);
+}
+
 export async function getBlueprint(ctx: AppContext, name: string): Promise<Result<Blueprint>> {
   const storeResult = requireBlueprintStore(ctx);
   if (!storeResult.ok) return storeResult;
