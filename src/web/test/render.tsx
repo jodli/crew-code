@@ -18,7 +18,7 @@ export function renderApp(ui: React.ReactElement, options: AppRenderOptions = {}
     },
   });
 
-  const { hook, navigate } = memoryLocation({ path: route, record: true });
+  const { hook, navigate, history } = memoryLocation({ path: route, record: true });
 
   const result = render(ui, {
     wrapper: ({ children }) => (
@@ -33,5 +33,5 @@ export function renderApp(ui: React.ReactElement, options: AppRenderOptions = {}
     ...renderOptions,
   });
 
-  return { ...result, queryClient, navigate };
+  return { ...result, queryClient, navigate, history: history! };
 }
