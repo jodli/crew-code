@@ -6,4 +6,5 @@ export interface BlueprintStore {
   save(blueprint: Blueprint): Promise<Result<string>>;
   list(): Promise<Result<string[]>>;
   exists(name: string): Promise<boolean>;
+  delete(name: string): Promise<Result<void>>;
 }

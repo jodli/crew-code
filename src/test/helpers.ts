@@ -52,6 +52,7 @@ export function makeBlueprintStore(overrides: Partial<BlueprintStore> = {}): Blu
     save: async () => ok("/fake/path.yaml"),
     list: async () => ok([]),
     exists: async () => false,
+    delete: async () => ok(undefined),
     ...overrides,
   };
 }

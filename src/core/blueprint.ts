@@ -94,6 +94,12 @@ export async function updateBlueprint(ctx: AppContext, input: UpdateBlueprintInp
   return ok(parseResult.data);
 }
 
+export async function deleteBlueprint(ctx: AppContext, name: string): Promise<Result<void>> {
+  const storeResult = requireBlueprintStore(ctx);
+  if (!storeResult.ok) return storeResult;
+  return storeResult.value.delete(name);
+}
+
 export async function exportTeamAsBlueprint(ctx: AppContext, input: { team: string }): Promise<Result<Blueprint>> {
   const teamResult = await ctx.configStore.getTeam(input.team);
   if (!teamResult.ok) return teamResult;

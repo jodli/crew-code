@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { parse, stringify } from "yaml";
 import type { Blueprint } from "../config/blueprint-schema.ts";
@@ -70,5 +70,18 @@ export class YamlBlueprintStore implements BlueprintStore {
 
   async exists(name: string): Promise<boolean> {
     return existsSync(join(this.dir, `${name}.yaml`));
+  }
+
+  async delete(name: string): Promise<Result<void>> {
+    const filePath = join(this.dir, `${name}.yaml`);
+    if (!existsSync(filePath)) {
+      return err({ kind: "blueprint_not_found", name });
+    }
+    try {
+      await unlink(filePath);
+      return ok(undefined);
+    } catch (e: unknown) {
+      return err({ kind: "file_write_failed", path: filePath, detail: String(e) });
+    }
   }
 }

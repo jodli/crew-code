@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { createBlueprint } from "../../actions/create-blueprint.ts";
+import { deleteBlueprint } from "../../actions/delete-blueprint.ts";
 import { exportTeamAsBlueprint } from "../../actions/export-team-as-blueprint.ts";
 import { getBlueprint } from "../../actions/get-blueprint.ts";
 import { listBlueprintsDetailed } from "../../actions/list-blueprints.ts";
@@ -65,6 +66,14 @@ export function blueprintRoutes() {
     const result = await updateBlueprint(ctx, { name, ...body });
     if (!result.ok) return errorResponse(c, result.error);
     return c.json(result.value);
+  });
+
+  r.delete("/blueprints/:name", async (c) => {
+    const ctx = c.get("ctx");
+    const name = c.req.param("name");
+    const result = await deleteBlueprint(ctx, name);
+    if (!result.ok) return errorResponse(c, result.error);
+    return c.json({ name });
   });
 
   r.post("/blueprints/:name/load", zValidator("json", LoadBody), async (c) => {

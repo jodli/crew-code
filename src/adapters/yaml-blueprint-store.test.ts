@@ -126,6 +126,23 @@ describe("YamlBlueprintStore", () => {
     });
   });
 
+  describe("delete", () => {
+    test("removes an existing blueprint", async () => {
+      await store.save(sampleBlueprint);
+      const result = await store.delete("review-team");
+      expect(result.ok).toBe(true);
+      expect(await store.exists("review-team")).toBe(false);
+    });
+
+    test("returns blueprint_not_found for missing name", async () => {
+      const result = await store.delete("nonexistent");
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe("blueprint_not_found");
+      }
+    });
+  });
+
   describe("exists", () => {
     test("returns false when blueprint does not exist", async () => {
       expect(await store.exists("nope")).toBe(false);

@@ -123,6 +123,28 @@ describe("PATCH /api/blueprints/:name", () => {
   });
 });
 
+describe("DELETE /api/blueprints/:name", () => {
+  test("deletes an existing blueprint", async () => {
+    await app.request("/api/blueprints", json(sampleBlueprint));
+    const res = await app.request("/api/blueprints/review-team", { method: "DELETE" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.name).toBe("review-team");
+  });
+
+  test("returns 404 after deletion", async () => {
+    await app.request("/api/blueprints", json(sampleBlueprint));
+    await app.request("/api/blueprints/review-team", { method: "DELETE" });
+    const res = await app.request("/api/blueprints/review-team");
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 404 for non-existent blueprint", async () => {
+    const res = await app.request("/api/blueprints/nope", { method: "DELETE" });
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("POST /api/blueprints/:name/load", () => {
   test("loads a blueprint as a new team", async () => {
     await app.request("/api/blueprints", json(sampleBlueprint));

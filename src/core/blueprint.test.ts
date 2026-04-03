@@ -6,6 +6,7 @@ import type { TeamConfig } from "../types/domain.ts";
 import { err, ok } from "../types/result.ts";
 import {
   createBlueprint,
+  deleteBlueprint,
   exportTeamAsBlueprint,
   getBlueprint,
   listBlueprints,
@@ -41,6 +42,11 @@ function makeBlueprintStore(blueprints: Blueprint[] = []): BlueprintStore & { sa
     },
     async exists(name: string) {
       return store.has(name);
+    },
+    async delete(name: string) {
+      if (!store.has(name)) return err({ kind: "blueprint_not_found", name });
+      store.delete(name);
+      return ok(undefined);
     },
   };
 }
@@ -287,6 +293,26 @@ const sampleTeamConfig: TeamConfig = {
     },
   ],
 };
+
+describe("deleteBlueprint", () => {
+  test("deletes existing blueprint", async () => {
+    const ctx = makeCtx([sampleBlueprint]);
+    const result = await deleteBlueprint(ctx, "review-team");
+    expect(result.ok).toBe(true);
+
+    const after = await getBlueprint(ctx, "review-team");
+    expect(after.ok).toBe(false);
+  });
+
+  test("returns blueprint_not_found for missing name", async () => {
+    const ctx = makeCtx();
+    const result = await deleteBlueprint(ctx, "nonexistent");
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("blueprint_not_found");
+    }
+  });
+});
 
 describe("exportTeamAsBlueprint", () => {
   test("exports team as blueprint without saving", async () => {
