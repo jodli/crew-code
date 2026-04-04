@@ -6,6 +6,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { useLocation, useParams } from "wouter";
 import { parse, stringify } from "yaml";
 import { z } from "zod";
+import { useConnection } from "../app.tsx";
 import { DeployDialog } from "../components/blueprint/deploy-dialog.tsx";
 import { ErrorBanner } from "../components/shared/error-banner.tsx";
 import { PageSkeleton } from "../components/shared/skeleton.tsx";
@@ -51,6 +52,7 @@ export function BlueprintEditorPage() {
   const isNew = !params.name;
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const connStatus = useConnection();
 
   // --- Data fetching ---
   const blueprintQuery = useQuery({
@@ -172,7 +174,7 @@ export function BlueprintEditorPage() {
 
   // --- Loading / error states for edit mode ---
   if (!isNew && blueprintQuery.isLoading) return <PageSkeleton />;
-  if (!isNew && blueprintQuery.error) {
+  if (!isNew && blueprintQuery.error && connStatus === "connected") {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8">
         <ErrorBanner
@@ -327,7 +329,7 @@ export function BlueprintEditorPage() {
 
           {/* Right: agent detail */}
           {agent && (
-            <div className="flex-1 overflow-auto bg-bg-surface">
+            <div key={fields[selected]?.id} className="flex-1 overflow-auto bg-bg-surface">
               <div className="max-w-2xl px-8 py-6 space-y-5">
                 <div>
                   <h2 className="text-lg font-semibold tracking-[-0.02em] text-text mb-4">
@@ -380,7 +382,7 @@ export function BlueprintEditorPage() {
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-[120px_1fr] gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <Field label="Color" htmlFor="agent-color">
                     <div className="flex items-center gap-2">
                       <input
@@ -390,7 +392,7 @@ export function BlueprintEditorPage() {
                         onChange={(e) =>
                           form.setValue(`agents.${selected}.color`, e.target.value, { shouldDirty: true })
                         }
-                        className="w-9 h-9 rounded-md border border-border bg-bg-elevated cursor-pointer p-1"
+                        className="w-12 h-12 rounded-lg border border-border bg-bg-elevated cursor-pointer p-1.5"
                       />
                       <input
                         type="text"

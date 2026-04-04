@@ -4,6 +4,7 @@ interface DropdownItem {
   label: string;
   icon?: string;
   danger?: boolean;
+  keepOpen?: boolean;
   onSelect: () => void;
 }
 
@@ -46,7 +47,7 @@ export function Dropdown({
               key={item.label}
               onClick={() => {
                 item.onSelect();
-                setOpen(false);
+                if (!item.keepOpen) setOpen(false);
               }}
               className={`w-full text-left px-3 py-1.5 text-sm transition-colors ${
                 item.danger

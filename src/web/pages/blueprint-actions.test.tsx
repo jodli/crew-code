@@ -29,8 +29,7 @@ describe("Blueprint Actions", () => {
       await openDropdown(user);
       await user.click(screen.getByText("Delete"));
 
-      // Re-open dropdown — text should now say "Confirm delete"
-      await openDropdown(user);
+      // Dropdown stays open — text should now say "Confirm delete"
       expect(screen.getByText("Confirm delete")).toBeInTheDocument();
 
       // Click "Confirm delete" — triggers DELETE request
@@ -58,16 +57,15 @@ describe("Blueprint Actions", () => {
         expect(screen.getByText("code-review-team")).toBeInTheDocument();
       });
 
-      // Click Delete to enter confirmation state
+      // Click Delete to enter confirmation state — dropdown stays open
       await openDropdown(user);
       await user.click(screen.getByText("Delete"));
 
-      // Re-open dropdown — confirmation should be visible
-      const triggers = screen.getAllByText("⋯");
-      await user.click(triggers[0]);
+      // Confirmation should be visible (dropdown stayed open)
       expect(screen.getByText("Confirm delete")).toBeInTheDocument();
 
       // Close dropdown before advancing time
+      const triggers = screen.getAllByText("⋯");
       await user.click(triggers[0]);
 
       // Advance timers by 3 seconds to reset confirmation

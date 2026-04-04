@@ -1,14 +1,29 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useConnection } from "../app.tsx";
 import { ErrorBanner } from "../components/shared/error-banner.tsx";
 import { CardSkeleton } from "../components/shared/skeleton.tsx";
+import { useToast } from "../components/shared/toast.tsx";
 import type { TeamDetail, TeamSummary } from "../lib/api-client.ts";
-import { getTeam, getTeams } from "../lib/api-client.ts";
+import { getTeam, getTeams, startTeam } from "../lib/api-client.ts";
 
 export function CrewsListPage() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const connStatus = useConnection();
+
+  const startTeamMutation = useMutation({
+    mutationFn: startTeam,
+    onSuccess: (result, name) => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast("success", `Started ${result.started.length} agents in ${name}`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Start failed"),
+  });
 
   const {
     data: teams,
@@ -61,7 +76,9 @@ export function CrewsListPage() {
         </div>
       )}
 
-      {error && <ErrorBanner message={error instanceof Error ? error.message : "Failed to load crews"} />}
+      {error && connStatus === "connected" && (
+        <ErrorBanner message={error instanceof Error ? error.message : "Failed to load crews"} />
+      )}
 
       {!isLoading && !error && (
         <>
@@ -82,6 +99,7 @@ export function CrewsListPage() {
                 summary={summary}
                 detail={detailMap.get(summary.name)}
                 onClick={() => navigate(`/crews/${summary.name}`)}
+                onStartAll={() => startTeamMutation.mutate(summary.name)}
               />
             ))}
           </div>
@@ -109,7 +127,17 @@ export function CrewsListPage() {
   );
 }
 
-function CrewCard({ summary, detail, onClick }: { summary: TeamSummary; detail?: TeamDetail; onClick: () => void }) {
+function CrewCard({
+  summary,
+  detail,
+  onClick,
+  onStartAll,
+}: {
+  summary: TeamSummary;
+  detail?: TeamDetail;
+  onClick: () => void;
+  onStartAll: () => void;
+}) {
   const members = detail?.members ?? [];
   const running = members.filter((m) => m.processId !== undefined).length;
   const total = members.length || summary.memberCount;
@@ -199,6 +227,7 @@ function CrewCard({ summary, detail, onClick }: { summary: TeamSummary; detail?:
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              onStartAll();
             }}
             className="h-8 px-3 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
           >
@@ -209,6 +238,7 @@ function CrewCard({ summary, detail, onClick }: { summary: TeamSummary; detail?:
           type="button"
           onClick={(e) => {
             e.stopPropagation();
+            onClick();
           }}
           className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors duration-100"
         >

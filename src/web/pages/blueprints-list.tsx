@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { stringify } from "yaml";
+import { useConnection } from "../app.tsx";
 import { DeployDialog } from "../components/blueprint/deploy-dialog.tsx";
 import { Dropdown } from "../components/shared/dropdown.tsx";
 import { ErrorBanner } from "../components/shared/error-banner.tsx";
@@ -16,6 +17,7 @@ export function BlueprintsListPage() {
   const [deployTarget, setDeployTarget] = useState<Blueprint | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const connStatus = useConnection();
 
   const {
     data: blueprints,
@@ -47,7 +49,7 @@ export function BlueprintsListPage() {
 
   if (isLoading) return <PageSkeleton />;
 
-  if (error) {
+  if (error && connStatus === "connected") {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8">
         <ErrorBanner message={error instanceof Error ? error.message : "Failed to load blueprints"} />
@@ -224,6 +226,7 @@ function BlueprintCard({
             {
               label: confirmDelete ? "Confirm delete" : "Delete",
               danger: true,
+              keepOpen: !confirmDelete,
               onSelect: () => {
                 if (confirmDelete) {
                   onDelete();
