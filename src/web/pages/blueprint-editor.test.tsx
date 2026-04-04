@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
+import { describe, expect, it } from "vitest";
 import { Route } from "wouter";
-import { server } from "../test/setup.ts";
-import { renderApp } from "../test/render.tsx";
-import { BlueprintEditorPage } from "./blueprint-editor.tsx";
 import { FIXTURE_AGENT_TYPES, FIXTURE_MODELS } from "../test/msw-handlers.ts";
+import { renderApp } from "../test/render.tsx";
+import { server } from "../test/setup.ts";
+import { BlueprintEditorPage } from "./blueprint-editor.tsx";
 
 /**
  * Helper: render editor in create mode (/blueprints/new).
@@ -25,7 +25,9 @@ function renderCreate() {
 function renderEdit(name: string) {
   const user = userEvent.setup();
   const result = renderApp(
-    <Route path="/blueprints/:name"><BlueprintEditorPage /></Route>,
+    <Route path="/blueprints/:name">
+      <BlueprintEditorPage />
+    </Route>,
     { route: `/blueprints/${name}` },
   );
   return { user, ...result };

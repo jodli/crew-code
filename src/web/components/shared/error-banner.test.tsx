@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ErrorBanner, DisconnectedBanner } from "./error-banner.tsx";
+import { describe, expect, it, vi } from "vitest";
+import { DisconnectedBanner, ErrorBanner } from "./error-banner.tsx";
 
 describe("ErrorBanner", () => {
   it("shows the error message", () => {

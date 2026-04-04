@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { HttpResponse, http } from "msw";
+import { describe, expect, it } from "vitest";
 import { useLocation } from "wouter";
-import { http, HttpResponse } from "msw";
-import { server } from "../test/setup.ts";
 import { renderApp } from "../test/render.tsx";
+import { server } from "../test/setup.ts";
 import { CrewsListPage } from "./crews-list.tsx";
 
 describe("CrewsListPage", () => {
@@ -71,9 +71,7 @@ describe("CrewsListPage", () => {
   });
 
   it("shows empty state when no teams", async () => {
-    server.use(
-      http.get("/api/teams", () => HttpResponse.json([])),
-    );
+    server.use(http.get("/api/teams", () => HttpResponse.json([])));
 
     renderApp(<CrewsListPage />);
 

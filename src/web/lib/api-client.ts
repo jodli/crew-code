@@ -1,7 +1,7 @@
 export type { Blueprint, BlueprintAgent } from "@crew/config/blueprint-schema.ts";
-export type { TeamSummary, MemberDetail, TeamDetail } from "@crew/core/status.ts";
-export type { InboxResult } from "@crew/core/inbox.ts";
 export type { CrewChannelResult } from "@crew/core/crew-channel.ts";
+export type { InboxResult } from "@crew/core/inbox.ts";
+export type { MemberDetail, TeamDetail, TeamSummary } from "@crew/core/status.ts";
 export type { InboxMessage } from "@crew/types/domain.ts";
 
 // --- Types defined locally (not exported from backend) ---
@@ -89,7 +89,10 @@ export async function createBlueprint(data: import("@crew/config/blueprint-schem
   });
 }
 
-export async function updateBlueprint(name: string, data: { description?: string; agents?: import("@crew/config/blueprint-schema.ts").BlueprintAgent[] }) {
+export async function updateBlueprint(
+  name: string,
+  data: { description?: string; agents?: import("@crew/config/blueprint-schema.ts").BlueprintAgent[] },
+) {
   return apiFetch<import("@crew/config/blueprint-schema.ts").Blueprint>(`/blueprints/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify(data),
@@ -138,11 +141,15 @@ export async function destroyTeam(name: string) {
 // --- Agents ---
 
 export async function startAgent(team: string, agent: string) {
-  return apiFetch<StartAgentResult>(`/teams/${encodeURIComponent(team)}/agents/${encodeURIComponent(agent)}/start`, { method: "POST" });
+  return apiFetch<StartAgentResult>(`/teams/${encodeURIComponent(team)}/agents/${encodeURIComponent(agent)}/start`, {
+    method: "POST",
+  });
 }
 
 export async function stopAgent(team: string, agent: string) {
-  return apiFetch<{ stopped: boolean }>(`/teams/${encodeURIComponent(team)}/agents/${encodeURIComponent(agent)}/stop`, { method: "POST" });
+  return apiFetch<{ stopped: boolean }>(`/teams/${encodeURIComponent(team)}/agents/${encodeURIComponent(agent)}/stop`, {
+    method: "POST",
+  });
 }
 
 export async function removeAgent(team: string, agent: string) {
@@ -153,7 +160,9 @@ export async function removeAgent(team: string, agent: string) {
 
 export async function getAgentInbox(team: string, agent: string, opts?: { unreadOnly?: boolean }) {
   const params = opts?.unreadOnly ? "?status=unread" : "";
-  return apiFetch<import("@crew/core/inbox.ts").InboxResult>(`/teams/${encodeURIComponent(team)}/agents/${encodeURIComponent(agent)}/inbox${params}`);
+  return apiFetch<import("@crew/core/inbox.ts").InboxResult>(
+    `/teams/${encodeURIComponent(team)}/agents/${encodeURIComponent(agent)}/inbox${params}`,
+  );
 }
 
 export async function sendMessage(team: string, agent: string, message: string, from?: string) {
@@ -165,7 +174,9 @@ export async function sendMessage(team: string, agent: string, message: string, 
 
 export async function getCrewMessages(team: string, opts?: { unreadOnly?: boolean }) {
   const params = opts?.unreadOnly ? "?status=unread" : "";
-  return apiFetch<import("@crew/core/crew-channel.ts").CrewChannelResult>(`/teams/${encodeURIComponent(team)}/messages${params}`);
+  return apiFetch<import("@crew/core/crew-channel.ts").CrewChannelResult>(
+    `/teams/${encodeURIComponent(team)}/messages${params}`,
+  );
 }
 
 // --- Health ---

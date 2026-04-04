@@ -1,11 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { getTeam, getCrewMessages, getAgentInbox } from "../lib/api-client.ts";
-import type { MemberDetail, InboxMessage } from "../lib/api-client.ts";
 import { PageSkeleton } from "../components/shared/skeleton.tsx";
-import { ErrorBanner } from "../components/shared/error-banner.tsx";
 import { useToast } from "../components/shared/toast.tsx";
+import type { InboxMessage } from "../lib/api-client.ts";
+import { getAgentInbox, getCrewMessages, getTeam } from "../lib/api-client.ts";
 
 export function CrewDetailPage() {
   const [, navigate] = useLocation();
@@ -45,7 +44,9 @@ export function CrewDetailPage() {
       <div className="max-w-4xl mx-auto px-6 py-16 text-center">
         <h1 className="text-2xl font-bold text-text mb-2">Crew not found</h1>
         <p className="text-sm text-text-muted mb-4">{message}</p>
-        <a href="/crews" className="text-sm text-accent hover:text-accent-hover transition-colors">Back to Crews</a>
+        <a href="/crews" className="text-sm text-accent hover:text-accent-hover transition-colors">
+          Back to Crews
+        </a>
       </div>
     );
   }
@@ -72,16 +73,23 @@ export function CrewDetailPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-3 px-6 h-12 shrink-0 border-b border-border">
-        <a href="/crews" className="text-sm text-text-muted hover:text-text transition-colors">Crews</a>
+        <a href="/crews" className="text-sm text-text-muted hover:text-text transition-colors">
+          Crews
+        </a>
         <span className="text-text-muted/40">/</span>
-        <span className={`w-2 h-2 rounded-full shrink-0 ${allRunning ? "bg-success" : allStopped ? "border border-text-muted/30" : "bg-warning"}`} />
+        <span
+          className={`w-2 h-2 rounded-full shrink-0 ${allRunning ? "bg-success" : allStopped ? "border border-text-muted/30" : "bg-warning"}`}
+        />
         <span className="text-sm font-semibold tracking-[-0.02em] text-text font-mono">{team.name}</span>
-        <span className={`text-xs font-medium ${allRunning ? "text-success/70" : allStopped ? "text-text-muted" : "text-warning/70"}`}>
+        <span
+          className={`text-xs font-medium ${allRunning ? "text-success/70" : allStopped ? "text-text-muted" : "text-warning/70"}`}
+        >
           {allStopped ? "stopped" : `${running}/${total} running`}
         </span>
         <div className="flex-1" />
         {!allRunning && (
           <button
+            type="button"
             onClick={() => toast("success", `Starting ${total - running} agent${total - running !== 1 ? "s" : ""}...`)}
             className="h-8 px-4 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
           >
@@ -103,9 +111,15 @@ export function CrewDetailPage() {
             {members.map((m, i) => {
               const isRunning = m.processId !== undefined;
               return (
+                // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
                 <div
                   key={m.agentId}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => selectAgent(i)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") selectAgent(i);
+                  }}
                   className={`group flex items-start gap-2.5 px-2.5 py-2.5 rounded-md cursor-pointer transition-colors duration-100 mb-0.5 ${
                     selected === i ? "bg-bg-active" : "hover:bg-bg-hover"
                   }`}
@@ -118,12 +132,16 @@ export function CrewDetailPage() {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-mono truncate ${isRunning ? "text-text" : "text-text-muted"}`}>{m.name}</span>
+                      <span className={`text-sm font-mono truncate ${isRunning ? "text-text" : "text-text-muted"}`}>
+                        {m.name}
+                      </span>
                       <span className={`text-[11px] ${isRunning ? "text-success/60" : "text-text-muted/50"}`}>
                         {isRunning ? "running" : "stopped"}
                       </span>
                     </div>
-                    <div className="text-xs text-text-muted truncate">{m.model || "default"} &middot; {m.agentType}</div>
+                    <div className="text-xs text-text-muted truncate">
+                      {m.model || "default"} &middot; {m.agentType}
+                    </div>
                     {m.unreadCount > 0 && (
                       <span className="text-xs text-accent mt-0.5 inline-block">{m.unreadCount} unread</span>
                     )}
@@ -155,7 +173,10 @@ export function CrewDetailPage() {
               </div>
               <div className="flex gap-1.5 mt-3">
                 <button
-                  onClick={() => toast("success", `${agent.processId !== undefined ? "Stopping" : "Starting"} ${agent.name}...`)}
+                  type="button"
+                  onClick={() =>
+                    toast("success", `${agent.processId !== undefined ? "Stopping" : "Starting"} ${agent.name}...`)
+                  }
                   className={`h-7 px-2.5 text-xs font-medium rounded-md transition-colors ${
                     agent.processId !== undefined
                       ? "text-error/70 border border-error/20 hover:bg-error/10"
@@ -172,17 +193,22 @@ export function CrewDetailPage() {
         {/* Right: crew channel (top) + agent inbox (bottom) */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Crew Channel — always visible, muted bg for read-only feel */}
-          <div className={`flex flex-col overflow-hidden bg-bg ${agent && inboxOpen ? "flex-[3]" : "flex-1"}`} style={{ minHeight: 0 }}>
+          <div
+            className={`flex flex-col overflow-hidden bg-bg ${agent && inboxOpen ? "flex-[3]" : "flex-1"}`}
+            style={{ minHeight: 0 }}
+          >
             <ChannelView messages={crewMessages} />
           </div>
 
           {/* Agent Inbox — shown when agent is selected */}
           {agent && inboxOpen && (
-            <div className="flex-[2] flex flex-col overflow-hidden border-t-2 border-border" style={{ minHeight: 0, borderTopColor: agent.color || "var(--color-accent)" }}>
+            <div
+              className="flex-[2] flex flex-col overflow-hidden border-t-2 border-border"
+              style={{ minHeight: 0, borderTopColor: agent.color || "var(--color-accent)" }}
+            >
               <InboxView
                 messages={inboxMessages}
                 agentName={agent.name}
-                agentId={agent.agentId}
                 agentColor={agent.color}
                 onClose={() => setInboxOpen(false)}
               />
@@ -218,7 +244,7 @@ function ChannelView({ messages }: { messages: InboxMessage[] }) {
         ) : (
           <div className="space-y-2.5">
             {messages.map((msg, i) => (
-              <div key={i}>
+              <div key={msg.timestamp}>
                 {firstUnread === i && <UnreadSeparator />}
                 <MessageRow msg={msg} />
               </div>
@@ -239,13 +265,11 @@ function ChannelView({ messages }: { messages: InboxMessage[] }) {
 function InboxView({
   messages,
   agentName,
-  agentId,
   agentColor,
   onClose,
 }: {
   messages: InboxMessage[];
   agentName: string;
-  agentId: string;
   agentColor?: string;
   onClose: () => void;
 }) {
@@ -263,7 +287,10 @@ function InboxView({
   return (
     <div className="flex flex-col h-full bg-bg-surface">
       {/* Header — tinted with agent color */}
-      <div className="flex items-center justify-between px-5 py-2.5 shrink-0" style={{ borderBottom: `1px solid ${agentColor ? `${agentColor}20` : "var(--color-border)"}` }}>
+      <div
+        className="flex items-center justify-between px-5 py-2.5 shrink-0"
+        style={{ borderBottom: `1px solid ${agentColor ? `${agentColor}20` : "var(--color-border)"}` }}
+      >
         <div className="flex items-center gap-2">
           <span
             className="w-2 h-2 rounded-full shrink-0"
@@ -274,12 +301,16 @@ function InboxView({
             <span className="font-normal text-text-muted ml-1.5">inbox</span>
           </span>
           {unreadCount > 0 && (
-            <span className="min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full text-[10px] font-medium px-1 text-bg" style={{ backgroundColor: agentColor || "var(--color-accent)" }}>
+            <span
+              className="min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full text-[10px] font-medium px-1 text-bg"
+              style={{ backgroundColor: agentColor || "var(--color-accent)" }}
+            >
               {unreadCount}
             </span>
           )}
         </div>
         <button
+          type="button"
           onClick={onClose}
           className="text-xs text-text-muted hover:text-text transition-colors px-1.5 py-0.5 rounded hover:bg-bg-hover"
           title="Close inbox"
@@ -295,7 +326,7 @@ function InboxView({
         ) : (
           <div className="space-y-2.5">
             {messages.map((msg, i) => (
-              <div key={i}>
+              <div key={msg.timestamp}>
                 {firstUnread === i && <UnreadSeparator label="unread" />}
                 <MessageRow msg={msg} />
               </div>
@@ -305,21 +336,27 @@ function InboxView({
       </div>
 
       {/* Send input — visually distinct */}
-      <div className="px-4 py-3 shrink-0 bg-bg-elevated/50" style={{ borderTop: `1px solid ${agentColor ? `${agentColor}15` : "var(--color-border)"}` }}>
+      <div
+        className="px-4 py-3 shrink-0 bg-bg-elevated/50"
+        style={{ borderTop: `1px solid ${agentColor ? `${agentColor}15` : "var(--color-border)"}` }}
+      >
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSend();
+            }}
             placeholder={`Message to ${agentName}...`}
             className="flex-1 h-9 px-3 text-sm bg-bg-surface border border-border rounded-md text-text placeholder:text-text-muted/40 focus:outline-none focus:border-border-focus transition-colors font-mono"
           />
           <button
+            type="button"
             onClick={handleSend}
             disabled={!input.trim()}
             className="h-9 px-4 text-sm font-medium rounded-md disabled:opacity-30 disabled:cursor-not-allowed transition-all text-bg"
-            style={{ backgroundColor: !input.trim() ? undefined : (agentColor || "var(--color-accent)") }}
+            style={{ backgroundColor: !input.trim() ? undefined : agentColor || "var(--color-accent)" }}
           >
             Send
           </button>
@@ -338,7 +375,9 @@ function MessageRow({ msg }: { msg: InboxMessage }) {
 
   return (
     <div className="flex gap-2.5">
-      <span className="text-xs font-mono text-text-muted shrink-0 pt-0.5 w-10">{hh}:{mm}</span>
+      <span className="text-xs font-mono text-text-muted shrink-0 pt-0.5 w-10">
+        {hh}:{mm}
+      </span>
       <div className="min-w-0">
         <span className="text-sm font-medium font-mono" style={{ color: msg.color || undefined }}>
           {msg.from}
@@ -375,6 +414,7 @@ function DestroyButton() {
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       className={`h-8 px-3 text-sm rounded-md transition-colors ${
         confirming

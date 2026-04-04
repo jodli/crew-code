@@ -1,14 +1,14 @@
+import type { Blueprint } from "@crew/config/blueprint-schema.ts";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { getBlueprints } from "../lib/api-client.ts";
-import { PageSkeleton } from "../components/shared/skeleton.tsx";
-import { ErrorBanner } from "../components/shared/error-banner.tsx";
+import { stringify } from "yaml";
 import { DeployDialog } from "../components/blueprint/deploy-dialog.tsx";
 import { Dropdown } from "../components/shared/dropdown.tsx";
+import { ErrorBanner } from "../components/shared/error-banner.tsx";
+import { PageSkeleton } from "../components/shared/skeleton.tsx";
 import { useToast } from "../components/shared/toast.tsx";
-import type { Blueprint } from "@crew/config/blueprint-schema.ts";
-import { stringify } from "yaml";
+import { getBlueprints } from "../lib/api-client.ts";
 
 export function BlueprintsListPage() {
   const [, navigate] = useLocation();
@@ -16,7 +16,11 @@ export function BlueprintsListPage() {
   const [deployTarget, setDeployTarget] = useState<Blueprint | null>(null);
   const { toast } = useToast();
 
-  const { data: blueprints, isLoading, error } = useQuery({
+  const {
+    data: blueprints,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["blueprints"],
     queryFn: getBlueprints,
   });
@@ -64,6 +68,7 @@ export function BlueprintsListPage() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => navigate("/blueprints/new")}
           className="h-9 px-4 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
         >
@@ -104,6 +109,7 @@ export function BlueprintsListPage() {
             <div>
               <p className="text-text-muted mb-4">No blueprints yet.</p>
               <button
+                type="button"
                 onClick={() => navigate("/blueprints/new")}
                 className="h-9 px-4 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover transition-colors"
               >
@@ -114,9 +120,7 @@ export function BlueprintsListPage() {
         </div>
       )}
 
-      {deployTarget && (
-        <DeployDialog blueprint={deployTarget} onClose={() => setDeployTarget(null)} />
-      )}
+      {deployTarget && <DeployDialog blueprint={deployTarget} onClose={() => setDeployTarget(null)} />}
     </div>
   );
 }
@@ -139,36 +143,51 @@ function BlueprintCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
     <div
+      role="button"
+      tabIndex={0}
       className="group bg-bg-surface border border-border rounded-lg p-4 hover:border-border-focus/30 transition-colors duration-150 cursor-pointer"
       onClick={onEdit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onEdit();
+      }}
     >
       <div className="flex items-start justify-between gap-4 mb-2">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">
-            {bp.name}
-          </h3>
-          {bp.description && (
-            <p className="text-sm text-text-secondary mt-0.5 line-clamp-1">{bp.description}</p>
-          )}
+          <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">{bp.name}</h3>
+          {bp.description && <p className="text-sm text-text-secondary mt-0.5 line-clamp-1">{bp.description}</p>}
         </div>
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100 shrink-0">
           <button
-            onClick={(e) => { e.stopPropagation(); onDeploy(); }}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeploy();
+            }}
             className="h-8 px-3 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
           >
             Deploy
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
             className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors duration-100"
           >
             Edit
           </button>
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation wrapper, not interactive itself */}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation wrapper, not interactive itself */}
           <div onClick={(e) => e.stopPropagation()}>
             <Dropdown
               trigger={
-                <button className="h-8 w-8 flex items-center justify-center text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors">
+                <button
+                  type="button"
+                  className="h-8 w-8 flex items-center justify-center text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors"
+                >
                   &#8943;
                 </button>
               }
@@ -200,15 +219,10 @@ function BlueprintCard({
             key={agent.name}
             className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-bg/60 px-2 py-1 rounded"
           >
-            <span
-              className="w-2 h-2 rounded-full shrink-0"
-              style={{ backgroundColor: agent.color || "#3b3f52" }}
-            />
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: agent.color || "#3b3f52" }} />
             <span className="font-mono">{agent.name}</span>
             {agent.model && <span className="text-text-muted/60">{agent.model}</span>}
-            {agent.agentType === "team-lead" && (
-              <span className="text-warning/50 text-[10px]">&#9733;</span>
-            )}
+            {agent.agentType === "team-lead" && <span className="text-warning/50 text-[10px]">&#9733;</span>}
           </div>
         ))}
       </div>

@@ -1,16 +1,20 @@
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery, useQueries } from "@tanstack/react-query";
-import { getTeams, getTeam } from "../lib/api-client.ts";
-import type { TeamSummary, TeamDetail, MemberDetail } from "../lib/api-client.ts";
-import { CardSkeleton } from "../components/shared/skeleton.tsx";
 import { ErrorBanner } from "../components/shared/error-banner.tsx";
+import { CardSkeleton } from "../components/shared/skeleton.tsx";
+import type { TeamDetail, TeamSummary } from "../lib/api-client.ts";
+import { getTeam, getTeams } from "../lib/api-client.ts";
 
 export function CrewsListPage() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
 
-  const { data: teams, isLoading, error } = useQuery({
+  const {
+    data: teams,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["teams"],
     queryFn: getTeams,
   });
@@ -52,14 +56,13 @@ export function CrewsListPage() {
       {isLoading && (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders have no stable key
             <CardSkeleton key={i} />
           ))}
         </div>
       )}
 
-      {error && (
-        <ErrorBanner message={error instanceof Error ? error.message : "Failed to load crews"} />
-      )}
+      {error && <ErrorBanner message={error instanceof Error ? error.message : "Failed to load crews"} />}
 
       {!isLoading && !error && (
         <>
@@ -107,11 +110,7 @@ export function CrewsListPage() {
   );
 }
 
-function CrewCard({ summary, detail, onClick }: {
-  summary: TeamSummary;
-  detail?: TeamDetail;
-  onClick: () => void;
-}) {
+function CrewCard({ summary, detail, onClick }: { summary: TeamSummary; detail?: TeamDetail; onClick: () => void }) {
   const members = detail?.members ?? [];
   const running = members.filter((m) => m.processId !== undefined).length;
   const total = members.length || summary.memberCount;
@@ -120,9 +119,15 @@ function CrewCard({ summary, detail, onClick }: {
   const totalUnread = members.reduce((sum, m) => sum + m.unreadCount, 0);
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
     <div
+      role="button"
+      tabIndex={0}
       className="group bg-bg-surface border border-border rounded-lg p-4 hover:border-border-focus/30 transition-colors duration-150 cursor-pointer"
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick();
+      }}
     >
       {/* Top row */}
       <div className="flex items-start justify-between gap-4">
@@ -138,9 +143,7 @@ function CrewCard({ summary, detail, onClick }: {
                     : "bg-warning"
               }`}
             />
-            <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">
-              {summary.name}
-            </h3>
+            <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">{summary.name}</h3>
             {/* Status badge */}
             <span
               className={`inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded shrink-0 ${
@@ -153,16 +156,10 @@ function CrewCard({ summary, detail, onClick }: {
             >
               {allStopped ? "stopped" : `${running}/${total} running`}
             </span>
-            {totalUnread > 0 && (
-              <span className="text-xs text-accent font-medium">
-                {totalUnread} unread
-              </span>
-            )}
+            {totalUnread > 0 && <span className="text-xs text-accent font-medium">{totalUnread} unread</span>}
           </div>
           {summary.description && (
-            <p className="text-sm text-text-secondary mt-0.5 ml-5 line-clamp-1">
-              {summary.description}
-            </p>
+            <p className="text-sm text-text-secondary mt-0.5 ml-5 line-clamp-1">{summary.description}</p>
           )}
         </div>
 
@@ -170,14 +167,20 @@ function CrewCard({ summary, detail, onClick }: {
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100 shrink-0">
           {!allRunning && (
             <button
-              onClick={(e) => { e.stopPropagation(); }}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
               className="h-8 px-3 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
             >
               Start all
             </button>
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); }}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
             className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors duration-100"
           >
             View
@@ -197,10 +200,13 @@ function CrewCard({ summary, detail, onClick }: {
               >
                 <span
                   className={`w-2 h-2 rounded-full shrink-0 ${isRunning ? "" : "opacity-30"}`}
-                  style={{ backgroundColor: isRunning ? (member.color || "#565f89") : undefined }}
+                  style={{ backgroundColor: isRunning ? member.color || "#565f89" : undefined }}
                 />
                 {!isRunning && !member.color && (
-                  <span className="w-2 h-2 rounded-full shrink-0 border border-text-muted/30 -ml-[calc(0.5rem+2px+6px)]" style={{ position: "relative" }} />
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0 border border-text-muted/30 -ml-[calc(0.5rem+2px+6px)]"
+                    style={{ position: "relative" }}
+                  />
                 )}
                 <span className={`font-mono ${isRunning ? "text-text-secondary" : "text-text-muted/60"}`}>
                   {member.name}

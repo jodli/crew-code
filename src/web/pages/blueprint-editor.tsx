@@ -1,16 +1,16 @@
-import { useState, useMemo } from "react";
-import { useLocation, useParams } from "wouter";
-import { useForm, useFieldArray } from "react-hook-form";
+import { type Blueprint, type BlueprintAgent, BlueprintSchema } from "@crew/config/blueprint-schema.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BlueprintSchema, type Blueprint, type BlueprintAgent } from "@crew/config/blueprint-schema.ts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { useLocation, useParams } from "wouter";
+import { parse, stringify } from "yaml";
 import { z } from "zod";
-import { getBlueprint, createBlueprint, updateBlueprint, getAgentTypes, getModels } from "../lib/api-client.ts";
 import { DeployDialog } from "../components/blueprint/deploy-dialog.tsx";
-import { useToast } from "../components/shared/toast.tsx";
-import { PageSkeleton } from "../components/shared/skeleton.tsx";
 import { ErrorBanner } from "../components/shared/error-banner.tsx";
-import { stringify, parse } from "yaml";
+import { PageSkeleton } from "../components/shared/skeleton.tsx";
+import { useToast } from "../components/shared/toast.tsx";
+import { createBlueprint, getAgentTypes, getBlueprint, getModels, updateBlueprint } from "../lib/api-client.ts";
 
 /** Stricter schema for the editor form — requires non-empty name. */
 const EditorSchema = BlueprintSchema.extend({
@@ -92,6 +92,7 @@ export function BlueprintEditorPage() {
   const watchedName = form.watch("name");
   const agent = watchedAgents?.[selected] ?? null;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: watched values are intentional cache-busting triggers for form.getValues()
   const currentYaml = useMemo(() => {
     const values = form.getValues();
     if (!values.agents?.length) return "";
@@ -123,9 +124,10 @@ export function BlueprintEditorPage() {
       if (errors.name) {
         toast("error", "Blueprint name is required");
       } else if (errors.agents) {
-        const msg = typeof errors.agents.root?.message === "string"
-          ? errors.agents.root.message
-          : "At least one agent is required";
+        const msg =
+          typeof errors.agents.root?.message === "string"
+            ? errors.agents.root.message
+            : "At least one agent is required";
         toast("error", msg);
       }
     },
@@ -173,7 +175,9 @@ export function BlueprintEditorPage() {
   if (!isNew && blueprintQuery.error) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <ErrorBanner message={blueprintQuery.error instanceof Error ? blueprintQuery.error.message : "Failed to load blueprint"} />
+        <ErrorBanner
+          message={blueprintQuery.error instanceof Error ? blueprintQuery.error.message : "Failed to load blueprint"}
+        />
       </div>
     );
   }
@@ -185,20 +189,19 @@ export function BlueprintEditorPage() {
     <div className="flex flex-col h-full">
       {/* Editor toolbar */}
       <div className="flex items-center gap-3 px-6 h-12 shrink-0 border-b border-border">
-        <a href="/" className="text-sm text-text-muted hover:text-text transition-colors">Blueprints</a>
+        <a href="/" className="text-sm text-text-muted hover:text-text transition-colors">
+          Blueprints
+        </a>
         <span className="text-text-muted/40">/</span>
-        <span className="text-sm font-semibold tracking-[-0.02em] text-text">
-          {isNew ? "New" : watchedName}
-        </span>
-        {isDirty && (
-          <span className="text-xs text-warning/70 font-medium">unsaved</span>
-        )}
+        <span className="text-sm font-semibold tracking-[-0.02em] text-text">{isNew ? "New" : watchedName}</span>
+        {isDirty && <span className="text-xs text-warning/70 font-medium">unsaved</span>}
 
         <div className="flex-1" />
 
         {/* Form / YAML toggle */}
         <div className="flex bg-bg rounded-md border border-border overflow-hidden">
           <button
+            type="button"
             onClick={mode === "yaml" ? toForm : undefined}
             className={`px-3 py-1 text-sm transition-colors ${
               mode === "form" ? "bg-bg-active text-text font-medium" : "text-text-muted hover:text-text-secondary"
@@ -207,6 +210,7 @@ export function BlueprintEditorPage() {
             Form
           </button>
           <button
+            type="button"
             onClick={mode === "form" ? toYaml : undefined}
             className={`px-3 py-1 text-sm transition-colors ${
               mode === "yaml" ? "bg-bg-active text-text font-medium" : "text-text-muted hover:text-text-secondary"
@@ -217,6 +221,7 @@ export function BlueprintEditorPage() {
         </div>
 
         <button
+          type="button"
           onClick={() => handleSave()}
           disabled={saveMutation.isPending}
           className="h-8 px-4 text-sm font-medium text-text-secondary border border-border rounded-md hover:bg-bg-hover transition-colors"
@@ -224,6 +229,7 @@ export function BlueprintEditorPage() {
           {saveMutation.isPending ? "Saving..." : "Save"}
         </button>
         <button
+          type="button"
           onClick={() => setDeployOpen(true)}
           className="h-8 px-4 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
         >
@@ -238,6 +244,7 @@ export function BlueprintEditorPage() {
             {/* Blueprint meta */}
             <div className="p-4 space-y-3 border-b border-border">
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: label and input are colocated siblings */}
                 <label className="block text-xs font-medium text-text-muted mb-1">Name</label>
                 <input
                   type="text"
@@ -250,6 +257,7 @@ export function BlueprintEditorPage() {
                 )}
               </div>
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: label and input are colocated siblings */}
                 <label className="block text-xs font-medium text-text-muted mb-1">Description</label>
                 <input
                   type="text"
@@ -264,6 +272,7 @@ export function BlueprintEditorPage() {
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
               <span className="text-xs font-medium text-text-muted uppercase tracking-wide">Agents</span>
               <button
+                type="button"
                 onClick={addAgent}
                 className="text-xs text-accent hover:text-accent-hover transition-colors"
               >
@@ -276,13 +285,17 @@ export function BlueprintEditorPage() {
               {fields.map((field, i) => {
                 const a = watchedAgents?.[i] ?? field;
                 return (
+                  // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
                   <div
                     key={field.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelected(i)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") setSelected(i);
+                    }}
                     className={`group flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer transition-colors duration-100 mb-0.5 ${
-                      selected === i
-                        ? "bg-bg-active text-text"
-                        : "text-text-secondary hover:bg-bg-hover"
+                      selected === i ? "bg-bg-active text-text" : "text-text-secondary hover:bg-bg-hover"
                     }`}
                   >
                     <span
@@ -293,12 +306,14 @@ export function BlueprintEditorPage() {
                       <div className="text-sm font-mono truncate">{a.name || "unnamed"}</div>
                       <div className="text-xs text-text-muted truncate">{a.agentType || "general-purpose"}</div>
                     </div>
-                    {a.agentType === "team-lead" && (
-                      <span className="text-warning/60 text-xs shrink-0">&#9733;</span>
-                    )}
+                    {a.agentType === "team-lead" && <span className="text-warning/60 text-xs shrink-0">&#9733;</span>}
                     {fields.length > 1 && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); removeAgent(i); }}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeAgent(i);
+                        }}
                         className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-error transition-all text-xs shrink-0"
                       >
                         &#10005;
@@ -334,16 +349,30 @@ export function BlueprintEditorPage() {
                       {...form.register(`agents.${selected}.agentType`)}
                       className="w-full h-9 px-3 text-sm bg-bg-elevated border border-border rounded-md text-text focus:outline-none focus:border-border-focus appearance-none cursor-pointer transition-colors"
                     >
-                      {agentTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                      {agentTypes.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
                     </select>
                   </Field>
                   <Field label="Model">
                     <select
                       value={agent.model || "(default)"}
-                      onChange={(e) => form.setValue(`agents.${selected}.model`, e.target.value === "(default)" ? undefined : e.target.value, { shouldDirty: true })}
+                      onChange={(e) =>
+                        form.setValue(
+                          `agents.${selected}.model`,
+                          e.target.value === "(default)" ? undefined : e.target.value,
+                          { shouldDirty: true },
+                        )
+                      }
                       className="w-full h-9 px-3 text-sm bg-bg-elevated border border-border rounded-md text-text focus:outline-none focus:border-border-focus appearance-none cursor-pointer transition-colors"
                     >
-                      {models.map((m) => <option key={m} value={m}>{m}</option>)}
+                      {models.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
                     </select>
                   </Field>
                 </div>
@@ -354,13 +383,17 @@ export function BlueprintEditorPage() {
                       <input
                         type="color"
                         value={agent.color || "#565f89"}
-                        onChange={(e) => form.setValue(`agents.${selected}.color`, e.target.value, { shouldDirty: true })}
+                        onChange={(e) =>
+                          form.setValue(`agents.${selected}.color`, e.target.value, { shouldDirty: true })
+                        }
                         className="w-9 h-9 rounded-md border border-border bg-bg-elevated cursor-pointer p-1"
                       />
                       <input
                         type="text"
                         value={agent.color || ""}
-                        onChange={(e) => form.setValue(`agents.${selected}.color`, e.target.value, { shouldDirty: true })}
+                        onChange={(e) =>
+                          form.setValue(`agents.${selected}.color`, e.target.value, { shouldDirty: true })
+                        }
                         placeholder="#hex"
                         className="flex-1 h-9 px-2.5 text-xs font-mono bg-bg-elevated border border-border rounded-md text-text placeholder:text-text-muted/40 focus:outline-none focus:border-border-focus transition-colors"
                       />
@@ -370,7 +403,9 @@ export function BlueprintEditorPage() {
                     <input
                       type="text"
                       value={agent.cwd || ""}
-                      onChange={(e) => form.setValue(`agents.${selected}.cwd`, e.target.value || undefined, { shouldDirty: true })}
+                      onChange={(e) =>
+                        form.setValue(`agents.${selected}.cwd`, e.target.value || undefined, { shouldDirty: true })
+                      }
                       placeholder="~/repos/project"
                       className="w-full h-9 px-3 text-sm font-mono bg-bg-elevated border border-border rounded-md text-text placeholder:text-text-muted/40 focus:outline-none focus:border-border-focus transition-colors"
                     />
@@ -381,7 +416,13 @@ export function BlueprintEditorPage() {
                   <input
                     type="text"
                     value={agent.extraArgs?.join(" ") || ""}
-                    onChange={(e) => form.setValue(`agents.${selected}.extraArgs`, e.target.value ? e.target.value.split(/\s+/) : undefined, { shouldDirty: true })}
+                    onChange={(e) =>
+                      form.setValue(
+                        `agents.${selected}.extraArgs`,
+                        e.target.value ? e.target.value.split(/\s+/) : undefined,
+                        { shouldDirty: true },
+                      )
+                    }
                     placeholder="--verbose --model sonnet"
                     className="w-full h-9 px-3 text-sm font-mono bg-bg-elevated border border-border rounded-md text-text placeholder:text-text-muted/40 focus:outline-none focus:border-border-focus transition-colors"
                   />
@@ -410,7 +451,10 @@ export function BlueprintEditorPage() {
           <div className="flex-1 p-8">
             <textarea
               value={yamlText}
-              onChange={(e) => { setYamlText(e.target.value); setYamlError(null); }}
+              onChange={(e) => {
+                setYamlText(e.target.value);
+                setYamlError(null);
+              }}
               spellCheck={false}
               className="w-full h-full px-4 py-4 text-sm font-mono leading-relaxed bg-bg border border-border rounded-md text-text focus:outline-none focus:border-border-focus resize-none transition-colors"
             />
@@ -426,6 +470,7 @@ export function BlueprintEditorPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
+      {/* biome-ignore lint/a11y/noLabelWithoutControl: label and input are colocated children in Field component */}
       <label className="block text-xs font-medium text-text-muted mb-1.5">{label}</label>
       {children}
     </div>

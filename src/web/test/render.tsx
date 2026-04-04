@@ -1,5 +1,5 @@
-import { render, type RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type RenderOptions, render } from "@testing-library/react";
 import { Router } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { ToastProvider } from "../components/shared/toast.tsx";
@@ -24,9 +24,7 @@ export function renderApp(ui: React.ReactElement, options: AppRenderOptions = {}
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <Router hook={hook}>
-            {children}
-          </Router>
+          <Router hook={hook}>{children}</Router>
         </ToastProvider>
       </QueryClientProvider>
     ),

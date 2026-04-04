@@ -1,20 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
 import { Route } from "wouter";
-import { http, HttpResponse } from "msw";
-import { server } from "../test/setup.ts";
+import { FIXTURE_TEAM_DETAILS } from "../test/msw-handlers.ts";
 import { renderApp } from "../test/render.tsx";
 import { CrewDetailPage } from "./crew-detail.tsx";
-import {
-  FIXTURE_TEAM_DETAILS,
-  FIXTURE_CREW_MESSAGES,
-  FIXTURE_AGENT_INBOX,
-} from "../test/msw-handlers.ts";
 
 function renderCrewDetail(teamName: string) {
   return renderApp(
-    <Route path="/crews/:name"><CrewDetailPage /></Route>,
+    <Route path="/crews/:name">
+      <CrewDetailPage />
+    </Route>,
     { route: `/crews/${teamName}` },
   );
 }
@@ -161,7 +157,9 @@ describe("CrewDetailPage", () => {
     // The inbox container has a border-top with the agent color
     const inboxContainer = screen.getByText("inbox").closest("[style]");
     // A color dot element with the agent's color should be visible
-    const colorDots = document.querySelectorAll(`[style*="background-color: #f7768e"], [style*="background-color: rgb(247, 118, 142)"]`);
+    const colorDots = document.querySelectorAll(
+      `[style*="background-color: #f7768e"], [style*="background-color: rgb(247, 118, 142)"]`,
+    );
     expect(colorDots.length).toBeGreaterThan(0);
   });
 

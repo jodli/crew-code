@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderApp } from "./render.tsx";
+import { describe, expect, it } from "vitest";
 import { App } from "../app.tsx";
+import { renderApp } from "./render.tsx";
 
 describe("App", () => {
   it("renders navigation with Blueprints and Crews links", () => {

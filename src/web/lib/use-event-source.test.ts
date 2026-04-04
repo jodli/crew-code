@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useEventSource } from "./use-event-source.ts";
 
 // Mock EventSource
@@ -16,7 +16,9 @@ class MockEventSource {
     this.url = url;
     MockEventSource.instances.push(this);
     // Simulate connection opening
-    setTimeout(() => { this.readyState = 1; }, 0); // OPEN
+    setTimeout(() => {
+      this.readyState = 1;
+    }, 0); // OPEN
   }
 
   close() {
@@ -52,9 +54,7 @@ describe("useEventSource", () => {
   it("connects to URL and receives events", async () => {
     const onMessage = vi.fn();
 
-    renderHook(() =>
-      useEventSource({ url: "/api/stream", onMessage }),
-    );
+    renderHook(() => useEventSource({ url: "/api/stream", onMessage }));
 
     expect(MockEventSource.instances).toHaveLength(1);
     expect(MockEventSource.instances[0].url).toBe("/api/stream");
@@ -69,9 +69,7 @@ describe("useEventSource", () => {
   });
 
   it("does not connect when url is null", () => {
-    renderHook(() =>
-      useEventSource({ url: null }),
-    );
+    renderHook(() => useEventSource({ url: null }));
 
     expect(MockEventSource.instances).toHaveLength(0);
   });
@@ -79,9 +77,7 @@ describe("useEventSource", () => {
   it("calls onError when error occurs", () => {
     const onError = vi.fn();
 
-    renderHook(() =>
-      useEventSource({ url: "/api/stream", onError }),
-    );
+    renderHook(() => useEventSource({ url: "/api/stream", onError }));
 
     act(() => {
       MockEventSource.instances[0].simulateError();
@@ -91,9 +87,7 @@ describe("useEventSource", () => {
   });
 
   it("cleans up on unmount", () => {
-    const { unmount } = renderHook(() =>
-      useEventSource({ url: "/api/stream" }),
-    );
+    const { unmount } = renderHook(() => useEventSource({ url: "/api/stream" }));
 
     expect(MockEventSource.instances).toHaveLength(1);
     expect(MockEventSource.instances[0].closed).toBe(false);
@@ -104,10 +98,9 @@ describe("useEventSource", () => {
   });
 
   it("reconnects when URL changes", () => {
-    const { rerender } = renderHook(
-      ({ url }: { url: string | null }) => useEventSource({ url }),
-      { initialProps: { url: "/api/stream/a" } },
-    );
+    const { rerender } = renderHook(({ url }: { url: string | null }) => useEventSource({ url }), {
+      initialProps: { url: "/api/stream/a" },
+    });
 
     expect(MockEventSource.instances).toHaveLength(1);
     expect(MockEventSource.instances[0].url).toBe("/api/stream/a");
@@ -122,9 +115,7 @@ describe("useEventSource", () => {
   });
 
   it("close function works", () => {
-    const { result } = renderHook(() =>
-      useEventSource({ url: "/api/stream" }),
-    );
+    const { result } = renderHook(() => useEventSource({ url: "/api/stream" }));
 
     expect(MockEventSource.instances[0].closed).toBe(false);
 

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import { Dropdown } from "./dropdown.tsx";
 
 const items = [
@@ -9,9 +9,7 @@ const items = [
 ];
 
 function renderDropdown(overrides?: { items?: typeof items }) {
-  return render(
-    <Dropdown trigger={<button>Menu</button>} items={overrides?.items ?? items} />,
-  );
+  return render(<Dropdown trigger={<button type="button">Menu</button>} items={overrides?.items ?? items} />);
 }
 
 describe("Dropdown", () => {

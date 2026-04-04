@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
-import { server } from "../test/setup.ts";
-import { renderApp } from "../test/render.tsx";
-import { BlueprintsListPage } from "./blueprints-list.tsx";
+import { HttpResponse, http } from "msw";
+import { describe, expect, it } from "vitest";
 import { FIXTURE_BLUEPRINTS } from "../test/msw-handlers.ts";
+import { renderApp } from "../test/render.tsx";
+import { server } from "../test/setup.ts";
+import { BlueprintsListPage } from "./blueprints-list.tsx";
 
 describe("BlueprintsListPage", () => {
   it("shows loading skeleton while fetching", () => {
@@ -38,15 +38,9 @@ describe("BlueprintsListPage", () => {
     const extraBlueprint = {
       name: "extra-team",
       description: "An extra blueprint for testing search",
-      agents: [
-        { name: "team-lead", agentType: "team-lead" as const, model: "opus", prompt: "Lead." },
-      ],
+      agents: [{ name: "team-lead", agentType: "team-lead" as const, model: "opus", prompt: "Lead." }],
     };
-    server.use(
-      http.get("/api/blueprints", () =>
-        HttpResponse.json([...FIXTURE_BLUEPRINTS, extraBlueprint]),
-      ),
-    );
+    server.use(http.get("/api/blueprints", () => HttpResponse.json([...FIXTURE_BLUEPRINTS, extraBlueprint])));
 
     const user = userEvent.setup();
     renderApp(<BlueprintsListPage />);
@@ -75,9 +69,7 @@ describe("BlueprintsListPage", () => {
   });
 
   it("shows empty state when API returns empty array", async () => {
-    server.use(
-      http.get("/api/blueprints", () => HttpResponse.json([])),
-    );
+    server.use(http.get("/api/blueprints", () => HttpResponse.json([])));
     renderApp(<BlueprintsListPage />);
 
     await waitFor(() => {
