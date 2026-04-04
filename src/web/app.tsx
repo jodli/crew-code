@@ -1,9 +1,11 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
+import { DisconnectedBanner } from "./components/shared/error-banner.tsx";
 import { ToastProvider } from "./components/shared/toast.tsx";
 import { createQueryClient } from "./lib/query-client.ts";
 import { getStoredTheme, setTheme, type Theme } from "./lib/theme.ts";
+import { useHealthCheck } from "./lib/use-health-check.ts";
 import { BlueprintEditorPage } from "./pages/blueprint-editor.tsx";
 import { BlueprintsListPage } from "./pages/blueprints-list.tsx";
 import { CrewDetailPage } from "./pages/crew-detail.tsx";
@@ -15,13 +17,10 @@ const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
 const THEME_ICONS: Record<Theme, string> = { light: "\u2600", dark: "\u263E", system: "\u25D1" };
 const THEME_LABELS: Record<Theme, string> = { light: "Light", dark: "Dark", system: "System" };
 
-type ConnectionState = "connected" | "reconnecting" | "disconnected";
-
 export function App() {
   const [location] = useLocation();
   const [theme, setThemeState] = useState<Theme>(getStoredTheme);
-  // Mock: cycle through connection states on click for prototype demo
-  const [connState, setConnState] = useState<ConnectionState>("connected");
+  const { status: connState } = useHealthCheck();
 
   const cycleTheme = useCallback(() => {
     const next = THEME_CYCLE[(THEME_CYCLE.indexOf(theme) + 1) % THEME_CYCLE.length];
@@ -29,21 +28,11 @@ export function App() {
     setThemeState(next);
   }, [theme]);
 
-  const cycleConn = () => {
-    const states: ConnectionState[] = ["connected", "reconnecting", "disconnected"];
-    setConnState(states[(states.indexOf(connState) + 1) % states.length]);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <div className="h-full flex flex-col">
-          {/* Disconnect banner */}
-          {connState === "disconnected" && (
-            <div className="bg-error/10 border-b border-error/20 px-6 py-1.5 text-xs text-error/80 text-center shrink-0">
-              Server disconnected &mdash; retrying...
-            </div>
-          )}
+          {connState === "disconnected" && <DisconnectedBanner />}
 
           <nav className="flex items-center gap-6 px-6 h-12 shrink-0 border-b border-border">
             <span className="text-base font-semibold tracking-[-0.04em] text-text select-none">crew</span>
@@ -69,13 +58,8 @@ export function App() {
               <span>{THEME_LABELS[theme]}</span>
             </button>
 
-            {/* Connection indicator — click to cycle states (prototype demo) */}
-            <button
-              type="button"
-              onClick={cycleConn}
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
-              title="Click to cycle connection states (prototype demo)"
-            >
+            {/* Connection indicator */}
+            <span className="flex items-center gap-1.5 text-xs text-text-muted">
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
                   connState === "connected"
@@ -92,7 +76,7 @@ export function App() {
                     ? "reconnecting..."
                     : "disconnected"}
               </span>
-            </button>
+            </span>
           </nav>
 
           <main className="flex-1 overflow-auto">
