@@ -73,24 +73,25 @@ export function CrewDetailPage() {
     enabled: !!selectedMember && inboxOpen,
   });
 
-  // SSE: live team status updates + crew channel messages
-  // Using direct EventSource instead of the hook for explicit named event handling
+  // SSE: single team-update stream drives all live data
+  // On every team-update event: update team cache, refetch messages, refetch inbox if unread changed
   const selectedMemberRef = useRef(selectedMember);
   selectedMemberRef.current = selectedMember;
 
   useEffect(() => {
     if (!params.name) return;
-    const teamUrl = `/api/teams/${encodeURIComponent(params.name)}/stream`;
-    const messagesUrl = `/api/teams/${encodeURIComponent(params.name)}/messages/stream`;
 
-    const teamEs = new EventSource(teamUrl);
-    const messagesEs = new EventSource(messagesUrl);
+    const es = new EventSource(`/api/teams/${encodeURIComponent(params.name)}/stream`);
 
-    // Team status updates
-    teamEs.addEventListener("team-update", (event: MessageEvent) => {
+    es.addEventListener("team-update", (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
         queryClient.setQueryData(["teams", params.name], data);
+
+        // Always refetch crew messages — agent activity means new messages
+        queryClient.invalidateQueries({ queryKey: ["teams", params.name, "messages"] });
+
+        // Refetch inbox if selected agent's unread count changed
         const member = selectedMemberRef.current;
         if (member && data.members) {
           const updated = data.members.find((m: { name: string }) => m.name === member.name);
@@ -101,44 +102,11 @@ export function CrewDetailPage() {
           }
         }
       } catch {
-        /* ignore */
+        /* ignore parse errors */
       }
     });
 
-    // Crew messages: initial snapshot
-    messagesEs.addEventListener("snapshot", (event: MessageEvent) => {
-      try {
-        queryClient.setQueryData(["teams", params.name, "messages"], JSON.parse(event.data));
-      } catch {
-        /* ignore */
-      }
-    });
-
-    // Crew messages: new messages
-    messagesEs.addEventListener("message", (event: MessageEvent) => {
-      try {
-        const newMsgs: InboxMessage[] = JSON.parse(event.data);
-        queryClient.setQueryData(["teams", params.name, "messages"], (old: unknown) => {
-          const prev = old as
-            | { team: string; messages: InboxMessage[]; totalCount: number; unreadCount: number }
-            | undefined;
-          if (!prev) return prev;
-          return {
-            ...prev,
-            messages: [...prev.messages, ...newMsgs],
-            totalCount: prev.totalCount + newMsgs.length,
-            unreadCount: prev.unreadCount + newMsgs.length,
-          };
-        });
-      } catch {
-        /* ignore */
-      }
-    });
-
-    return () => {
-      teamEs.close();
-      messagesEs.close();
-    };
+    return () => es.close();
   }, [params.name, queryClient]);
 
   if (teamQuery.isLoading) {
