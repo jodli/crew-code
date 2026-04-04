@@ -15,6 +15,7 @@ import {
   startTeam,
   stopAgent,
 } from "../lib/api-client.ts";
+import { useEventSource } from "../lib/use-event-source.ts";
 
 export function CrewDetailPage() {
   const [, navigate] = useLocation();
@@ -73,47 +74,39 @@ export function CrewDetailPage() {
     enabled: !!selectedMember && inboxOpen,
   });
 
-  // SSE: single team-update stream drives all live data
-  // On every team-update event: update team cache, refetch messages, refetch inbox if unread changed
+  // SSE: live updates via single team stream
   const selectedMemberRef = useRef(selectedMember);
   selectedMemberRef.current = selectedMember;
 
-  useEffect(() => {
-    if (!params.name) return;
-
-    const es = new EventSource(`/api/teams/${encodeURIComponent(params.name)}/stream`);
-
-    es.addEventListener("team-update", (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        queryClient.setQueryData(["teams", params.name], data);
-
-        // Refetch inbox if selected agent's unread count changed
-        const member = selectedMemberRef.current;
-        if (member && data.members) {
-          const updated = data.members.find((m: { name: string }) => m.name === member.name);
-          if (updated && updated.unreadCount !== member.unreadCount) {
-            queryClient.invalidateQueries({
-              queryKey: ["teams", params.name, "agents", member.name, "inbox"],
-            });
+  useEventSource({
+    url: params.name ? `/api/teams/${encodeURIComponent(params.name)}/stream` : null,
+    events: {
+      "team-update": (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          queryClient.setQueryData(["teams", params.name], data);
+          const member = selectedMemberRef.current;
+          if (member && data.members) {
+            const updated = data.members.find((m: { name: string }) => m.name === member.name);
+            if (updated && updated.unreadCount !== member.unreadCount) {
+              queryClient.invalidateQueries({
+                queryKey: ["teams", params.name, "agents", member.name, "inbox"],
+              });
+            }
           }
+        } catch {
+          /* ignore parse errors */
         }
-      } catch {
-        /* ignore parse errors */
-      }
-    });
-
-    // Crew channel messages — set directly from SSE data
-    es.addEventListener("crew-messages", (event: MessageEvent) => {
-      try {
-        queryClient.setQueryData(["teams", params.name, "messages"], JSON.parse(event.data));
-      } catch {
-        /* ignore parse errors */
-      }
-    });
-
-    return () => es.close();
-  }, [params.name, queryClient]);
+      },
+      "crew-messages": (event) => {
+        try {
+          queryClient.setQueryData(["teams", params.name, "messages"], JSON.parse(event.data));
+        } catch {
+          /* ignore parse errors */
+        }
+      },
+    },
+  });
 
   if (teamQuery.isLoading) {
     return <PageSkeleton />;
