@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
+import { useConnection } from "../app.tsx";
 import { PageSkeleton } from "../components/shared/skeleton.tsx";
 import { useToast } from "../components/shared/toast.tsx";
 import type { InboxMessage } from "../lib/api-client.ts";
@@ -14,12 +15,14 @@ import {
   startTeam,
   stopAgent,
 } from "../lib/api-client.ts";
+import { useEventSource } from "../lib/use-event-source.ts";
 
 export function CrewDetailPage() {
   const [, navigate] = useLocation();
   const params = useParams<{ name: string }>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const connStatus = useConnection();
 
   const [selected, setSelected] = useState<number | null>(null);
   const [inboxOpen, setInboxOpen] = useState(false);
@@ -71,11 +74,62 @@ export function CrewDetailPage() {
     enabled: !!selectedMember && inboxOpen,
   });
 
+  // SSE: live team status updates — also triggers inbox refetch when unread counts change
+  useEventSource({
+    url: params.name ? `/api/teams/${encodeURIComponent(params.name)}/stream` : null,
+    onMessage: (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        queryClient.setQueryData(["teams", params.name], data);
+        // Refetch inbox when the selected agent's unread count changed
+        if (selectedMember && data.members) {
+          const updated = data.members.find((m: { name: string }) => m.name === selectedMember.name);
+          if (updated && updated.unreadCount !== selectedMember.unreadCount) {
+            queryClient.invalidateQueries({ queryKey: ["teams", params.name, "agents", selectedMember.name, "inbox"] });
+          }
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+    },
+  });
+
+  // SSE: live crew channel messages
+  useEventSource({
+    url: params.name ? `/api/teams/${encodeURIComponent(params.name)}/messages/stream` : null,
+    onMessage: (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        // "snapshot" events have the full CrewChannelResult, "message" events have new messages array
+        if (parsed.messages && parsed.totalCount !== undefined) {
+          // Full snapshot — replace query data
+          queryClient.setQueryData(["teams", params.name, "messages"], parsed);
+        } else if (Array.isArray(parsed)) {
+          // New messages — append to existing data
+          queryClient.setQueryData(["teams", params.name, "messages"], (old: unknown) => {
+            const prev = old as
+              | { team: string; messages: InboxMessage[]; totalCount: number; unreadCount: number }
+              | undefined;
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: [...prev.messages, ...parsed],
+              totalCount: prev.totalCount + parsed.length,
+              unreadCount: prev.unreadCount + parsed.length,
+            };
+          });
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+    },
+  });
+
   if (teamQuery.isLoading) {
     return <PageSkeleton />;
   }
 
-  if (teamQuery.error) {
+  if (teamQuery.error && connStatus === "connected") {
     const message = teamQuery.error instanceof Error ? teamQuery.error.message : "Failed to load team";
     return (
       <div className="max-w-4xl mx-auto px-6 py-16 text-center">
@@ -98,8 +152,8 @@ export function CrewDetailPage() {
   const allRunning = running === total;
   const allStopped = running === 0;
 
-  const crewMessages = messagesQuery.data?.messages ?? [];
-  const inboxMessages = inboxQuery.data?.messages ?? [];
+  const crewMessages = (messagesQuery.data?.messages ?? []).filter((m) => !isSystemMessage(m));
+  const inboxMessages = (inboxQuery.data?.messages ?? []).filter((m) => !isSystemMessage(m));
 
   const selectAgent = (i: number) => {
     setSelected(i);
@@ -200,7 +254,9 @@ export function CrewDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>CWD</span>
-                  <span className="text-text-secondary font-mono truncate ml-4">{agent.cwd}</span>
+                  <span className="text-text-secondary font-mono truncate ml-4" title={agent.cwd}>
+                    {agent.cwd}
+                  </span>
                 </div>
               </div>
               <div className="flex gap-1.5 mt-3">
@@ -261,6 +317,18 @@ export function CrewDetailPage() {
 
 function ChannelView({ messages }: { messages: InboxMessage[] }) {
   const firstUnread = messages.findIndex((m) => !m.read);
+  const { scrollRef, isLive, onScroll, scrollToBottom } = useAutoScroll(messages);
+  const [live, setLive] = useState(true);
+
+  const handleScroll = () => {
+    onScroll();
+    setLive(isLive.current);
+  };
+
+  const jumpToBottom = () => {
+    scrollToBottom();
+    setLive(true);
+  };
 
   return (
     <>
@@ -269,13 +337,24 @@ function ChannelView({ messages }: { messages: InboxMessage[] }) {
           <span className="text-sm font-semibold text-text">Crew channel</span>
           <span className="text-xs text-text-muted">{messages.length} messages</span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-text-muted">
-          <span className="w-1.5 h-1.5 rounded-full bg-success" />
-          Live
-        </div>
+        {live ? (
+          <div className="flex items-center gap-1.5 text-xs text-text-muted">
+            <span className="w-1.5 h-1.5 rounded-full bg-success" />
+            Live
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={jumpToBottom}
+            className="flex items-center gap-1.5 text-xs text-warning/70 hover:text-warning transition-colors"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-warning/50" />
+            Paused — jump to latest
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 overflow-auto px-5 py-3">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-auto px-5 py-3">
         {messages.length === 0 ? (
           <p className="text-sm text-text-muted py-4">No messages yet. Agents will post here when they have updates.</p>
         ) : (
@@ -315,6 +394,7 @@ function InboxView({
   const [input, setInput] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const inboxScroll = useAutoScroll(messages);
   const firstUnread = messages.findIndex((m) => !m.read);
   const unreadCount = messages.filter((m) => !m.read).length;
 
@@ -322,6 +402,7 @@ function InboxView({
     mutationFn: (text: string) => sendMessage(teamName, agentName, text, "crew"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams", teamName, "agents", agentName, "inbox"] });
+      queryClient.invalidateQueries({ queryKey: ["teams", teamName, "messages"] });
       toast("success", `Sent to ${agentName}`);
       setInput("");
     },
@@ -369,7 +450,7 @@ function InboxView({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto px-5 py-3">
+      <div ref={inboxScroll.scrollRef} onScroll={inboxScroll.onScroll} className="flex-1 overflow-auto px-5 py-3">
         {messages.length === 0 ? (
           <p className="text-sm text-text-muted py-2">No messages yet. Send one below.</p>
         ) : (
@@ -413,6 +494,47 @@ function InboxView({
       </div>
     </div>
   );
+}
+
+// --- Helpers ---
+
+function isSystemMessage(msg: InboxMessage): boolean {
+  try {
+    const parsed = JSON.parse(msg.text);
+    return parsed?.type === "idle_notification";
+  } catch {
+    return false;
+  }
+}
+
+/** Auto-scroll to bottom when new messages arrive, unless user has scrolled up. */
+function useAutoScroll(messages: InboxMessage[]) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isLive = useRef(true);
+  const prevCount = useRef(0);
+
+  const scrollToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
+  // Scroll on initial load and when new messages arrive (if live)
+  useEffect(() => {
+    const count = messages.length;
+    if (count !== prevCount.current) {
+      if (isLive.current) scrollToBottom();
+      prevCount.current = count;
+    }
+  });
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const threshold = 40;
+    isLive.current = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+  }, []);
+
+  return { scrollRef, isLive, onScroll, scrollToBottom };
 }
 
 // --- Shared components ---
