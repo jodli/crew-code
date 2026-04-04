@@ -55,9 +55,8 @@ export function CrewsListPage() {
 
       {isLoading && (
         <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders have no stable key
-            <CardSkeleton key={i} />
+          {Array.from({ length: 3 }, (_, n) => `skeleton-${n}`).map((key) => (
+            <CardSkeleton key={key} />
           ))}
         </div>
       )}
@@ -119,108 +118,103 @@ function CrewCard({ summary, detail, onClick }: { summary: TeamSummary; detail?:
   const totalUnread = members.reduce((sum, m) => sum + m.unreadCount, 0);
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
-    <div
-      role="button"
-      tabIndex={0}
-      className="group bg-bg-surface border border-border rounded-lg p-4 hover:border-border-focus/30 transition-colors duration-150 cursor-pointer"
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onClick();
-      }}
-    >
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
-            {/* Status dot */}
-            <span
-              className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                allRunning
-                  ? "bg-success shadow-[0_0_0_0_var(--color-success)] animate-[heartbeat_3s_ease-in-out_infinite]"
-                  : allStopped
-                    ? "border-2 border-text-muted/30 bg-transparent"
-                    : "bg-warning"
-              }`}
-            />
-            <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">{summary.name}</h3>
-            {/* Status badge */}
-            <span
-              className={`inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded shrink-0 ${
-                allRunning
-                  ? "text-success/80 bg-success/10"
-                  : allStopped
-                    ? "text-text-muted bg-bg-active"
-                    : "text-warning/80 bg-warning/10"
-              }`}
-            >
-              {allStopped ? "stopped" : `${running}/${total} running`}
-            </span>
-            {totalUnread > 0 && <span className="text-xs text-accent font-medium">{totalUnread} unread</span>}
+    <div className="group bg-bg-surface border border-border rounded-lg hover:border-border-focus/30 transition-colors duration-150 relative">
+      <button type="button" onClick={onClick} className="w-full text-left p-4 cursor-pointer">
+        {/* Top row */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              {/* Status dot */}
+              <span
+                className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                  allRunning
+                    ? "bg-success shadow-[0_0_0_0_var(--color-success)] animate-[heartbeat_3s_ease-in-out_infinite]"
+                    : allStopped
+                      ? "border-2 border-text-muted/30 bg-transparent"
+                      : "bg-warning"
+                }`}
+              />
+              <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">
+                {summary.name}
+              </h3>
+              {/* Status badge */}
+              <span
+                className={`inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded shrink-0 ${
+                  allRunning
+                    ? "text-success/80 bg-success/10"
+                    : allStopped
+                      ? "text-text-muted bg-bg-active"
+                      : "text-warning/80 bg-warning/10"
+                }`}
+              >
+                {allStopped ? "stopped" : `${running}/${total} running`}
+              </span>
+              {totalUnread > 0 && <span className="text-xs text-accent font-medium">{totalUnread} unread</span>}
+            </div>
+            {summary.description && (
+              <p className="text-sm text-text-secondary mt-0.5 ml-5 line-clamp-1">{summary.description}</p>
+            )}
           </div>
-          {summary.description && (
-            <p className="text-sm text-text-secondary mt-0.5 ml-5 line-clamp-1">{summary.description}</p>
-          )}
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100 shrink-0">
-          {!allRunning && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-              className="h-8 px-3 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
-            >
-              Start all
-            </button>
-          )}
+        {/* Agent chips */}
+        {members.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3 ml-5">
+            {members.map((member) => {
+              const isRunning = member.processId !== undefined;
+              return (
+                <div
+                  key={member.name}
+                  className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-bg/60 px-2 py-1 rounded"
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${isRunning ? "" : "opacity-30"}`}
+                    style={{ backgroundColor: isRunning ? member.color || "#565f89" : undefined }}
+                  />
+                  {!isRunning && !member.color && (
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0 border border-text-muted/30 -ml-[calc(0.5rem+2px+6px)]"
+                      style={{ position: "relative" }}
+                    />
+                  )}
+                  <span className={`font-mono ${isRunning ? "text-text-secondary" : "text-text-muted/60"}`}>
+                    {member.name}
+                  </span>
+                  {member.unreadCount > 0 && (
+                    <span className="min-w-[16px] h-4 inline-flex items-center justify-center rounded-full bg-accent/15 text-accent text-[10px] font-medium px-1">
+                      {member.unreadCount}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </button>
+
+      {/* Actions — positioned over the card, outside the main button */}
+      <div className="absolute top-4 right-4 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100 shrink-0">
+        {!allRunning && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
             }}
-            className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors duration-100"
+            className="h-8 px-3 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
           >
-            View
+            Start all
           </button>
-        </div>
+        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors duration-100"
+        >
+          View
+        </button>
       </div>
-
-      {/* Agent chips */}
-      {members.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-3 ml-5">
-          {members.map((member) => {
-            const isRunning = member.processId !== undefined;
-            return (
-              <div
-                key={member.name}
-                className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-bg/60 px-2 py-1 rounded"
-              >
-                <span
-                  className={`w-2 h-2 rounded-full shrink-0 ${isRunning ? "" : "opacity-30"}`}
-                  style={{ backgroundColor: isRunning ? member.color || "#565f89" : undefined }}
-                />
-                {!isRunning && !member.color && (
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0 border border-text-muted/30 -ml-[calc(0.5rem+2px+6px)]"
-                    style={{ position: "relative" }}
-                  />
-                )}
-                <span className={`font-mono ${isRunning ? "text-text-secondary" : "text-text-muted/60"}`}>
-                  {member.name}
-                </span>
-                {member.unreadCount > 0 && (
-                  <span className="min-w-[16px] h-4 inline-flex items-center justify-center rounded-full bg-accent/15 text-accent text-[10px] font-medium px-1">
-                    {member.unreadCount}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

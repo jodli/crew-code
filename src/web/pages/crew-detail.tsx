@@ -111,16 +111,11 @@ export function CrewDetailPage() {
             {members.map((m, i) => {
               const isRunning = m.processId !== undefined;
               return (
-                // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
-                <div
+                <button
+                  type="button"
                   key={m.agentId}
-                  role="button"
-                  tabIndex={0}
                   onClick={() => selectAgent(i)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") selectAgent(i);
-                  }}
-                  className={`group flex items-start gap-2.5 px-2.5 py-2.5 rounded-md cursor-pointer transition-colors duration-100 mb-0.5 ${
+                  className={`group flex items-start gap-2.5 px-2.5 py-2.5 rounded-md cursor-pointer transition-colors duration-100 mb-0.5 w-full text-left ${
                     selected === i ? "bg-bg-active" : "hover:bg-bg-hover"
                   }`}
                 >
@@ -146,7 +141,7 @@ export function CrewDetailPage() {
                       <span className="text-xs text-accent mt-0.5 inline-block">{m.unreadCount} unread</span>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

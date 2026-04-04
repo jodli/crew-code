@@ -143,88 +143,79 @@ function BlueprintCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
-    <div
-      role="button"
-      tabIndex={0}
-      className="group bg-bg-surface border border-border rounded-lg p-4 hover:border-border-focus/30 transition-colors duration-150 cursor-pointer"
-      onClick={onEdit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onEdit();
-      }}
-    >
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <div className="min-w-0">
-          <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">{bp.name}</h3>
-          {bp.description && <p className="text-sm text-text-secondary mt-0.5 line-clamp-1">{bp.description}</p>}
-        </div>
-        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100 shrink-0">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeploy();
-            }}
-            className="h-8 px-3 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
-          >
-            Deploy
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors duration-100"
-          >
-            Edit
-          </button>
-          {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation wrapper, not interactive itself */}
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation wrapper, not interactive itself */}
-          <div onClick={(e) => e.stopPropagation()}>
-            <Dropdown
-              trigger={
-                <button
-                  type="button"
-                  className="h-8 w-8 flex items-center justify-center text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors"
-                >
-                  &#8943;
-                </button>
-              }
-              items={[
-                { label: "Duplicate", onSelect: onDuplicate },
-                { label: "Export YAML", onSelect: onExport },
-                {
-                  label: confirmDelete ? "Confirm delete" : "Delete",
-                  danger: true,
-                  onSelect: () => {
-                    if (confirmDelete) {
-                      onDelete();
-                      setConfirmDelete(false);
-                    } else {
-                      setConfirmDelete(true);
-                      setTimeout(() => setConfirmDelete(false), 3000);
-                    }
-                  },
-                },
-              ]}
-            />
+    <div className="group bg-bg-surface border border-border rounded-lg hover:border-border-focus/30 transition-colors duration-150 relative">
+      <button type="button" onClick={onEdit} className="w-full text-left p-4 cursor-pointer">
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold tracking-[-0.02em] text-text font-mono truncate">{bp.name}</h3>
+            {bp.description && <p className="text-sm text-text-secondary mt-0.5 line-clamp-1">{bp.description}</p>}
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-wrap gap-2 mt-3">
-        {bp.agents.map((agent) => (
-          <div
-            key={agent.name}
-            className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-bg/60 px-2 py-1 rounded"
-          >
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: agent.color || "#3b3f52" }} />
-            <span className="font-mono">{agent.name}</span>
-            {agent.model && <span className="text-text-muted/60">{agent.model}</span>}
-            {agent.agentType === "team-lead" && <span className="text-warning/50 text-[10px]">&#9733;</span>}
-          </div>
-        ))}
+        <div className="flex flex-wrap gap-2 mt-3">
+          {bp.agents.map((agent) => (
+            <div
+              key={agent.name}
+              className="inline-flex items-center gap-1.5 text-xs text-text-muted bg-bg/60 px-2 py-1 rounded"
+            >
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: agent.color || "#3b3f52" }} />
+              <span className="font-mono">{agent.name}</span>
+              {agent.model && <span className="text-text-muted/60">{agent.model}</span>}
+              {agent.agentType === "team-lead" && <span className="text-warning/50 text-[10px]">&#9733;</span>}
+            </div>
+          ))}
+        </div>
+      </button>
+
+      {/* Actions — positioned over the card, outside the main button */}
+      <div className="absolute top-4 right-4 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100 shrink-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeploy();
+          }}
+          className="h-8 px-3 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
+        >
+          Deploy
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors duration-100"
+        >
+          Edit
+        </button>
+        <Dropdown
+          trigger={
+            <button
+              type="button"
+              className="h-8 w-8 flex items-center justify-center text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              &#8943;
+            </button>
+          }
+          items={[
+            { label: "Duplicate", onSelect: onDuplicate },
+            { label: "Export YAML", onSelect: onExport },
+            {
+              label: confirmDelete ? "Confirm delete" : "Delete",
+              danger: true,
+              onSelect: () => {
+                if (confirmDelete) {
+                  onDelete();
+                  setConfirmDelete(false);
+                } else {
+                  setConfirmDelete(true);
+                  setTimeout(() => setConfirmDelete(false), 3000);
+                }
+              },
+            },
+          ]}
+        />
       </div>
     </div>
   );

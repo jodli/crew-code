@@ -92,12 +92,12 @@ export function BlueprintEditorPage() {
   const watchedName = form.watch("name");
   const agent = watchedAgents?.[selected] ?? null;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: watched values are intentional cache-busting triggers for form.getValues()
+  const watchedDescription = form.watch("description");
+
   const currentYaml = useMemo(() => {
-    const values = form.getValues();
-    if (!values.agents?.length) return "";
-    return blueprintToYaml(values);
-  }, [watchedAgents, watchedName, form.watch("description")]);
+    if (!watchedAgents?.length) return "";
+    return blueprintToYaml({ name: watchedName, description: watchedDescription, agents: watchedAgents });
+  }, [watchedAgents, watchedName, watchedDescription]);
 
   // --- Save mutation ---
   const saveMutation = useMutation({
@@ -244,9 +244,11 @@ export function BlueprintEditorPage() {
             {/* Blueprint meta */}
             <div className="p-4 space-y-3 border-b border-border">
               <div>
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: label and input are colocated siblings */}
-                <label className="block text-xs font-medium text-text-muted mb-1">Name</label>
+                <label htmlFor="bp-name" className="block text-xs font-medium text-text-muted mb-1">
+                  Name
+                </label>
                 <input
+                  id="bp-name"
                   type="text"
                   {...form.register("name")}
                   placeholder="my-blueprint"
@@ -257,9 +259,11 @@ export function BlueprintEditorPage() {
                 )}
               </div>
               <div>
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: label and input are colocated siblings */}
-                <label className="block text-xs font-medium text-text-muted mb-1">Description</label>
+                <label htmlFor="bp-description" className="block text-xs font-medium text-text-muted mb-1">
+                  Description
+                </label>
                 <input
+                  id="bp-description"
                   type="text"
                   {...form.register("description")}
                   placeholder="Optional"
@@ -285,36 +289,32 @@ export function BlueprintEditorPage() {
               {fields.map((field, i) => {
                 const a = watchedAgents?.[i] ?? field;
                 return (
-                  // biome-ignore lint/a11y/useSemanticElements: complex card layout requires div
                   <div
                     key={field.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelected(i)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") setSelected(i);
-                    }}
-                    className={`group flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer transition-colors duration-100 mb-0.5 ${
+                    className={`group flex items-center gap-2 rounded-md transition-colors duration-100 mb-0.5 ${
                       selected === i ? "bg-bg-active text-text" : "text-text-secondary hover:bg-bg-hover"
                     }`}
                   >
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: a.color || "#3b3f52" }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-mono truncate">{a.name || "unnamed"}</div>
-                      <div className="text-xs text-text-muted truncate">{a.agentType || "general-purpose"}</div>
-                    </div>
-                    {a.agentType === "team-lead" && <span className="text-warning/60 text-xs shrink-0">&#9733;</span>}
+                    <button
+                      type="button"
+                      onClick={() => setSelected(i)}
+                      className="flex items-center gap-2 px-2.5 py-2 min-w-0 flex-1 w-full text-left cursor-pointer"
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: a.color || "#3b3f52" }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-mono truncate">{a.name || "unnamed"}</div>
+                        <div className="text-xs text-text-muted truncate">{a.agentType || "general-purpose"}</div>
+                      </div>
+                      {a.agentType === "team-lead" && <span className="text-warning/60 text-xs shrink-0">&#9733;</span>}
+                    </button>
                     {fields.length > 1 && (
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeAgent(i);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-error transition-all text-xs shrink-0"
+                        onClick={() => removeAgent(i)}
+                        className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-error transition-all text-xs shrink-0 pr-2.5"
                       >
                         &#10005;
                       </button>
@@ -335,8 +335,9 @@ export function BlueprintEditorPage() {
                   </h2>
                 </div>
 
-                <Field label="Name">
+                <Field label="Name" htmlFor="agent-name">
                   <input
+                    id="agent-name"
                     type="text"
                     {...form.register(`agents.${selected}.name`)}
                     className="w-full h-9 px-3 text-sm font-mono bg-bg-elevated border border-border rounded-md text-text focus:outline-none focus:border-border-focus transition-colors"
@@ -344,8 +345,9 @@ export function BlueprintEditorPage() {
                 </Field>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="Type">
+                  <Field label="Type" htmlFor="agent-type">
                     <select
+                      id="agent-type"
                       {...form.register(`agents.${selected}.agentType`)}
                       className="w-full h-9 px-3 text-sm bg-bg-elevated border border-border rounded-md text-text focus:outline-none focus:border-border-focus appearance-none cursor-pointer transition-colors"
                     >
@@ -356,8 +358,9 @@ export function BlueprintEditorPage() {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Model">
+                  <Field label="Model" htmlFor="agent-model">
                     <select
+                      id="agent-model"
                       value={agent.model || "(default)"}
                       onChange={(e) =>
                         form.setValue(
@@ -378,9 +381,10 @@ export function BlueprintEditorPage() {
                 </div>
 
                 <div className="grid grid-cols-[120px_1fr] gap-4">
-                  <Field label="Color">
+                  <Field label="Color" htmlFor="agent-color">
                     <div className="flex items-center gap-2">
                       <input
+                        id="agent-color"
                         type="color"
                         value={agent.color || "#565f89"}
                         onChange={(e) =>
@@ -399,8 +403,9 @@ export function BlueprintEditorPage() {
                       />
                     </div>
                   </Field>
-                  <Field label="Working directory">
+                  <Field label="Working directory" htmlFor="agent-cwd">
                     <input
+                      id="agent-cwd"
                       type="text"
                       value={agent.cwd || ""}
                       onChange={(e) =>
@@ -412,8 +417,9 @@ export function BlueprintEditorPage() {
                   </Field>
                 </div>
 
-                <Field label="Extra args">
+                <Field label="Extra args" htmlFor="agent-extra-args">
                   <input
+                    id="agent-extra-args"
                     type="text"
                     value={agent.extraArgs?.join(" ") || ""}
                     onChange={(e) =>
@@ -428,8 +434,9 @@ export function BlueprintEditorPage() {
                   />
                 </Field>
 
-                <Field label="Prompt">
+                <Field label="Prompt" htmlFor="agent-prompt">
                   <textarea
+                    id="agent-prompt"
                     {...form.register(`agents.${selected}.prompt`)}
                     placeholder="Describe the agent's role and responsibilities..."
                     rows={16}
@@ -467,11 +474,12 @@ export function BlueprintEditorPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
   return (
     <div>
-      {/* biome-ignore lint/a11y/noLabelWithoutControl: label and input are colocated children in Field component */}
-      <label className="block text-xs font-medium text-text-muted mb-1.5">{label}</label>
+      <label htmlFor={htmlFor} className="block text-xs font-medium text-text-muted mb-1.5">
+        {label}
+      </label>
       {children}
     </div>
   );
