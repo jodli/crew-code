@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
@@ -11,16 +11,14 @@
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noPropertyAccessFromIndexSignature": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "jsx": "react-jsx",
-    "jsxImportSource": "@opentui/react",
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "types": ["bun"]
+    "jsxImportSource": "react",
+    "types": ["vitest/globals"],
+    "paths": {
+      "@crew/*": ["../*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["src/web/**/*"]
+  "include": ["./**/*"]
 }

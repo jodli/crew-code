@@ -35,6 +35,9 @@ function makeBlueprintStore(bp?: Blueprint): BlueprintStore {
     async exists(name) {
       return bp?.name === name;
     },
+    async delete() {
+      return ok(undefined);
+    },
   };
 }
 

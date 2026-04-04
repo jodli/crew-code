@@ -2,3 +2,5 @@ node_modules/
 dist/
 docs
 *.log
+tsconfig.tsbuildinfo
+src/web/tsconfig.tsbuildinfo
