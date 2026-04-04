@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------
+   Color tokens — switch via .dark class on <html>
+   ------------------------------------------------ */
+
+:root {
+  /* Light mode */
+  --raw-bg: #f5f5f7;
+  --raw-bg-surface: #ffffff;
+  --raw-bg-elevated: #ebebef;
+  --raw-bg-hover: rgba(0, 0, 0, 0.03);
+  --raw-bg-active: rgba(0, 0, 0, 0.06);
+  --raw-border: rgba(0, 0, 0, 0.09);
+  --raw-border-focus: rgba(76, 110, 245, 0.5);
+  --raw-text: #1a1b2e;
+  --raw-text-secondary: #4c4f69;
+  --raw-text-muted: #9ca0b0;
+  --raw-accent: #4c6ef5;
+  --raw-accent-hover: #5b7bf7;
+  --raw-error: #e5484d;
+  --raw-warning: #d97706;
+  --raw-success: #46a758;
+  --raw-scrollbar: rgba(0, 0, 0, 0.1);
+  --raw-scrollbar-hover: rgba(0, 0, 0, 0.2);
+  --raw-selection: rgba(76, 110, 245, 0.15);
+  --raw-noise-opacity: 0.015;
+  color-scheme: light;
+}
+
+.dark {
+  --raw-bg: #16161e;
+  --raw-bg-surface: #1a1b26;
+  --raw-bg-elevated: #1f2133;
+  --raw-bg-hover: rgba(255, 255, 255, 0.04);
+  --raw-bg-active: rgba(255, 255, 255, 0.07);
+  --raw-border: rgba(255, 255, 255, 0.06);
+  --raw-border-focus: rgba(122, 162, 247, 0.5);
+  --raw-text: #c0caf5;
+  --raw-text-secondary: #a9b1d6;
+  --raw-text-muted: #565f89;
+  --raw-accent: #7aa2f7;
+  --raw-accent-hover: #89b4fa;
+  --raw-error: #f7768e;
+  --raw-warning: #e0af68;
+  --raw-success: #9ece6a;
+  --raw-scrollbar: rgba(255, 255, 255, 0.08);
+  --raw-scrollbar-hover: rgba(255, 255, 255, 0.14);
+  --raw-selection: rgba(122, 162, 247, 0.25);
+  --raw-noise-opacity: 0.025;
+  color-scheme: dark;
+}
+
+/* Map raw vars to Tailwind theme tokens */
+@theme {
+  --color-bg: var(--raw-bg);
+  --color-bg-surface: var(--raw-bg-surface);
+  --color-bg-elevated: var(--raw-bg-elevated);
+  --color-bg-hover: var(--raw-bg-hover);
+  --color-bg-active: var(--raw-bg-active);
+
+  --color-border: var(--raw-border);
+  --color-border-focus: var(--raw-border-focus);
+
+  --color-text: var(--raw-text);
+  --color-text-secondary: var(--raw-text-secondary);
+  --color-text-muted: var(--raw-text-muted);
+
+  --color-accent: var(--raw-accent);
+  --color-accent-hover: var(--raw-accent-hover);
+
+  --color-error: var(--raw-error);
+  --color-warning: var(--raw-warning);
+  --color-success: var(--raw-success);
+
+  --font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, monospace;
+  --font-sans: "Inter", -apple-system, system-ui, sans-serif;
+}
+
+/* ------------------------------------------------
+   Base
+   ------------------------------------------------ */
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.006em;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Noise texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: var(--raw-noise-opacity);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--raw-scrollbar); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--raw-scrollbar-hover); }
+
+::selection { background: var(--raw-selection); }
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--color-accent), 0 0 0 3px var(--raw-border-focus);
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Heartbeat glow for running status dots */
+@keyframes heartbeat {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 20%, transparent); }
+}
+
+/* Toast slide in */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -39,7 +39,7 @@ describe("App", () => {
     renderApp(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText("localhost:3117")).toBeInTheDocument();
+      expect(screen.getByText("localhost:3117")).toBeInTheDocument(); // default when VITE_API_HOST/PORT unset
     });
   });
 });

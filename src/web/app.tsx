@@ -17,6 +17,10 @@ export function useConnection() {
   return useContext(ConnectionContext);
 }
 
+const API_HOST = import.meta.env.VITE_API_HOST ?? "localhost";
+const API_PORT = import.meta.env.VITE_API_PORT ?? "3117";
+const API_DISPLAY = `${API_HOST}:${API_PORT}`;
+
 const queryClient = createQueryClient();
 
 const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
@@ -96,7 +100,7 @@ function AppShell() {
             />
             <span>
               {connState === "connected"
-                ? "localhost:3117"
+                ? API_DISPLAY
                 : connState === "reconnecting"
                   ? "reconnecting..."
                   : "disconnected"}

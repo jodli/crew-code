@@ -15,12 +15,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:3117",
+        target: `http://${process.env.VITE_API_HOST ?? "localhost"}:${process.env.VITE_API_PORT ?? "3117"}`,
         // Disable response buffering so SSE streams through immediately
         configure: (proxy) => {
           proxy.on("proxyRes", (proxyRes) => {
             if (proxyRes.headers["content-type"]?.includes("text/event-stream")) {
-              // Flush immediately — don't buffer SSE chunks
               proxyRes.headers["cache-control"] = "no-cache";
               proxyRes.headers["x-accel-buffering"] = "no";
             }

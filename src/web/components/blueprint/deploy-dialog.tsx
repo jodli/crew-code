@@ -89,15 +89,13 @@ export function DeployDialog({ blueprint, onClose }: { blueprint: Blueprint; onC
                 />
               </div>
 
-              <fieldset>
-                <legend className="text-xs font-medium text-text-muted mb-2">Agents ({blueprint.agents.length})</legend>
+              <div>
+                <span className="block text-xs font-medium text-text-muted mb-2">
+                  Agents ({blueprint.agents.length})
+                </span>
                 <div className="space-y-1">
                   {blueprint.agents.map((agent) => (
-                    <label
-                      key={agent.name}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-bg-hover cursor-pointer transition-colors"
-                    >
-                      <input type="checkbox" defaultChecked className="accent-accent" />
+                    <div key={agent.name} className="flex items-center gap-2.5 px-3 py-2 rounded-md">
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: agent.color || "#3b3f52" }}
@@ -105,10 +103,10 @@ export function DeployDialog({ blueprint, onClose }: { blueprint: Blueprint; onC
                       <span className="text-sm font-mono text-text">{agent.name}</span>
                       <span className="text-xs text-text-muted">{agent.agentType}</span>
                       {agent.model && <span className="ml-auto text-xs font-mono text-text-muted">{agent.model}</span>}
-                    </label>
+                    </div>
                   ))}
                 </div>
-              </fieldset>
+              </div>
             </div>
           )}
 
