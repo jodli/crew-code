@@ -1,5 +1,7 @@
 import type { Blueprint } from "@crew/config/blueprint-schema.ts";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { loadBlueprint, startTeam } from "../../lib/api-client.ts";
 
 type DeployState = "idle" | "deploying" | "success";
 
@@ -7,27 +9,37 @@ export function DeployDialog({ blueprint, onClose }: { blueprint: Blueprint; onC
   const [teamName, setTeamName] = useState(blueprint.name);
   const [state, setState] = useState<DeployState>("idle");
   const [logs, setLogs] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDeploy = (start: boolean) => {
+  const loadMutation = useMutation({
+    mutationFn: () => loadBlueprint(blueprint.name, { teamName }),
+  });
+
+  const startMutation = useMutation({
+    mutationFn: () => startTeam(teamName),
+  });
+
+  const handleDeploy = async (start: boolean) => {
     setState("deploying");
     setLogs([]);
+    setError(null);
 
-    const steps = [
-      `Creating team "${teamName}"`,
-      ...blueprint.agents.map((a) => `Adding agent "${a.name}"`),
-      ...(start ? [`Starting ${blueprint.agents.length} agents`] : []),
-    ];
+    try {
+      setLogs((prev) => [...prev, `Creating team "${teamName}"`]);
+      await loadMutation.mutateAsync();
+      setLogs((prev) => [...prev, `Team "${teamName}" created`]);
 
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < steps.length) {
-        setLogs((prev) => [...prev, steps[i]]);
-        i++;
-      } else {
-        clearInterval(interval);
-        setState("success");
+      if (start) {
+        setLogs((prev) => [...prev, "Starting agents..."]);
+        const result = await startMutation.mutateAsync();
+        setLogs((prev) => [...prev, `Started ${result.started.length} agents`]);
       }
-    }, 250);
+
+      setState("success");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Deploy failed");
+      setState("idle");
+    }
   };
 
   return (
@@ -56,6 +68,12 @@ export function DeployDialog({ blueprint, onClose }: { blueprint: Blueprint; onC
 
         {/* Body */}
         <div className="px-5 py-4">
+          {error && (
+            <div className="mb-4 px-4 py-3 rounded-md bg-error/8 border border-error/15 text-sm text-error/90">
+              {error}
+            </div>
+          )}
+
           {state === "idle" && (
             <div className="space-y-4">
               <div>
