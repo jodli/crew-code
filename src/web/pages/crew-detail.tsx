@@ -1,18 +1,55 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { PageSkeleton } from "../components/shared/skeleton.tsx";
 import { useToast } from "../components/shared/toast.tsx";
 import type { InboxMessage } from "../lib/api-client.ts";
-import { getAgentInbox, getCrewMessages, getTeam } from "../lib/api-client.ts";
+import {
+  destroyTeam,
+  getAgentInbox,
+  getCrewMessages,
+  getTeam,
+  sendMessage,
+  startAgent,
+  startTeam,
+  stopAgent,
+} from "../lib/api-client.ts";
 
 export function CrewDetailPage() {
   const [, navigate] = useLocation();
   const params = useParams<{ name: string }>();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [selected, setSelected] = useState<number | null>(null);
   const [inboxOpen, setInboxOpen] = useState(false);
+
+  const startAgentMutation = useMutation({
+    mutationFn: ({ agent }: { agent: string }) => startAgent(params.name!, agent),
+    onSuccess: (_, { agent }) => {
+      queryClient.invalidateQueries({ queryKey: ["teams", params.name] });
+      toast("success", `Started ${agent}`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Start failed"),
+  });
+
+  const stopAgentMutation = useMutation({
+    mutationFn: ({ agent }: { agent: string }) => stopAgent(params.name!, agent),
+    onSuccess: (_, { agent }) => {
+      queryClient.invalidateQueries({ queryKey: ["teams", params.name] });
+      toast("success", `Stopped ${agent}`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Stop failed"),
+  });
+
+  const startAllMutation = useMutation({
+    mutationFn: () => startTeam(params.name!),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["teams", params.name] });
+      toast("success", `Started ${result.started.length} agents`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Start all failed"),
+  });
 
   const teamQuery = useQuery({
     queryKey: ["teams", params.name],
@@ -90,13 +127,13 @@ export function CrewDetailPage() {
         {!allRunning && (
           <button
             type="button"
-            onClick={() => toast("success", `Starting ${total - running} agent${total - running !== 1 ? "s" : ""}...`)}
+            onClick={() => startAllMutation.mutate()}
             className="h-8 px-4 text-sm font-medium text-bg bg-accent rounded-md hover:bg-accent-hover active:scale-[0.98] transition-all duration-150"
           >
             Start all
           </button>
         )}
-        <DestroyButton />
+        <DestroyButton teamName={params.name!} onDestroyed={() => navigate("/crews")} />
       </div>
 
       {/* Two-column layout */}
@@ -169,9 +206,13 @@ export function CrewDetailPage() {
               <div className="flex gap-1.5 mt-3">
                 <button
                   type="button"
-                  onClick={() =>
-                    toast("success", `${agent.processId !== undefined ? "Stopping" : "Starting"} ${agent.name}...`)
-                  }
+                  onClick={() => {
+                    if (agent.processId !== undefined) {
+                      stopAgentMutation.mutate({ agent: agent.name });
+                    } else {
+                      startAgentMutation.mutate({ agent: agent.name });
+                    }
+                  }}
                   className={`h-7 px-2.5 text-xs font-medium rounded-md transition-colors ${
                     agent.processId !== undefined
                       ? "text-error/70 border border-error/20 hover:bg-error/10"
@@ -203,6 +244,7 @@ export function CrewDetailPage() {
             >
               <InboxView
                 messages={inboxMessages}
+                teamName={params.name!}
                 agentName={agent.name}
                 agentColor={agent.color}
                 onClose={() => setInboxOpen(false)}
@@ -259,24 +301,36 @@ function ChannelView({ messages }: { messages: InboxMessage[] }) {
 
 function InboxView({
   messages,
+  teamName,
   agentName,
   agentColor,
   onClose,
 }: {
   messages: InboxMessage[];
+  teamName: string;
   agentName: string;
   agentColor?: string;
   onClose: () => void;
 }) {
   const [input, setInput] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const firstUnread = messages.findIndex((m) => !m.read);
   const unreadCount = messages.filter((m) => !m.read).length;
 
+  const sendMutation = useMutation({
+    mutationFn: (text: string) => sendMessage(teamName, agentName, text, "crew"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams", teamName, "agents", agentName, "inbox"] });
+      toast("success", `Sent to ${agentName}`);
+      setInput("");
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Send failed"),
+  });
+
   const handleSend = () => {
     if (!input.trim()) return;
-    toast("success", `Sent to ${agentName}`);
-    setInput("");
+    sendMutation.mutate(input.trim());
   };
 
   return (
@@ -393,13 +447,22 @@ function UnreadSeparator({ label = "new" }: { label?: string }) {
   );
 }
 
-function DestroyButton() {
+function DestroyButton({ teamName, onDestroyed }: { teamName: string; onDestroyed: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const { toast } = useToast();
 
+  const destroyMutation = useMutation({
+    mutationFn: () => destroyTeam(teamName),
+    onSuccess: () => {
+      toast("success", "Team destroyed");
+      onDestroyed();
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Destroy failed"),
+  });
+
   const handleClick = () => {
     if (confirming) {
-      toast("success", "Crew destroyed (mock)");
+      destroyMutation.mutate();
       setConfirming(false);
     } else {
       setConfirming(true);
