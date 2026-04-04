@@ -8,10 +8,12 @@ import { listTeams } from "../../actions/list-teams.ts";
 import { removeTeam } from "../../actions/remove-team.ts";
 import { startTeam } from "../../actions/start-team.ts";
 import { updateTeam } from "../../actions/update-team.ts";
-import { claudeInboxesDir, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
+import { claudeInboxesDir, claudeInboxPath, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
+import { getCrewMessages } from "../../core/crew-channel.ts";
 import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
 import { debug } from "../../lib/logger.ts";
 import { launchAgent } from "../../runtime/launch.ts";
+import { CREW_SENDER } from "../../types/constants.ts";
 import { errorResponse } from "../errors.ts";
 import type { Env } from "../server.ts";
 
@@ -108,16 +110,17 @@ export function teamRoutes() {
   r.get("/teams/:name/stream", async (c) => {
     const ctx = c.get("ctx");
     const name = c.req.param("name");
-    let lastJson = "";
+    let lastTeamJson = "";
+    let lastMessagesJson = "";
 
     return streamSSE(c, async (stream) => {
-      const pushUpdate = async () => {
+      const pushTeamUpdate = async () => {
         try {
           const result = await getTeamDetail(ctx, name);
           if (!result.ok) return;
           const json = JSON.stringify(result.value);
-          if (json !== lastJson) {
-            lastJson = json;
+          if (json !== lastTeamJson) {
+            lastTeamJson = json;
             await stream.writeSSE({ event: "team-update", data: json });
           }
         } catch (e: unknown) {
@@ -125,24 +128,49 @@ export function teamRoutes() {
         }
       };
 
-      // Send initial snapshot
-      await pushUpdate();
+      const pushMessagesUpdate = async () => {
+        try {
+          const result = await getCrewMessages(ctx, name);
+          if (!result.ok) return;
+          const json = JSON.stringify(result.value);
+          if (json !== lastMessagesJson) {
+            lastMessagesJson = json;
+            await stream.writeSSE({ event: "crew-messages", data: json });
+          }
+        } catch (e: unknown) {
+          debug("sse", `crew messages stream error for ${name}`, { error: String(e) });
+        }
+      };
+
+      const pushAll = async () => {
+        await pushTeamUpdate();
+        await pushMessagesUpdate();
+      };
+
+      // Send initial snapshots
+      await pushAll();
 
       // Watch for changes
-      const debouncedPush = debounce(pushUpdate, 200);
+      const debouncedPushAll = debounce(pushAll, 200);
       const cleanups: (() => void)[] = [];
       try {
-        cleanups.push(watchFile(claudeTeamConfigPath(name), () => debouncedPush()));
+        cleanups.push(watchFile(claudeTeamConfigPath(name), () => debouncedPushAll()));
       } catch {
         /* file may not exist */
       }
       try {
-        cleanups.push(watchDir(claudeInboxesDir(name), () => debouncedPush()));
+        cleanups.push(watchDir(claudeInboxesDir(name), () => debouncedPushAll()));
       } catch {
         /* dir may not exist */
       }
       try {
-        cleanups.push(watchFile(processRegistryPath(name), () => debouncedPush()));
+        cleanups.push(watchFile(processRegistryPath(name), () => debouncedPushAll()));
+      } catch {
+        /* file may not exist */
+      }
+      // Also watch the crew inbox file directly (may not be in the dir watch)
+      try {
+        cleanups.push(watchFile(claudeInboxPath(name, CREW_SENDER), () => debouncedPushAll()));
       } catch {
         /* file may not exist */
       }

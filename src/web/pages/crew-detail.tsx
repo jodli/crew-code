@@ -88,9 +88,6 @@ export function CrewDetailPage() {
         const data = JSON.parse(event.data);
         queryClient.setQueryData(["teams", params.name], data);
 
-        // Always refetch crew messages — agent activity means new messages
-        queryClient.invalidateQueries({ queryKey: ["teams", params.name, "messages"] });
-
         // Refetch inbox if selected agent's unread count changed
         const member = selectedMemberRef.current;
         if (member && data.members) {
@@ -101,6 +98,15 @@ export function CrewDetailPage() {
             });
           }
         }
+      } catch {
+        /* ignore parse errors */
+      }
+    });
+
+    // Crew channel messages — set directly from SSE data
+    es.addEventListener("crew-messages", (event: MessageEvent) => {
+      try {
+        queryClient.setQueryData(["teams", params.name, "messages"], JSON.parse(event.data));
       } catch {
         /* ignore parse errors */
       }
