@@ -89,6 +89,13 @@ export async function createBlueprint(data: import("@crew/config/blueprint-schem
   });
 }
 
+export async function createBlueprintFromTeam(teamName: string) {
+  return apiFetch<import("@crew/config/blueprint-schema.ts").Blueprint>("/blueprints", {
+    method: "POST",
+    body: JSON.stringify({ fromTeam: teamName }),
+  });
+}
+
 export async function updateBlueprint(
   name: string,
   data: { description?: string; agents?: import("@crew/config/blueprint-schema.ts").BlueprintAgent[] },

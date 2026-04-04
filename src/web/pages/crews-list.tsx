@@ -2,11 +2,12 @@ import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/rea
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useConnection } from "../app.tsx";
+import { Dropdown } from "../components/shared/dropdown.tsx";
 import { ErrorBanner } from "../components/shared/error-banner.tsx";
 import { CardSkeleton } from "../components/shared/skeleton.tsx";
 import { useToast } from "../components/shared/toast.tsx";
 import type { TeamDetail, TeamSummary } from "../lib/api-client.ts";
-import { getTeam, getTeams, startTeam } from "../lib/api-client.ts";
+import { createBlueprintFromTeam, destroyTeam, getTeam, getTeams, startTeam, stopAgent } from "../lib/api-client.ts";
 
 export function CrewsListPage() {
   const [, navigate] = useLocation();
@@ -23,6 +24,36 @@ export function CrewsListPage() {
       toast("success", `Started ${result.started.length} agents in ${name}`);
     },
     onError: (err) => toast("error", err instanceof Error ? err.message : "Start failed"),
+  });
+
+  const stopAllMutation = useMutation({
+    mutationFn: async ({ name, members }: { name: string; members: string[] }) => {
+      await Promise.all(members.map((agent) => stopAgent(name, agent)));
+    },
+    onSuccess: (_, { name, members }) => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast("success", `Stopped ${members.length} agents in ${name}`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Stop failed"),
+  });
+
+  const saveBlueprintMutation = useMutation({
+    mutationFn: createBlueprintFromTeam,
+    onSuccess: (bp) => {
+      queryClient.invalidateQueries({ queryKey: ["blueprints"] });
+      toast("success", `Saved blueprint "${bp.name}"`);
+      navigate(`/blueprints/${bp.name}`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Save blueprint failed"),
+  });
+
+  const destroyMutation = useMutation({
+    mutationFn: destroyTeam,
+    onSuccess: (_, name) => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast("success", `Destroyed "${name}"`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Destroy failed"),
   });
 
   const {
@@ -100,6 +131,13 @@ export function CrewsListPage() {
                 detail={detailMap.get(summary.name)}
                 onClick={() => navigate(`/crews/${summary.name}`)}
                 onStartAll={() => startTeamMutation.mutate(summary.name)}
+                onStopAll={() => {
+                  const members = detailMap.get(summary.name)?.members ?? [];
+                  const running = members.filter((m) => m.processId !== undefined).map((m) => m.name);
+                  if (running.length > 0) stopAllMutation.mutate({ name: summary.name, members: running });
+                }}
+                onSaveBlueprint={() => saveBlueprintMutation.mutate(summary.name)}
+                onDestroy={() => destroyMutation.mutate(summary.name)}
               />
             ))}
           </div>
@@ -132,12 +170,19 @@ function CrewCard({
   detail,
   onClick,
   onStartAll,
+  onStopAll,
+  onSaveBlueprint,
+  onDestroy,
 }: {
   summary: TeamSummary;
   detail?: TeamDetail;
   onClick: () => void;
   onStartAll: () => void;
+  onStopAll: () => void;
+  onSaveBlueprint: () => void;
+  onDestroy: () => void;
 }) {
+  const [confirmDestroy, setConfirmDestroy] = useState(false);
   const members = detail?.members ?? [];
   const running = members.filter((m) => m.processId !== undefined).length;
   const total = members.length || summary.memberCount;
@@ -222,6 +267,18 @@ function CrewCard({
 
       {/* Actions — positioned over the card, outside the main button */}
       <div className="absolute top-4 right-4 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100 shrink-0">
+        {!allRunning && !allStopped && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStopAll();
+            }}
+            className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-error/70 hover:bg-error/5 transition-colors duration-100"
+          >
+            Stop all
+          </button>
+        )}
         {!allRunning && (
           <button
             type="button"
@@ -234,6 +291,18 @@ function CrewCard({
             Start all
           </button>
         )}
+        {allRunning && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStopAll();
+            }}
+            className="h-8 px-3 text-sm text-text-muted rounded-md hover:text-error/70 hover:bg-error/5 transition-colors duration-100"
+          >
+            Stop all
+          </button>
+        )}
         <button
           type="button"
           onClick={(e) => {
@@ -244,6 +313,33 @@ function CrewCard({
         >
           View
         </button>
+        <Dropdown
+          trigger={
+            <button
+              type="button"
+              className="h-8 w-8 flex items-center justify-center text-text-muted rounded-md hover:text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              &#8943;
+            </button>
+          }
+          items={[
+            { label: "Save as blueprint", onSelect: onSaveBlueprint },
+            {
+              label: confirmDestroy ? "Confirm destroy" : "Destroy",
+              danger: true,
+              keepOpen: !confirmDestroy,
+              onSelect: () => {
+                if (confirmDestroy) {
+                  onDestroy();
+                  setConfirmDestroy(false);
+                } else {
+                  setConfirmDestroy(true);
+                  setTimeout(() => setConfirmDestroy(false), 3000);
+                }
+              },
+            },
+          ]}
+        />
       </div>
     </div>
   );
