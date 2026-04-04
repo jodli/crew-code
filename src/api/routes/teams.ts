@@ -8,12 +8,11 @@ import { listTeams } from "../../actions/list-teams.ts";
 import { removeTeam } from "../../actions/remove-team.ts";
 import { startTeam } from "../../actions/start-team.ts";
 import { updateTeam } from "../../actions/update-team.ts";
-import { claudeInboxesDir, claudeInboxPath, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
+import { claudeInboxesDir, claudeTeamConfigPath, processRegistryPath } from "../../config/paths.ts";
 import { getCrewMessages } from "../../core/crew-channel.ts";
 import { debounce, watchDir, watchFile } from "../../lib/file-watcher.ts";
 import { debug } from "../../lib/logger.ts";
 import { launchAgent } from "../../runtime/launch.ts";
-import { CREW_SENDER } from "../../types/constants.ts";
 import { errorResponse } from "../errors.ts";
 import type { Env } from "../server.ts";
 
@@ -168,13 +167,6 @@ export function teamRoutes() {
       } catch {
         /* file may not exist */
       }
-      // Also watch the crew inbox file directly (may not be in the dir watch)
-      try {
-        cleanups.push(watchFile(claudeInboxPath(name, CREW_SENDER), () => debouncedPushAll()));
-      } catch {
-        /* file may not exist */
-      }
-
       stream.onAbort(() => {
         for (const c of cleanups) c();
       });
