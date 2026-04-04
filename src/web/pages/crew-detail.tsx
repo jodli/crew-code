@@ -77,51 +77,67 @@ export function CrewDetailPage() {
   // SSE: live team status updates — also triggers inbox refetch when unread counts change
   useEventSource({
     url: params.name ? `/api/teams/${encodeURIComponent(params.name)}/stream` : null,
-    onMessage: (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        queryClient.setQueryData(["teams", params.name], data);
-        // Refetch inbox when the selected agent's unread count changed
-        if (selectedMember && data.members) {
-          const updated = data.members.find((m: { name: string }) => m.name === selectedMember.name);
-          if (updated && updated.unreadCount !== selectedMember.unreadCount) {
-            queryClient.invalidateQueries({ queryKey: ["teams", params.name, "agents", selectedMember.name, "inbox"] });
+    events: {
+      "team-update": (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          queryClient.setQueryData(["teams", params.name], data);
+          if (selectedMember && data.members) {
+            const updated = data.members.find((m: { name: string }) => m.name === selectedMember.name);
+            if (updated && updated.unreadCount !== selectedMember.unreadCount) {
+              queryClient.invalidateQueries({
+                queryKey: ["teams", params.name, "agents", selectedMember.name, "inbox"],
+              });
+            }
           }
+        } catch {
+          /* ignore parse errors */
         }
-      } catch {
-        /* ignore parse errors */
-      }
+      },
     },
   });
 
   // SSE: live crew channel messages
-  useEventSource({
-    url: params.name ? `/api/teams/${encodeURIComponent(params.name)}/messages/stream` : null,
-    onMessage: (event) => {
+  const handleMessageSnapshot = useCallback(
+    (event: MessageEvent) => {
       try {
-        const parsed = JSON.parse(event.data);
-        // "snapshot" events have the full CrewChannelResult, "message" events have new messages array
-        if (parsed.messages && parsed.totalCount !== undefined) {
-          // Full snapshot — replace query data
-          queryClient.setQueryData(["teams", params.name, "messages"], parsed);
-        } else if (Array.isArray(parsed)) {
-          // New messages — append to existing data
-          queryClient.setQueryData(["teams", params.name, "messages"], (old: unknown) => {
-            const prev = old as
-              | { team: string; messages: InboxMessage[]; totalCount: number; unreadCount: number }
-              | undefined;
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: [...prev.messages, ...parsed],
-              totalCount: prev.totalCount + parsed.length,
-              unreadCount: prev.unreadCount + parsed.length,
-            };
-          });
-        }
+        const data = JSON.parse(event.data);
+        queryClient.setQueryData(["teams", params.name, "messages"], data);
       } catch {
         /* ignore parse errors */
       }
+    },
+    [queryClient, params.name],
+  );
+
+  const handleNewMessages = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const newMsgs: InboxMessage[] = JSON.parse(event.data);
+        queryClient.setQueryData(["teams", params.name, "messages"], (old: unknown) => {
+          const prev = old as
+            | { team: string; messages: InboxMessage[]; totalCount: number; unreadCount: number }
+            | undefined;
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: [...prev.messages, ...newMsgs],
+            totalCount: prev.totalCount + newMsgs.length,
+            unreadCount: prev.unreadCount + newMsgs.length,
+          };
+        });
+      } catch {
+        /* ignore parse errors */
+      }
+    },
+    [queryClient, params.name],
+  );
+
+  useEventSource({
+    url: params.name ? `/api/teams/${encodeURIComponent(params.name)}/messages/stream` : null,
+    events: {
+      snapshot: handleMessageSnapshot,
+      message: handleNewMessages,
     },
   });
 
