@@ -1,5 +1,5 @@
 import type { Blueprint } from "@crew/config/blueprint-schema.ts";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { stringify } from "yaml";
@@ -8,13 +8,14 @@ import { Dropdown } from "../components/shared/dropdown.tsx";
 import { ErrorBanner } from "../components/shared/error-banner.tsx";
 import { PageSkeleton } from "../components/shared/skeleton.tsx";
 import { useToast } from "../components/shared/toast.tsx";
-import { getBlueprints } from "../lib/api-client.ts";
+import { createBlueprint, deleteBlueprint, getBlueprints } from "../lib/api-client.ts";
 
 export function BlueprintsListPage() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
   const [deployTarget, setDeployTarget] = useState<Blueprint | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     data: blueprints,
@@ -23,6 +24,25 @@ export function BlueprintsListPage() {
   } = useQuery({
     queryKey: ["blueprints"],
     queryFn: getBlueprints,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteBlueprint,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blueprints"] });
+      toast("success", "Blueprint deleted");
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Delete failed"),
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (bp: Blueprint) => createBlueprint({ ...bp, name: `${bp.name}-copy` }),
+    onSuccess: (_, bp) => {
+      queryClient.invalidateQueries({ queryKey: ["blueprints"] });
+      toast("success", `Duplicated "${bp.name}"`);
+      navigate(`/blueprints/${bp.name}-copy`);
+    },
+    onError: (err) => toast("error", err instanceof Error ? err.message : "Duplicate failed"),
   });
 
   if (isLoading) return <PageSkeleton />;
@@ -51,11 +71,11 @@ export function BlueprintsListPage() {
   };
 
   const handleDuplicate = (bp: Blueprint) => {
-    toast("info", `Duplicated "${bp.name}" (mock)`);
+    duplicateMutation.mutate(bp);
   };
 
   const handleDelete = (bp: Blueprint) => {
-    toast("success", `Deleted "${bp.name}" (mock)`);
+    deleteMutation.mutate(bp.name);
   };
 
   return (
