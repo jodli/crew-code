@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { App } from "../app.tsx";
@@ -33,5 +33,13 @@ describe("App", () => {
   it("renders crews page at /crews route", () => {
     renderApp(<App />, { route: "/crews" });
     expect(screen.getByRole("heading", { name: "Crews" })).toBeInTheDocument();
+  });
+
+  it("shows connection indicator when health check succeeds", async () => {
+    renderApp(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("localhost:3117")).toBeInTheDocument();
+    });
   });
 });
