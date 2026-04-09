@@ -1,6 +1,8 @@
 node_modules/
 dist/
-docs
+docs/plan
+docs/talk/node_modules
+docs/talk/dist
 *.log
 tsconfig.tsbuildinfo
 src/web/tsconfig.tsbuildinfo
