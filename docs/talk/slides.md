@@ -397,7 +397,7 @@ It does the same scaffolding that Claude Code would do when spinning up an agent
 <v-clicks>
 
 <div class="border border-gray-600 rounded-xl p-5 text-center">
-  <div class="text-3xl font-bold text-blue-400">157</div>
+  <div class="text-3xl font-bold text-blue-400">623</div>
   <div class="text-sm opacity-70 mt-1">tests passing</div>
 </div>
 
@@ -428,9 +428,9 @@ At some point, **crew-code spawned a crew that continued building crew-code.**
 </div>
 
 <!--
-The whole thing is vibe-coded. I didn't write a single line myself. It started as a quick CLI, then I wantea TUI to watch the agents, and finally I added a web UI. Every time the architecture wasn't clean enough for the next frontend, I refactored it to get rid of external dependencies, clean API borders, proper dependency injection so I could do Test-driven development. Not because I planned it, but because I needed it.
+The whole thing is vibe-coded. I didn't write a single line myself. It started as a quick CLI, then I wanted a TUI to watch the agents, and finally I added a web UI. Every time the architecture wasn't clean enough for the next frontend, I refactored it to get rid of external dependencies, clean API borders, proper dependency injection so I could actually do TDD. Not because I planned it upfront, but because I needed it.
 
-157 tests, all generated. The compat tests are kind of meta — they test the protocol, written by the tool that was built on the protocol.
+Over 600 tests, all generated. The compat tests are kind of meta — they test the protocol, written by the tool that was built on the protocol.
 
 And at one point crew was far enough along that I used crew spawn to spawn agents that continued building crew. The tool was building itself. That was a fun moment.
 
