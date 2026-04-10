@@ -186,6 +186,46 @@ describe("CrewDetailPage", () => {
     expect(screen.getByText("~/repos/project")).toBeInTheDocument();
   });
 
+  it("renders markdown headings in crew channel messages", async () => {
+    renderCrewDetail("code-review-team");
+
+    // The fixture includes a markdown message with "# Review Summary"
+    await waitFor(() => {
+      const heading = document.querySelector("h1");
+      expect(heading).toBeInTheDocument();
+      expect(heading?.textContent).toBe("Review Summary");
+    });
+  });
+
+  it("renders markdown formatting in agent inbox", async () => {
+    const user = userEvent.setup();
+    renderCrewDetail("code-review-team");
+
+    await waitFor(() => {
+      expect(screen.getByText("security-reviewer")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText("security-reviewer"));
+
+    // Wait for inbox markdown message to render — find heading unique to inbox fixture
+    await waitFor(() => {
+      expect(screen.getByText("Auth Review")).toBeInTheDocument();
+    });
+
+    // Bold text renders as <strong>
+    const strong = screen.getByText((_, el) => el?.tagName === "STRONG" && el?.textContent === "Found 3 issues:");
+    expect(strong).toBeInTheDocument();
+
+    // Ordered list items render as <li>
+    expect(screen.getByText(/SQL injection/)).toBeInTheDocument();
+    expect(screen.getByText(/Missing rate limiting/)).toBeInTheDocument();
+
+    // Code renders as <code>
+    const codeEls = screen.getAllByText(/await hash/);
+    const hasCodeEl = codeEls.some((el) => el.closest("code") || el.tagName === "CODE");
+    expect(hasCodeEl).toBe(true);
+  });
+
   it("close inbox button works", async () => {
     const user = userEvent.setup();
     renderCrewDetail("code-review-team");

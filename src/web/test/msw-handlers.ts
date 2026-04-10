@@ -170,6 +170,12 @@ const FIXTURE_MESSAGES: InboxMessage[] = [
     read: true,
   },
   { from: "test-writer", text: "Generated 12 test cases.", timestamp: min(6), color: "#9ece6a", read: false },
+  {
+    from: "team-lead",
+    text: "# Review Summary\n\n**2 critical issues** found:\n\n- No `aria-label` on buttons\n- Missing `try/catch`\n\n```ts\nconst x = 1;\n```\n\n---\n\nSee details above.",
+    timestamp: min(3),
+    read: false,
+  },
 ];
 
 export const FIXTURE_CREW_MESSAGES: CrewChannelResult = {
@@ -185,6 +191,12 @@ export const FIXTURE_AGENT_INBOX: InboxResult = {
   messages: [
     { from: "crew", text: "Review the auth module for security vulnerabilities.", timestamp: min(15), read: true },
     { from: "team-lead", text: "Also check the session handling logic.", timestamp: min(8), read: false },
+    {
+      from: "team-lead",
+      text: "## Auth Review\n\n**Found 3 issues:**\n\n1. SQL injection in `login()`\n2. Missing rate limiting\n3. Weak password hashing\n\n```ts\nawait hash(password)\n```",
+      timestamp: min(5),
+      read: false,
+    },
   ],
   totalCount: 2,
   unreadCount: 1,
