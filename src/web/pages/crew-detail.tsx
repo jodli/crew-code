@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useLocation, useParams } from "wouter";
 import { useConnection } from "../app.tsx";
 import { PageSkeleton } from "../components/shared/skeleton.tsx";
@@ -536,7 +538,9 @@ function MessageRow({ msg }: { msg: InboxMessage }) {
         <span className="text-sm font-medium font-mono" style={{ color: msg.color || undefined }}>
           {msg.from}
         </span>
-        <p className="text-sm text-text-secondary leading-relaxed">{msg.text}</p>
+        <div className="text-sm text-text-secondary leading-relaxed prose prose-sm prose-invert max-w-none">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+        </div>
       </div>
     </div>
   );

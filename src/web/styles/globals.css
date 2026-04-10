@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* ------------------------------------------------
    Color tokens — switch via .dark class on <html>
