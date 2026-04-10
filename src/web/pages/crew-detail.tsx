@@ -538,7 +538,7 @@ function MessageRow({ msg }: { msg: InboxMessage }) {
         <span className="text-sm font-medium font-mono" style={{ color: msg.color || undefined }}>
           {msg.from}
         </span>
-        <div className="text-sm text-text-secondary leading-relaxed prose prose-sm prose-invert max-w-none">
+        <div className="text-sm text-text-secondary leading-relaxed prose prose-sm max-w-none [--tw-prose-body:var(--color-text-secondary)] [--tw-prose-headings:var(--color-text)] [--tw-prose-bold:var(--color-text)] [--tw-prose-code:var(--color-text)] [--tw-prose-links:var(--color-accent)] [--tw-prose-counters:var(--color-text-muted)] [--tw-prose-bullets:var(--color-text-muted)] [--tw-prose-hr:var(--color-border)]">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
         </div>
       </div>
