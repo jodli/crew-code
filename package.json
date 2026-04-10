@@ -1,6 +1,6 @@
 {
   "name": "crew",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CLI tool for managing Claude Code agent teams",
   "type": "module",
   "bin": {

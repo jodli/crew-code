@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.1](https://github.com/jodli/crew-code/compare/v0.2.0...v0.2.1) (2026-04-10)
+
+
+### Features
+
+* **web:** add react-markdown and typography dependencies ([f968e8e](https://github.com/jodli/crew-code/commit/f968e8ea8442872d31a9ed0a3c7b70859f720328))
+* **web:** render inbox messages as markdown ([23e9ec9](https://github.com/jodli/crew-code/commit/23e9ec9957d75efbe7315687e12adf25e3ab1871))
+
+
+### Bug Fixes
+
+* **web:** use theme tokens for markdown prose colors ([9bb2ae6](https://github.com/jodli/crew-code/commit/9bb2ae6dec8f3748b49548d5929fbf07318befcd))
+
 ## [0.2.0](https://github.com/jodli/crew-code/compare/v0.1.6...v0.2.0) (2026-04-09)
 
 
