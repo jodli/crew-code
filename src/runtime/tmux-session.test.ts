@@ -97,11 +97,15 @@ describe("addPaneToTeamSession", () => {
       spawnSync: ((cmd: string[], opts?: Record<string, unknown>) => {
         calls.push({ cmd, ...opts });
         if (cmd.includes("has-session")) return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
-        // split-window returns pane ID
         if (cmd.includes("split-window")) return { exitCode: 0, stdout: Buffer.from("%7\n"), stderr: Buffer.from("") };
-        // list-panes for PID lookup
-        if (cmd.includes("list-panes"))
+        if (cmd.includes("list-panes")) {
+          const fIdx = cmd.indexOf("-F");
+          const fmt = fIdx >= 0 ? cmd[fIdx + 1] : "";
+          // getFirstPaneId call (format: "#{pane_id}" only)
+          if (!fmt.includes("pane_pid")) return { exitCode: 0, stdout: Buffer.from("%1\n"), stderr: Buffer.from("") };
+          // getPanePid call (format: "#{pane_id} #{pane_pid}")
           return { exitCode: 0, stdout: Buffer.from("%7 54321\n"), stderr: Buffer.from("") };
+        }
         return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
       }) as unknown as TmuxDeps["spawnSync"],
     });
@@ -119,11 +123,14 @@ describe("addPaneToTeamSession", () => {
 
     const layoutCall = calls.find((c) => c.cmd.includes("select-layout"));
     expect(layoutCall).toBeDefined();
-    expect(layoutCall!.cmd).toContain("tiled");
+    expect(layoutCall!.cmd).toContain("main-vertical");
 
-    const titleCall = calls.find((c) => c.cmd.includes("select-pane"));
+    // First pane must be selected before layout so team-lead stays on the left
+    const firstPaneSelect = calls.find((c) => c.cmd.includes("select-pane") && c.cmd.includes("%1") && !c.cmd.includes("-T"));
+    expect(firstPaneSelect).toBeDefined();
+
+    const titleCall = calls.find((c) => c.cmd.includes("select-pane") && c.cmd.includes("-T"));
     expect(titleCall).toBeDefined();
-    expect(titleCall!.cmd).toContain("-T");
     expect(titleCall!.cmd).toContain("coder");
   });
 
@@ -138,8 +145,12 @@ describe("addPaneToTeamSession", () => {
           return { exitCode: 1, stdout: Buffer.from(""), stderr: Buffer.from("duplicate session: crew_alpha") };
         }
         if (cmd.includes("split-window")) return { exitCode: 0, stdout: Buffer.from("%3\n"), stderr: Buffer.from("") };
-        if (cmd.includes("list-panes"))
+        if (cmd.includes("list-panes")) {
+          const fIdx = cmd.indexOf("-F");
+          const fmt = fIdx >= 0 ? cmd[fIdx + 1] : "";
+          if (!fmt.includes("pane_pid")) return { exitCode: 0, stdout: Buffer.from("%1\n"), stderr: Buffer.from("") };
           return { exitCode: 0, stdout: Buffer.from("%3 99999\n"), stderr: Buffer.from("") };
+        }
         return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
       }) as unknown as TmuxDeps["spawnSync"],
     });
