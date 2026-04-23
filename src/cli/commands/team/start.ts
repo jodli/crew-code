@@ -26,6 +26,16 @@ export default defineCommand({
       required: false,
       default: false,
     },
+    layout: {
+      type: "string",
+      description: "Tmux layout for agent panes: tiled (default) or main-vertical",
+      required: false,
+    },
+    "main-pane": {
+      type: "string",
+      description: "Agent name to place on the left in main-vertical layout (defaults to team-lead)",
+      required: false,
+    },
   },
   async run({ args }) {
     if (!isTmuxAvailable()) {
@@ -61,6 +71,10 @@ export default defineCommand({
     const activeResult = await processRegistry.listActive(args.team);
     const activeIds = new Set(activeResult.ok ? activeResult.value.map((e) => e.agentId) : []);
 
+    const layout = args.layout as "tiled" | "main-vertical" | undefined;
+    const leadAgent = result.value.agents.find((a) => a.isLead);
+    const mainPane = args["main-pane"] ?? leadAgent?.name;
+
     let started = 0;
     for (const agent of result.value.agents) {
       if (activeIds.has(agent.agentId)) {
@@ -69,7 +83,7 @@ export default defineCommand({
       }
 
       try {
-        const { pid } = launchAgent(agent.launchOptions, { headless: true });
+        const { pid } = launchAgent(agent.launchOptions, { headless: true, layout, mainPane });
         await processRegistry.activate(args.team, agent.agentId, pid, "headless");
         console.error(`  Started ${pc.bold(agent.name)} (PID: ${pid})`);
         started++;

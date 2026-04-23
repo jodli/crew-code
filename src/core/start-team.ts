@@ -10,6 +10,7 @@ export interface StartTeamInput {
 export interface StartTeamAgent {
   agentId: string;
   name: string;
+  isLead: boolean;
   launchOptions: AgentLaunchInfo;
 }
 
@@ -48,6 +49,7 @@ export async function startTeam(ctx: AppContext, input: StartTeamInput): Promise
     agents.push({
       agentId: member.agentId,
       name: member.name,
+      isLead: member.agentType === "team-lead",
       launchOptions: {
         agentId: member.agentId,
         agentName: member.name,

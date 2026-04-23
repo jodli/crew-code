@@ -40,11 +40,18 @@ export function teamSessionExists(teamName: string, deps: TmuxDeps = defaultDeps
   return result.exitCode === 0;
 }
 
+export type TmuxLayout = "tiled" | "main-vertical";
+
 export interface AddPaneOptions {
   teamName: string;
   agentName: string;
   command: string[];
   cwd: string;
+  /** Tmux layout to apply after adding the pane. Defaults to "tiled". */
+  layout?: TmuxLayout;
+  /** Agent name to place in the main (left) position when layout is "main-vertical".
+   *  Defaults to the first pane in the session (the team-lead). */
+  mainPane?: string;
 }
 
 export interface AddPaneResult {
@@ -113,13 +120,21 @@ function splitIntoSession(session: string, options: AddPaneOptions, deps: TmuxDe
 
   setPaneTitle(paneId, options.agentName, deps);
 
-  // Select the first pane (team-lead) before applying main-vertical so it stays on the left.
-  // Without this, tmux would make the newly-added pane the "main" pane.
-  const firstPaneId = getFirstPaneId(session, deps);
-  if (firstPaneId) {
-    deps.spawnSync(["tmux", "select-pane", "-t", firstPaneId], { stdout: "pipe", stderr: "pipe" });
+  const layout = options.layout ?? "tiled";
+
+  if (layout === "main-vertical") {
+    // Select the designated main pane before applying main-vertical so tmux
+    // puts it on the left. Falls back to the first pane (team-lead) if no
+    // mainPane name is given or the name isn't found.
+    const mainPaneId =
+      (options.mainPane ? getPaneIdByTitle(session, options.mainPane, deps) : undefined) ??
+      getFirstPaneId(session, deps);
+    if (mainPaneId) {
+      deps.spawnSync(["tmux", "select-pane", "-t", mainPaneId], { stdout: "pipe", stderr: "pipe" });
+    }
   }
-  deps.spawnSync(["tmux", "select-layout", "-t", paneTarget(session), "main-vertical"], {
+
+  deps.spawnSync(["tmux", "select-layout", "-t", paneTarget(session), layout], {
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -152,6 +167,19 @@ function getFirstPaneId(session: string, deps: TmuxDeps): string | undefined {
   );
   const first = result.stdout.toString().trim().split("\n")[0];
   return first || undefined;
+}
+
+function getPaneIdByTitle(session: string, title: string, deps: TmuxDeps): string | undefined {
+  const result = deps.spawnSync(
+    ["tmux", "list-panes", "-s", "-t", sessionTarget(session), "-F", "#{pane_id} #{pane_title}"],
+    { stdout: "pipe", stderr: "pipe" },
+  );
+  for (const line of result.stdout.toString().trim().split("\n")) {
+    const spaceIdx = line.indexOf(" ");
+    if (spaceIdx === -1) continue;
+    if (line.slice(spaceIdx + 1) === title) return line.slice(0, spaceIdx);
+  }
+  return undefined;
 }
 
 function getPanePid(session: string, paneId: string, deps: TmuxDeps): number {
