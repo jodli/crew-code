@@ -29,18 +29,22 @@ export function selectLaunchMode(
 
 export interface LaunchOptions extends Partial<LaunchDeps> {
   headless?: boolean;
+  /** Tmux layout to apply when running headless. Defaults to "tiled". */
+  layout?: "tiled" | "main-vertical";
+  /** Agent name to place on the left when layout is "main-vertical". Defaults to the first pane (team-lead). */
+  mainPane?: string;
 }
 
 export function launchAgent(info: AgentLaunchInfo, options: LaunchOptions = {}): LaunchResult {
   const resolved = { ...info, cwd: expandHome(info.cwd) };
-  const { headless, ...depsOverrides } = options;
+  const { headless, layout, mainPane, ...depsOverrides } = options;
   const { checkSession } = { ...defaultDeps, ...depsOverrides };
   const mode = selectLaunchMode(resolved, checkSession);
 
   const args = buildClaudeArgs(resolved, mode);
 
   if (headless) {
-    return launchHeadless(resolved, args);
+    return launchHeadless(resolved, args, { layout, mainPane });
   }
 
   return launchInteractive(resolved, args, mode);
@@ -70,13 +74,19 @@ function launchInteractive(info: AgentLaunchInfo, args: string[], mode: LaunchMo
   return { pid: proc.pid, exited: proc.exited };
 }
 
-function launchHeadless(info: AgentLaunchInfo, args: string[]): LaunchResult {
+function launchHeadless(
+  info: AgentLaunchInfo,
+  args: string[],
+  layoutOptions: { layout?: "tiled" | "main-vertical"; mainPane?: string } = {},
+): LaunchResult {
   const command = ["env", `${CLAUDE_TEAMS_ENV_VAR}=1`, "claude", ...args];
   const result = addPaneToTeamSession({
     teamName: info.teamName,
     agentName: info.agentName,
     command,
     cwd: info.cwd,
+    layout: layoutOptions.layout,
+    mainPane: layoutOptions.mainPane,
   });
 
   return { pid: result.pid, sessionName: result.sessionName, exited: new Promise(() => {}) };

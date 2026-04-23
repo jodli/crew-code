@@ -91,15 +91,13 @@ describe("addPaneToTeamSession", () => {
     expect(newSessionCall!.cmd).toContain("crew_alpha");
   });
 
-  test("splits window when session exists", () => {
+  test("splits window when session exists — defaults to tiled", () => {
     const calls: Array<{ cmd: string[] }> = [];
     const deps = mockDeps({
       spawnSync: ((cmd: string[], opts?: Record<string, unknown>) => {
         calls.push({ cmd, ...opts });
         if (cmd.includes("has-session")) return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
-        // split-window returns pane ID
         if (cmd.includes("split-window")) return { exitCode: 0, stdout: Buffer.from("%7\n"), stderr: Buffer.from("") };
-        // list-panes for PID lookup
         if (cmd.includes("list-panes"))
           return { exitCode: 0, stdout: Buffer.from("%7 54321\n"), stderr: Buffer.from("") };
         return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
@@ -114,17 +112,75 @@ describe("addPaneToTeamSession", () => {
     expect(result.pid).toBe(54321);
     expect(result.isNewSession).toBe(false);
 
-    const splitCall = calls.find((c) => c.cmd.includes("split-window"));
-    expect(splitCall).toBeDefined();
-
     const layoutCall = calls.find((c) => c.cmd.includes("select-layout"));
     expect(layoutCall).toBeDefined();
     expect(layoutCall!.cmd).toContain("tiled");
 
-    const titleCall = calls.find((c) => c.cmd.includes("select-pane"));
+    const titleCall = calls.find((c) => c.cmd.includes("select-pane") && c.cmd.includes("-T"));
     expect(titleCall).toBeDefined();
-    expect(titleCall!.cmd).toContain("-T");
     expect(titleCall!.cmd).toContain("coder");
+  });
+
+  test("main-vertical layout: selects first pane by default so team-lead stays on the left", () => {
+    const calls: Array<{ cmd: string[] }> = [];
+    const deps = mockDeps({
+      spawnSync: ((cmd: string[], opts?: Record<string, unknown>) => {
+        calls.push({ cmd, ...opts });
+        if (cmd.includes("has-session")) return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
+        if (cmd.includes("split-window")) return { exitCode: 0, stdout: Buffer.from("%7\n"), stderr: Buffer.from("") };
+        if (cmd.includes("list-panes")) {
+          const fIdx = cmd.indexOf("-F");
+          const fmt = fIdx >= 0 ? cmd[fIdx + 1] : "";
+          if (fmt.includes("pane_pid")) return { exitCode: 0, stdout: Buffer.from("%7 54321\n"), stderr: Buffer.from("") };
+          // getFirstPaneId: "#{pane_id}"
+          return { exitCode: 0, stdout: Buffer.from("%1\n"), stderr: Buffer.from("") };
+        }
+        return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
+      }) as unknown as TmuxDeps["spawnSync"],
+    });
+
+    const result = addPaneToTeamSession(
+      { teamName: "alpha", agentName: "coder", command: ["claude"], cwd: "/tmp", layout: "main-vertical" },
+      deps,
+    );
+
+    expect(result.pid).toBe(54321);
+
+    const layoutCall = calls.find((c) => c.cmd.includes("select-layout"));
+    expect(layoutCall!.cmd).toContain("main-vertical");
+
+    // First pane selected before layout so it becomes the main left pane
+    const mainSelect = calls.find((c) => c.cmd.includes("select-pane") && c.cmd.includes("%1") && !c.cmd.includes("-T"));
+    expect(mainSelect).toBeDefined();
+  });
+
+  test("main-vertical layout: selects named mainPane when specified", () => {
+    const calls: Array<{ cmd: string[] }> = [];
+    const deps = mockDeps({
+      spawnSync: ((cmd: string[], opts?: Record<string, unknown>) => {
+        calls.push({ cmd, ...opts });
+        if (cmd.includes("has-session")) return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
+        if (cmd.includes("split-window")) return { exitCode: 0, stdout: Buffer.from("%7\n"), stderr: Buffer.from("") };
+        if (cmd.includes("list-panes")) {
+          const fIdx = cmd.indexOf("-F");
+          const fmt = fIdx >= 0 ? cmd[fIdx + 1] : "";
+          if (fmt.includes("pane_pid")) return { exitCode: 0, stdout: Buffer.from("%7 54321\n"), stderr: Buffer.from("") };
+          if (fmt.includes("pane_title")) return { exitCode: 0, stdout: Buffer.from("%2 lead\n%7 coder\n"), stderr: Buffer.from("") };
+          // getFirstPaneId fallback
+          return { exitCode: 0, stdout: Buffer.from("%2\n"), stderr: Buffer.from("") };
+        }
+        return { exitCode: 0, stdout: Buffer.from(""), stderr: Buffer.from("") };
+      }) as unknown as TmuxDeps["spawnSync"],
+    });
+
+    addPaneToTeamSession(
+      { teamName: "alpha", agentName: "coder", command: ["claude"], cwd: "/tmp", layout: "main-vertical", mainPane: "lead" },
+      deps,
+    );
+
+    // Should have selected %2 (the "lead" pane) — not the first pane
+    const mainSelect = calls.find((c) => c.cmd.includes("select-pane") && c.cmd.includes("%2") && !c.cmd.includes("-T"));
+    expect(mainSelect).toBeDefined();
   });
 
   test("retries with split-window on race condition (new-session fails because session appeared)", () => {

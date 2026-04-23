@@ -53,7 +53,9 @@ describe("startTeam", () => {
     if (!result.ok) return;
     expect(result.value.agents).toHaveLength(2);
     expect(result.value.agents[0].name).toBe("lead");
+    expect(result.value.agents[0].isLead).toBe(true);
     expect(result.value.agents[1].name).toBe("coder");
+    expect(result.value.agents[1].isLead).toBe(false);
     expect(result.value.skipped).toHaveLength(0);
   });
 
